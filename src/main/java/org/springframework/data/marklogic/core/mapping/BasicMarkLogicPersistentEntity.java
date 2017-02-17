@@ -27,7 +27,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
 
         if (document != null) {
             this.documentFormat = document.format() != null ? document.format() : formatFallback;
-            this.typePersistenceStrategy = document.strategy() != null ? document.strategy() : strategyFallback;
+            this.typePersistenceStrategy = document.typeStrategy() != null ? document.typeStrategy() : strategyFallback;
         } else {
             this.typePersistenceStrategy = strategyFallback;
             this.documentFormat = formatFallback;

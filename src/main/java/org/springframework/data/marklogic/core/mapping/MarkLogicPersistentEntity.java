@@ -12,7 +12,7 @@ public interface MarkLogicPersistentEntity<T> extends PersistentEntity<T, MarkLo
     String getCollection();
 
     /**
-     * Gets the strategy defined for determining how to save "type" information about a document, to save the name of the
+     * Gets the typeStrategy defined for determining how to save "type" information about a document, to save the name of the
      * class in a Collection so queries can "auto" filter based on type, or left to the discretion of the client.
      * @return
      */

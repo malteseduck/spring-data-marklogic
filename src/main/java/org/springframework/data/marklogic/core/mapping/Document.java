@@ -9,6 +9,11 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE })
 public @interface Document {
-    TypePersistenceStrategy strategy() default TypePersistenceStrategy.COLLECTION;
+
+    TypePersistenceStrategy typeStrategy() default TypePersistenceStrategy.COLLECTION;
+
     DocumentFormat format() default DocumentFormat.JSON;
+
+    // TODO: What type of object wrapping to use, FULL_CLASS, SIMPLE_CLASS, NONE, default to NONE, only configurable for JSON?
+    // TODO: Whether or not to store something like "_class" so we can convert objects if type is not specified?
 }

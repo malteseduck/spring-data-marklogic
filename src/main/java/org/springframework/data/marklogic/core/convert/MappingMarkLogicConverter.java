@@ -17,7 +17,13 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.*;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 public class MappingMarkLogicConverter implements MarkLogicConverter, InitializingBean {
 
@@ -52,9 +58,14 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
         if (entity.hasIdProperty()) {
             PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
+
+            if (Collection.class.isAssignableFrom(idProperty.getType()) || Map.class.isAssignableFrom(idProperty.getType()))
+                throw new IllegalArgumentException("Collection types not supported as entity id");
+
             try {
+                // TODO: Better way to do this?
                 Object id = idProperty.getGetter().invoke(source);
-                doc.setUri(getDocumentUri(id, entity.getType()));
+                doc.setUri(getDocumentUris(asList(id), entity.getType()).get(0));
             } catch (Exception e) {
                 // TODO: Support document URI templates
                 throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
@@ -92,14 +103,33 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     }
 
     @Override
-    public <T> String getDocumentUri(Object id, Class<T> entityClass) {
+    public <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass) {
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
 
-        if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
-            return "/" + String.valueOf(id) + ".xml";
-        } else {
-            return "/" + String.valueOf(id) + ".json";
-        }
+        final List<String> uris = ids.stream()
+                .flatMap(id -> {
+                    if (entityClass != null)
+                        if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
+                            return asList("/" + String.valueOf(id) + ".xml").stream();
+                        } else {
+                            return asList("/" + String.valueOf(id) + ".json").stream();
+                        }
+                    else
+                        // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
+                        // is if they have both JSON/XML for the same id - might get "odd" results?
+                        return asList(
+                            "/" + String.valueOf(id) + ".json",
+                            "/" + String.valueOf(id) + ".xml"
+                        ).stream();
+                })
+                .collect(Collectors.toList());
+
+        return uris;
+    }
+
+    @Override
+    public List<String> getDocumentUris(List<? extends Object> ids) {
+        return getDocumentUris(ids, null);
     }
 
     @Override
@@ -115,7 +145,9 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
         try {
             Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
-            xmlMapper = (XmlMapper) new XmlMapper().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+            xmlMapper = (XmlMapper) new XmlMapper()
+                    .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
+                    .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                     .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
                     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                     .setDateFormat(simpleDateFormat8601)

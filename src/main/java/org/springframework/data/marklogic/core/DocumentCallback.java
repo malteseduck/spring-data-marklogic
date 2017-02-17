@@ -2,6 +2,6 @@ package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.document.DocumentManager;
 
-public interface MarkLogicCallback<T> {
+public interface DocumentCallback<T> {
     T doInMarkLogic(DocumentManager mgr);
 }

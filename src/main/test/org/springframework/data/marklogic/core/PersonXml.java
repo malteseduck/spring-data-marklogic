@@ -1,16 +1,24 @@
 package org.springframework.data.marklogic.core;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.marklogic.core.mapping.Document;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Person {
+import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
+
+@Document(format = XML)
+@JacksonXmlRootElement(localName = "person")
+public class PersonXml {
 
     @Id
     private String id;
+    private String lang;
     private String name;
     private int age;
     private String gender;
@@ -19,21 +27,22 @@ public class Person {
     private Instant birthtime;
     private List<String> hobbies;
 
-    public Person() {
+    public PersonXml() {
         this.id = UUID.randomUUID().toString();
     }
 
-    public Person(String name) {
+    public PersonXml(String name) {
         this();
         this.name = name;
+        this.lang = "eng";
         this.birthtime = Instant.now();
     }
 
-    public Person(String name, int age, String gender, String occupation, String description, Instant birthtime) {
+    public PersonXml(String name, int age, String gender, String occupation, String description, Instant birthtime) {
         this(name, age, gender, occupation, description, birthtime, new ArrayList<>());
     }
 
-    public Person(String name, int age, String gender, String occupation, String description, Instant birthtime, List<String> hobbies) {
+    public PersonXml(String name, int age, String gender, String occupation, String description, Instant birthtime, List<String> hobbies) {
         this();
         this.name = name;
         this.age = age;
@@ -50,6 +59,16 @@ public class Person {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @JacksonXmlProperty(isAttribute = true, localName = "xml:lang")
+    public String getLang() {
+        return lang;
+    }
+
+    @JacksonXmlProperty(isAttribute = true, localName = "lang")
+    public void setLang(String lang) {
+        this.lang = lang;
     }
 
     public String getName() {
