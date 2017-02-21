@@ -24,29 +24,25 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Sample repository managing {@link Person} entities.
- *
- * @author Oliver Gierke
- * @author Thomas Darimont
- * @author Christoph Strobl
- * @author Fırat KÜÇÜK
- * @author Mark Paluch
- */
 public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByName(String name);
 
     List<Person> findByNameStartsWith(String prefix);
 
+    List<Person> findByNameStartingWithIgnoreCase(String prefix);
+
     List<Person> findByNameEndsWith(String postfix);
 
     List<Person> findByNameOrderByAgeAsc(String name);
 
-    @Query(value = "{ 'name' : ?0 }", extract = "[ '/firstname', '/description' ]")
-    List<Person> findByThePersonsName(String name);
-
     List<Person> findByNameLike(String name);
+
+    List<Person> findByNameNot(String name);
+
+    List<Person> findByNameIgnoreCase(String name);
+
+    List<Person> findByNameNotIgnoreCase(String name);
 
     List<Person> findByNameNotContains(String name);
 
@@ -58,26 +54,34 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByHobbiesNotContains(List<String> hobbies);
 
-    @Query("{'age' : { '$lt' : ?0 } }")
-    List<Person> findByAgeLessThan(int age, Sort sort);
-
     Page<Person> findByNameLike(String name, Pageable pageable);
 
     List<Person> findByNameIn(String... names);
 
     List<Person> findByNameNotIn(Collection<String> names);
 
-    List<Person> findByNameAndAge(String name, String age);
+    List<Person> findByNameAndAge(String name, int age);
+
+    List<Person> findByNameOrAge(String name, int age);
+
+    List<Person> findByAge(int age);
 
     List<Person> findByAgeBetween(int from, int to);
 
-    List<Person> findByNamedQuery(String firstname);
+    List<Person> findByBirthtimeLessThan(Instant date);
 
-    List<Person> findByBirthtimeAtLessThan(Instant date);
+    List<Person> findByBirthtimeGreaterThan(Instant date);
 
-    List<Person> findByBirthtimeAtGreaterThan(Instant date);
+    // Annotated queries (QBE)
+    @Query(value = "{ 'name' : ?0 }", extract = "[ '/firstname', '/description' ]")
+    List<Person> findByThePersonsName(String name);
 
+    @Query("{'age' : { '$lt' : ?0 } }")
+    List<Person> findByAgeLessThan(int age, Sort sort);
+
+    // Exists/count checks
     long countByName(String name);
 
     boolean existsByName(String name);
+
 }

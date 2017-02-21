@@ -126,4 +126,19 @@ public class PersonXml {
     public void setHobbies(List<String> hobbies) {
         this.hobbies = hobbies;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PersonXml personXml = (PersonXml) o;
+
+        return id != null ? id.equals(personXml.id) : personXml.id == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

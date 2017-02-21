@@ -34,6 +34,8 @@ public interface MarkLogicOperations {
 
     List<?> search(StructuredQueryDefinition query);
 
+    <T> List<T> search(Class<T> entityClass);
+
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
     Page<?> search(StructuredQueryDefinition query, int start);
@@ -44,7 +46,11 @@ public interface MarkLogicOperations {
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
 
+    // TODO: How to deal with sorting?  Allow un-indexed sorts? create @Index annotation to specify type and only allow those?  Assume based on doc type (element, path)?  How match on nested paths?
+
     boolean exists(Object id);
+
+    <T> boolean exists(Object id, Class<T> entityClass);
 
     long count(String... collections);
 
@@ -58,9 +64,11 @@ public interface MarkLogicOperations {
 
     <T> void delete(Object id, Class<T> entityClass);
 
-    void delete(List<?> ids);
+    <T> void delete(List<T> entities, Class<T> entityClass);
 
-    <T> void delete(List<?> ids, Class<T> entityClass);
+    void deleteAll(List<?> ids);
+
+    <T> void deleteAll(List<?> ids, Class<T> entityClass);
 
     void deleteAll(String... collections);
 

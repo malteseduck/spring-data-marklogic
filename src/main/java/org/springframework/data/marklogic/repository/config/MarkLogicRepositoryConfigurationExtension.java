@@ -36,15 +36,6 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
 
     /*
      * (non-Javadoc)
-     * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModuleName()
-     */
-    @Override
-    public String getModuleName() {
-        return "MarkLogic";
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModulePrefix()
      */
     @Override
@@ -66,6 +57,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
      */
     @Override
     protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
+        // TODO: Does this make it required to annotation a persistable class with @Document?
         return Collections.<Class<? extends Annotation>>singleton(Document.class);
     }
 
@@ -84,9 +76,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
      */
     @Override
     public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {
-
         Element element = config.getElement();
-
         ParsingUtils.setPropertyReference(builder, element, MARKLOGIC_TEMPLATE_REF, "marklogicOperations");
     }
 
@@ -96,9 +86,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
      */
     @Override
     public void postProcess(BeanDefinitionBuilder builder, AnnotationRepositoryConfigurationSource config) {
-
         AnnotationAttributes attributes = config.getAttributes();
-
         builder.addPropertyReference("marklogicOperations", attributes.getString("marklogicTemplateRef"));
     }
 }

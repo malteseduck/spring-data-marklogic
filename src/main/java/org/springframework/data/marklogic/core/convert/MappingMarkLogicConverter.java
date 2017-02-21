@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.JacksonDatabindHandle;
+import com.marklogic.client.query.StructuredQueryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -17,10 +18,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.*;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -76,7 +74,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
             if (doc.getMetadata() == null) doc.setMetadata(new DocumentMetadataHandle());
-            doc.setMetadata(doc.getMetadata().withCollections(entity.getType().getSimpleName()));
+            doc.setMetadata(doc.getMetadata().withCollections(getTypeName(entity)));
         }
 
         JacksonDatabindHandle contentHandle = new JacksonDatabindHandle(source);
@@ -133,6 +131,20 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     }
 
     @Override
+    public <T> StructuredQueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
+        if (entityClass != null) {
+            MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
+            if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
+                List<String> collections = new ArrayList<>();
+                Collections.addAll(collections, query.getCollections());
+                collections.add(getTypeName(entity));
+                query.setCollections(collections.toArray(new String[0]));
+            }
+        }
+        return query;
+    }
+
+    @Override
     public void afterPropertiesSet() {
         objectMapper = new ObjectMapper()
                 .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
@@ -159,4 +171,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     }
 
+    public String getTypeName(MarkLogicPersistentEntity entity) {
+        // TODO: Add support for full class name for collection
+        return entity.getType().getSimpleName();
+    }
 }

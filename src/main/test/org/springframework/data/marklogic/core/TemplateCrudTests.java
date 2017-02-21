@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
@@ -91,7 +92,8 @@ public class TemplateCrudTests {
     }
 
     @Document(typeStrategy = TypePersistenceStrategy.NONE)
-    private static class BadPerson {
+    private static class BadPerson extends Person {
+        public BadPerson(String name) { super(name); }
     }
 
     @Test
@@ -100,6 +102,16 @@ public class TemplateCrudTests {
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
                 .hasMessage("Cannot determine delete scope for entity of type org.springframework.data.marklogic.core.TemplateCrudTests$BadPerson");
+    }
+
+    @Test
+    public void testSearchConstrainedToCollection() {
+        Person bob = new Person("bob");
+        BadPerson fred = new BadPerson("fred");
+
+        template.write(asList(bob, fred));
+        List<Person> people = template.search(Person.class);
+        assertThat(people).containsExactly(bob);
     }
 
     @Test

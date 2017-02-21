@@ -2,9 +2,9 @@ package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClientFactory;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
 
-@Configuration
+@ContextConfiguration
 public class InfrastructureConfiguration {
 
     @Bean

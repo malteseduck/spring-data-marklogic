@@ -21,6 +21,9 @@ import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.marklogic.repository.query.MarkLogicEntityInformation;
+import org.springframework.data.marklogic.repository.query.MarkLogicQueryMethod;
+import org.springframework.data.marklogic.repository.query.StringQBEMarkLogicQuery;
+import org.springframework.data.marklogic.repository.query.PartTreeMarkLogicQuery;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -122,7 +125,12 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
         @Override
         public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
                                             NamedQueries namedQueries) {
-            return null;
+            MarkLogicQueryMethod queryMethod = new MarkLogicQueryMethod(method, metadata, factory, mappingContext);
+
+            if (queryMethod.hasAnnotatedQuery())
+                return new StringQBEMarkLogicQuery(queryMethod, operations);
+            else
+                return new PartTreeMarkLogicQuery(queryMethod, operations);
         }
     }
 }

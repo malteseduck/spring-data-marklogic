@@ -9,6 +9,10 @@ import org.springframework.data.marklogic.repository.query.MarkLogicEntityInform
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class SimpleMarkLogicRepository<T, ID extends Serializable> implements MarkLogicRepository<T, ID> {
 
@@ -24,71 +28,84 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    public Iterable<T> findAll(Sort sort) {
-        return null;
+    public List<T> findAll(Sort sort) {
+        // TODO: When sorting support is added...
+        return findAll();
     }
 
     @Override
     public Page<T> findAll(Pageable pageable) {
-        return null;
+        // TODO: Support fill Pageable instead of just page bounds
+        return operations.search(null, pageable.getOffset(), pageable.getPageSize(), entityInformation.getJavaType());
     }
 
     @Override
     public <S extends T> S save(S entity) {
-        Assert.notNull(entity, "Entity must not be null!");
-
-        operations.write(entity);
-
-        return entity;
+        Assert.notNull(entity, "Entity must not be null");
+        return (S) operations.write(entity);
     }
 
     @Override
-    public <S extends T> Iterable<S> save(Iterable<S> entities) {
-        return null;
+    public <S extends T> List<S> save(Iterable<S> entities) {
+        Assert.notNull(entities, "The given Iterable of entities must not be null");
+        return operations.write(convertIterableToList(entities));
     }
 
     @Override
     public T findOne(ID id) {
-        return null;
+        Assert.notNull(id, "The given id must not be null");
+        return operations.read(id, entityInformation.getJavaType());
     }
 
     @Override
     public boolean exists(ID id) {
-        return false;
+        Assert.notNull(id, "The given id must not be null");
+        return operations.exists(id, entityInformation.getJavaType());
     }
 
     @Override
-    public Iterable<T> findAll() {
-        return null;
+    public List<T> findAll() {
+        return operations.search(entityInformation.getJavaType());
     }
 
     @Override
     public Iterable<T> findAll(Iterable<ID> ids) {
-        return null;
+        Assert.notNull(ids, "The given Iterable of ids must not be null");
+        return operations.read(convertIterableToList(ids), entityInformation.getJavaType());
     }
 
     @Override
     public long count() {
-        return 0;
+        return operations.count(entityInformation.getJavaType());
     }
 
     @Override
     public void delete(ID id) {
-
+        Assert.notNull(id, "The given id must not be null");
+        operations.delete(id, entityInformation.getJavaType());
     }
 
     @Override
     public void delete(T entity) {
-
+        Assert.notNull(entity, "The given entity must not be null");
+        operations.delete(singletonList(entity), entityInformation.getJavaType());
     }
 
     @Override
     public void delete(Iterable<? extends T> entities) {
-
+        Assert.notNull(entities, "The given Iterable of entities must not be null");
+        operations.delete(entities, entityInformation.getJavaType());
     }
 
     @Override
     public void deleteAll() {
+        operations.deleteAll(entityInformation.getJavaType());
+    }
 
+    private static <T> List<T> convertIterableToList(Iterable<T> entities) {
+        if (entities instanceof List) return (List<T>) entities;
+        List<T> list = new ArrayList<>();
+        entities.iterator().forEachRemaining(list::add);
+        return list;
     }
 }

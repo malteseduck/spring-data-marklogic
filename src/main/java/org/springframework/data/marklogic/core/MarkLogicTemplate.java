@@ -18,14 +18,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
-import org.springframework.data.marklogic.core.mapping.*;
+import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
+import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
+import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContextAware {
 
@@ -97,7 +100,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public Object write(final Object entity, String... collections) {
         // TODO: Safer...
-        return write(asList(entity), collections).get(0);
+        return write(singletonList(entity), collections).get(0);
     }
 
     @Override
@@ -144,7 +147,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> T read(Object id, Class<T> entityClass) {
-        return read(asList(id), entityClass).get(0);
+        return read(singletonList(id), entityClass).get(0);
     }
 
     @Override
@@ -181,6 +184,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public <T> List<T> search(Class<T> entityClass) {
+        // TODO: Is this dangerous?
+        return search(null, 0, Integer.MAX_VALUE, entityClass).getContent();
+    }
+
+    @Override
     public Page<?> search(StructuredQueryDefinition query, int start) {
         // TODO: Persist something like "_class" so we can convert, or return something so they can?
         return null;
@@ -203,8 +212,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager) -> {
             if (length >= 0) manager.setPageLength(length);
 
+            // TODO: Is here the best place to check this?
+            StructuredQueryDefinition finalQuery;
+            if (query != null) finalQuery = query; else finalQuery = queryBuilder().and();
+
             // MarkLogic uses 1-based indexing, whereas the rest of us use 0-based, so convert and query
-            DocumentPage docPage = manager.search(query, start + 1);
+            DocumentPage docPage = manager.search(converter.wrapQuery(finalQuery, entityClass), start + 1);
             List<T> results = toEntityList(entityClass, docPage);
 
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
@@ -213,7 +226,16 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public boolean exists(Object id) {
-        return false;
+        // TODO: Has to check if either JSON or XML exists with two separate calls, so not super-efficient. Is there a better way?
+        final List<String> uris = converter.getDocumentUris(singletonList(id));
+        return execute((manager) -> uris.stream().anyMatch(uri -> manager.exists(uri) != null));
+    }
+
+    @Override
+    public <T> boolean exists(Object id, Class<T> entityClass) {
+        final String uri = converter.getDocumentUris(singletonList(id), entityClass).get(0);
+
+        return execute((manager) -> manager.exists(uri) != null);
     }
 
     @Override
@@ -238,21 +260,38 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public void delete(Object id) {
-        delete(asList(id), null);
+        delete(singletonList(id), null);
     }
 
     @Override
     public <T> void delete(Object id, Class<T> entityClass) {
-        delete(asList(id), entityClass);
+        deleteAll(singletonList(id), entityClass);
     }
 
     @Override
-    public void delete(List<? extends Object> ids) {
-        delete(ids, null);
+    public <T> void delete(List<T> entities, Class<T> entityClass) {
+        List<String> uris =
+                entities.stream()
+                        .map(entity -> {
+                            final DocumentDescriptor doc = new DocumentDescriptor();
+                            this.converter.write(entity, doc);
+                            return doc.getUri();
+                        })
+                        .collect(Collectors.toList());
+
+        execute((manager) -> {
+            manager.delete(uris.toArray(new String[0]));
+            return null;
+        });
     }
 
     @Override
-    public <T> void delete(List<?> ids, Class<T> entityClass) {
+    public void deleteAll(List<?> ids) {
+        deleteAll(ids, null);
+    }
+
+    @Override
+    public <T> void deleteAll(List<?> ids, Class<T> entityClass) {
         final List<String> uris = converter.getDocumentUris(ids, entityClass);
 
         execute((manager) -> {

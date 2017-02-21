@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.core.convert;
 
+import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.convert.EntityConverter;
 import org.springframework.data.convert.EntityReader;
 import org.springframework.data.convert.EntityWriter;
@@ -14,7 +15,11 @@ public interface MarkLogicConverter extends
         EntityReader<Object, DocumentDescriptor> {
 
 
+    List<String> getDocumentUris(List<?> ids);
+
     <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass);
 
-    List<String> getDocumentUris(List<?> ids);
+    <T> StructuredQueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass);
+
+    String getTypeName(MarkLogicPersistentEntity entity);
 }

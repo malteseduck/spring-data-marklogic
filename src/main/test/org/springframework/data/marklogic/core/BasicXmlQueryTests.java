@@ -67,7 +67,7 @@ public class BasicXmlQueryTests {
             PersonXml.class
         );
 
-        assertThat(people).extracting(PersonXml::getName).containsExactly("Jenny");
+        assertThat(people).containsExactly(jenny);
     }
 
     @Test

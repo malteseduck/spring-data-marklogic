@@ -16,7 +16,7 @@
 
 	<properties>
 		<marklogic.version>3.0.7</marklogic.version>
-		<springdata.commons.version>1.12.7.RELEASE</springdata.commons.version>
+		<springdata.commons.version>1.13.0.RELEASE</springdata.commons.version>
 	</properties>
 
 	<dependencies>
