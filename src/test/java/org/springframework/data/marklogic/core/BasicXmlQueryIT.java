@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.marklogic.InfrastructureConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -20,14 +21,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = InfrastructureConfiguration.class)
-public class BasicXmlQueryTests {
+public class BasicXmlQueryIT {
 
     private MarkLogicTemplate template;
     private StructuredQueryBuilder qb;
 
-    private PersonXml bobby;
-    private PersonXml george;
-    private PersonXml jane;
+    private PersonXml bobby, george, jane;
+    private List<PersonXml> all;
 
     @Autowired
     public void setClient(DatabaseClient client) {
@@ -43,7 +43,7 @@ public class BasicXmlQueryTests {
         george = new PersonXml("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-01-01T00:00:00Z"));
         jane = new PersonXml("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-01-01T00:00:00Z"));
 
-        template.write(asList(bobby, george, jane));
+        all = template.write(asList(bobby, george, jane));
     }
 
     @After

@@ -16,6 +16,7 @@
 package org.springframework.data.marklogic.repository.query;
 
 import com.marklogic.client.query.StructuredQueryBuilder;
+import com.marklogic.client.query.StructuredQueryBuilder.ContainerIndex;
 import com.marklogic.client.query.StructuredQueryBuilder.TextIndex;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.context.PersistentPropertyPath;
-import org.springframework.data.marklogic.core.mapping.DocumentFormat;
+import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
@@ -33,31 +34,31 @@ import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
+import java.util.stream.Stream;
 
-import static org.springframework.data.marklogic.core.mapping.DocumentFormat.JSON;
+import static java.util.Arrays.asList;
 import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
 
 class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefinition, StructuredQueryDefinition> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MarkLogicQueryCreator.class);
-    private final ParameterAccessor accessor;
-    private final DocumentFormat format;
+    private final MarkLogicOperations operations;
+    private final MarkLogicQueryMethod method;
     private final MappingContext<?, MarkLogicPersistentProperty> context;
     private final StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
-    public MarkLogicQueryCreator(PartTree tree, ParameterAccessor accessor, MappingContext<?, MarkLogicPersistentProperty> context) {
-        this(tree, accessor, context, JSON);
-    }
-
-    public MarkLogicQueryCreator(PartTree tree, ParameterAccessor accessor, MappingContext<?, MarkLogicPersistentProperty> context, DocumentFormat format) {
+    public MarkLogicQueryCreator(PartTree tree, ParameterAccessor accessor, MarkLogicOperations operations, MappingContext<?, MarkLogicPersistentProperty> context, MarkLogicQueryMethod method) {
         super(tree, accessor);
         Assert.notNull(context, "MappingContext must not be null!");
+        Assert.notNull(operations, "MarkLogicOperations must not be null!");
+        Assert.notNull(method, "MarkLogicQueryMethod must not be null!");
 
-        this.accessor = accessor;
+        this.operations = operations;
         this.context = context;
-        this.format = format;
+        this.method = method;
     }
 
     /*
@@ -93,14 +94,14 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
      */
     @Override
     protected StructuredQueryDefinition complete(StructuredQueryDefinition criteria, Sort sort) {
+        // TODO: Always create a CombinedQueryDefinition so we can merge in more options?  Need a "modified" implementation that allows modifying an existing combined
+        StructuredQueryDefinition query = operations.sortQuery(sort, criteria, method.getEntityInformation().getJavaType());
 
-//        Query query = (criteria == null ? new Query() : new Query(criteria)).with(sort);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Created query " + query);
+        }
 
-//        if (LOG.isDebugEnabled()) {
-//            LOG.debug("Created query " + query);
-//        }
-
-        return criteria;
+        return query;
     }
 
     private StructuredQueryDefinition from(Part part, Iterator<Object> parameters) {
@@ -108,217 +109,175 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
         PersistentPropertyPath<MarkLogicPersistentProperty> path = context.getPersistentPropertyPath(part.getProperty());
         MarkLogicPersistentProperty property = path.getLeafProperty();
         String name = path.toDotPath();
+        // TODO: Simplify?  Pass part to functions?  Pass parameters instead of parameters.next()?  Do getTextIndex() in single place?
 
         switch (type) {
+            //
             case AFTER:
             case GREATER_THAN:
-//                return criteria.(parameters.next());
             case GREATER_THAN_EQUAL:
-//                return criteria.gt(parameters.next());
             case BEFORE:
             case LESS_THAN:
-//                return criteria.lt(parameters.next());
             case LESS_THAN_EQUAL:
-//                return criteria.lte(parameters.next());
             case BETWEEN:
-//                return criteria.gt(parameters.next()).lt(parameters.next());
+                // TODO: Support range queries
+                throw new IllegalArgumentException("Unsupported keyword!");
             case IS_NOT_NULL:
-//                return criteria.ne(null);
+                return qb.not(createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part)));
             case IS_NULL:
-//                return criteria.is(null);
+                return createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part));
             case NOT_IN:
-//                return criteria.nin(nextAsArray(parameters));
+                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part)));
             case IN:
-//                return criteria.in(nextAsArray(parameters));
+                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part));
             case LIKE:
             case STARTING_WITH:
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s*"), shouldIgnoreCase(part));
             case ENDING_WITH:
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "*%s"), shouldIgnoreCase(part));
             case CONTAINING:
-                return createContainingCriteria(name, property, parameters);
+                return createContainingCriteria(name, property, parameters, shouldIgnoreCase(part));
             case NOT_LIKE:
-//                return createContainingCriteria(part, property, criteria.not(), parameters);
+                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part)));
             case NOT_CONTAINING:
-//                return createContainingCriteria(part, property, criteria.not(), parameters);
+                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part)));
             case REGEX:
-//                return criteria.regex(parameters.next().toString());
+                // TODO: What types of regex is passed?  Can this really be supported
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s"), shouldIgnoreCase(part));
             case EXISTS:
-//                return criteria.exists((Boolean) parameters.next());
+                return qb.containerQuery((ContainerIndex) getTextIndex(name), qb.and());
             case TRUE:
-//                return criteria.is(true);
+                return createValueCriteria(property, getTextIndex(name), true, shouldIgnoreCase(part));
             case FALSE:
-//                return criteria.is(false);
+                return createValueCriteria(property, getTextIndex(name), false, shouldIgnoreCase(part));
             case NEAR:
             case WITHIN:
-
-//                Object parameter = parameters.next();
-//                return criteria.within((Shape) parameter);
+                // TODO: Support near queries
+                // TODO: Support geo queries?
+                throw new IllegalArgumentException("Unsupported keyword!");
             case SIMPLE_PROPERTY:
-                return isSimpleComparisionPossible(part) ? createValueCriteria(property, getTextIndex(name), parameters.next())
-                        : qb.and();
-//
-//                return isSimpleComparisionPossible(part) ? criteria.is(parameters.next())
-//                        : createLikeRegexCriteriaOrThrow(part, property, criteria, parameters, false);
-
+                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part));
             case NEGATING_SIMPLE_PROPERTY:
-                return qb.and();
-//                return isSimpleComparisionPossible(part) ? criteria.ne(parameters.next())
-//                        : createLikeRegexCriteriaOrThrow(part, property, criteria, parameters, true);
+                // TODO: is a not() query really the same thing as "negating simple"?
+                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part)));
             default:
                 throw new IllegalArgumentException("Unsupported keyword!");
         }
     }
 
     private TextIndex getTextIndex(String name) {
-        return XML.equals(format) ? qb.element(name) : qb.jsonProperty(name);
+        return XML.equals(method.getFormat()) ? qb.element(name) : qb.jsonProperty(name);
     }
 
-    private StructuredQueryDefinition createValueCriteria(MarkLogicPersistentProperty property, TextIndex index, Object values) {
-        // TODO: Better way to handle types?
+    private String[] formatWords(Object values, String format) {
+        List<String> words = asList(asArray(values, String[].class));
+
+        return words.stream()
+                .map(word -> {
+                    if (word.contains("*")) return word;
+                    else return String.format(format, word);
+                })
+                .toArray(String[]::new);
+    }
+
+    private StructuredQueryDefinition createValueCriteria(MarkLogicPersistentProperty property, TextIndex index, Object values, boolean ignoreCase) {
+        List<String> options = new ArrayList<>();
+
+        if (ignoreCase) options.add("case-insensitive");
+
+        // TODO: Is there a better way to do this logic?
+
         if (values == null) {
-            return qb.value(index, (String) null);
-        } else if (values.getClass().isArray()) {
-            if (values instanceof Boolean[])
+            if (!options.isEmpty())
+                return qb.value(index, null, options.toArray(new String[0]), 1.0, (String) null);
+            else
+                return qb.value(index, (String) null);
+        } else if (values.getClass().isArray() || property.isCollectionLike()) {
+            if (values instanceof Boolean[]) {
                 throw new IllegalArgumentException("Condition for property '" + property.getName() + "' can not match multiple boolean values");
-            else if (values instanceof Number[])
-                return qb.value(index, (Number[]) values);
-            else
-                return qb.value(index, (String[]) values);
+            } else if (values instanceof Number[]) {
+                if (!options.isEmpty())
+                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
+                else
+                    return qb.value(index, asArray(values, Number[].class));
+            } else {
+                if (!options.isEmpty())
+                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
+                else
+                    return qb.value(index, asArray(values, String[].class));
+            }
         } else {
-            if (values instanceof Boolean)
-                return qb.value(index, ((Boolean) values).booleanValue());
-            if (values instanceof Number)
-                return qb.value(index, ((Number) values).intValue());
-            else
-                return qb.value(index, String.valueOf(values));
+            if (values instanceof Boolean) {
+                if (!options.isEmpty())
+                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Boolean.class));
+                else
+                    return qb.value(index, as(values, Boolean.class));
+            } else if (values instanceof Number) {
+                if (!options.isEmpty())
+                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Number.class));
+                else
+                    return qb.value(index, as(values, Number.class));
+            } else {
+                if (!options.isEmpty())
+                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, String.class));
+                else
+                    return qb.value(index, as(values, String.class));
+            }
         }
     }
 
-
-
-    private boolean isSimpleComparisionPossible(Part part) {
-        switch (part.shouldIgnoreCase()) {
-            case NEVER:
-                return true;
-            case WHEN_POSSIBLE:
-                return part.getProperty().getType() != String.class;
-            case ALWAYS:
-                return false;
-            default:
-                return true;
-        }
+    private StructuredQueryDefinition createWordCriteria(MarkLogicPersistentProperty property, TextIndex index, String[] words) {
+        return createWordCriteria(property, index, words, false);
     }
 
-    /**
-     * Creates and extends the given criteria with a like-regex if necessary.
-     *
-     * @param part
-     * @param property
-     * @param criteria
-     * @param parameters
-     * @param shouldNegateExpression
-     * @return the criteria extended with the like-regex.
-     */
-    private StructuredQueryDefinition createLikeRegexCriteriaOrThrow(Part part, MarkLogicPersistentProperty property, StructuredQueryDefinition criteria,
-                                                    Iterator<Object> parameters, boolean shouldNegateExpression) {
+    private StructuredQueryDefinition createWordCriteria(MarkLogicPersistentProperty property, TextIndex index, String[] words, boolean ignoreCase) {
+        List<String> options = new ArrayList<>();
 
-//        PropertyPath path = part.getProperty().getLeafProperty();
-//
-//        switch (part.shouldIgnoreCase()) {
-//
-//            case ALWAYS:
-//                if (path.getType() != String.class) {
-//                    throw new IllegalArgumentException(
-//                            String.format("Part %s must be of type String but was %s", path, path.getType()));
-//                }
-//                // fall-through
-//
-//            case WHEN_POSSIBLE:
-//
-//                if (shouldNegateExpression) {
-//                    criteria = criteria.not();
-//                }
-//
-//                return addAppropriateLikeRegexTo(criteria, part, parameters.next().toString());
-//
-//            case NEVER:
-//                // intentional no-op
-//        }
-//
-//        throw new IllegalArgumentException(String.format("part.shouldCaseIgnore must be one of %s, but was %s",
-//                Arrays.asList(IgnoreCaseType.ALWAYS, IgnoreCaseType.WHEN_POSSIBLE), part.shouldIgnoreCase()));
-        return criteria;
+        // If there are any wild cards we need to specify the "wildcarded" options so it processes correctly
+        if (Stream.of(words).anyMatch(word ->  word.contains("*"))) options.add("wildcarded");
+
+        if (ignoreCase) options.add("case-insensitive");
+
+        if (!options.isEmpty())
+            return qb.word(index, null, options.toArray(new String[0]), 1.0, words);
+        else
+            return qb.word(index, words);
     }
 
-    /**
-     * If the target property of the comparison is of type String, then the operator checks for match using regular
-     * expression. If the target property of the comparison is a {@link Collection} then the operator evaluates to true if
-     * it finds an exact match within any member of the {@link Collection}.
-     *
-     * @return
-     */
-    private StructuredQueryDefinition createContainingCriteria(String name, MarkLogicPersistentProperty property, Iterator<Object> parameters) {
+    private boolean shouldIgnoreCase(Part part) {
+        return part.shouldIgnoreCase() == WHEN_POSSIBLE || part.shouldIgnoreCase() == ALWAYS;
+    }
+
+    private StructuredQueryDefinition createContainingCriteria(String name, MarkLogicPersistentProperty property, Iterator<Object> parameters, boolean ignoreCase) {
 
         if (property.isCollectionLike()) {
-            return createValueCriteria(property, getTextIndex(name), parameters.next());
+            return createValueCriteria(property, getTextIndex(name), parameters.next(), ignoreCase);
         }
 
-//        return addAppropriateLikeRegexTo(criteria, part, parameters.next().toString());
-        return null;
+        return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "*%s*"), ignoreCase);
     }
 
-    /**
-     * Creates an appropriate like-regex and appends it to the given criteria.
-     *
-     * @param criteria
-     * @param part
-     * @param value
-     * @return the criteria extended with the regex.
-     */
-    private StructuredQueryDefinition addAppropriateLikeRegexTo(StructuredQueryDefinition criteria, Part part, String value) {
-
-//        return criteria.regex(toLikeRegex(createValueCriteria, part), toRegexOptions(part));
-        return criteria;
-    }
-
-    private String toRegexOptions(Part part) {
-
-        String regexOptions = null;
-        switch (part.shouldIgnoreCase()) {
-            case WHEN_POSSIBLE:
-            case ALWAYS:
-                regexOptions = "i";
-            case NEVER:
-        }
-        return regexOptions;
-    }
 
     @SuppressWarnings("unchecked")
-    private <T> T nextAs(Iterator<Object> iterator, Class<T> type) {
+    private <T> T as(Object value, Class<T> type) {
 
-        Object parameter = iterator.next();
-
-        if (ClassUtils.isAssignable(type, parameter.getClass())) {
-            return (T) parameter;
+        if (ClassUtils.isAssignable(type, value.getClass())) {
+            return (T) value;
         }
 
         throw new IllegalArgumentException(
-                String.format("Expected parameter type of %s but got %s!", type, parameter.getClass()));
+                String.format("Expected parameter type of %s but got %s!", type, value.getClass()));
     }
 
-    private Object[] nextAsArray(Iterator<Object> iterator) {
+    @SuppressWarnings("unchecked")
+    private <T> T[] asArray(Object values, Class<T[]> type) {
 
-        Object next = iterator.next();
-
-        if (next instanceof Collection) {
-            return ((Collection<?>) next).toArray();
-        } else if (next != null && next.getClass().isArray()) {
-            return (Object[]) next;
+        if (values instanceof Collection) {
+            return (T[]) ((Collection<T>) values).toArray();
+        } else if (values != null && values.getClass().isArray()) {
+            return (T[]) values;
         }
 
-        return new Object[] { next };
-    }
-
-    private String toLikeRegex(String source, Part part) {
-        return null;
+        return Arrays.copyOf(new Object[] { values }, 1, type);
     }
 }

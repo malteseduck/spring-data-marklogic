@@ -2,6 +2,7 @@ package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.document.DocumentPage;
+import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -16,13 +17,14 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
-import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
-import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
-import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
-import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
+import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.domain.ChunkRequest;
+import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
+import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +95,72 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query) {
+        return sortQuery(sort, query, null);
+    }
+
+    @Override
+    public <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass) {
+        if (sort != null && sort.iterator().hasNext()) {
+            CombinedQueryDefinition queryDefinition;
+
+            if (query instanceof CombinedQueryDefinition)
+                queryDefinition = (CombinedQueryDefinition) query;
+            else
+                queryDefinition = new CombinedQueryDefinitionBuilder(query);
+
+            final MarkLogicPersistentEntity entity = entityClass != null ? converter.getMappingContext().getPersistentEntity(entityClass) : null;
+
+            sort.forEach(order -> {
+                StringBuilder options = new StringBuilder();
+                String propertyName = order.getProperty();
+                String direction = asMLSort(order.getDirection());
+
+                options.append("<sort-order direction='").append(direction).append("'>");
+
+                StringBuilder path = new StringBuilder();
+                // If there is an entity then we can determine the configuration of the index from it, otherwise we just
+                // default to a path index. An error will be thrown by the database if the index is not created, though.
+                if (entity != null) {
+                    MarkLogicPersistentProperty property = (MarkLogicPersistentProperty) entity.getPersistentProperty(propertyName);
+                    if (!StringUtils.isEmpty(property.getPath())) path.append(property.getPath());
+                } else {
+                    path.append("/").append(order.getProperty());
+                }
+
+                if (path.length() > 0) {
+                    options.append("<path-index>").append(path).append("</path-index>");
+                } else {
+                    options.append("<element ns='' name='").append(propertyName).append("'/>");
+                }
+                options.append("</sort-order>");
+
+                queryDefinition.with(options.toString());
+            });
+
+            return queryDefinition;
+        } else {
+            return query;
+        }
+    }
+
+    private String asMLSort(Sort.Direction direction) {
+        if (Sort.Direction.DESC.equals(direction)) {
+            return "descending";
+        } else {
+            return "ascending";
+        }
+    }
+
+    @Override
+    public StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query) {
+        if (query instanceof CombinedQueryDefinition)
+            return ((CombinedQueryDefinition) query).term(term);
+        else
+            return new CombinedQueryDefinitionBuilder(query).term(term);
+    }
+
+    @Override
     public Object write(Object entity) {
         return write(entity, null);
     }
@@ -140,8 +208,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Object read(Object id) {
-        // TODO: Persist something like "_class" so we can convert, or return something so they can?
+    public DocumentRecord read(Object id) {
         return null;
     }
 
@@ -151,8 +218,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public List<?> read(List<?> ids) {
-        // TODO: Persist something like "_class" so we can convert, or return something so they can?
+    public List<DocumentRecord> read(List<?> ids) {
         return null;
     }
 
@@ -173,8 +239,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public List<?> search(StructuredQueryDefinition query) {
-        // TODO: Persist something like "_class" so we can convert, or return something so they can?
+    public List<DocumentRecord> search(StructuredQueryDefinition query) {
         return null;
     }
 
@@ -190,8 +255,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Page<?> search(StructuredQueryDefinition query, int start) {
-        // TODO: Persist something like "_class" so we can convert, or return something so they can?
+    public Page<DocumentRecord> search(StructuredQueryDefinition query, int start) {
         return null;
     }
 
@@ -201,8 +265,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> Page<T> search(StructuredQueryDefinition query, int start, int length) {
-        // TODO: Persist something like "_class" so we can convert, or return something so they can?
+    public Page<DocumentRecord> search(StructuredQueryDefinition query, int start, int length) {
         return null;
     }
 
@@ -226,45 +289,43 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public boolean exists(Object id) {
-        // TODO: Has to check if either JSON or XML exists with two separate calls, so not super-efficient. Is there a better way?
         final List<String> uris = converter.getDocumentUris(singletonList(id));
         return execute((manager) -> uris.stream().anyMatch(uri -> manager.exists(uri) != null));
     }
 
     @Override
-    public <T> boolean exists(Object id, Class<T> entityClass) {
-        final String uri = converter.getDocumentUris(singletonList(id), entityClass).get(0);
-
-        return execute((manager) -> manager.exists(uri) != null);
+    public <T> boolean exists(StructuredQueryDefinition query, Class<T> entityClass) {
+        Page<T> page = search(query, 0, 0, entityClass);
+        return page.getTotalElements() > 0;
     }
 
     @Override
     public long count(String... collections) {
-        return 0;
+        return count(queryBuilder().collection(collections));
     }
 
     @Override
     public <T> long count(Class<T> entityClass) {
-        return 0;
+        return count(null, entityClass);
     }
 
     @Override
-    public <T> long count(StructuredQueryDefinition query) {
-        return 0;
+    public long count(StructuredQueryDefinition query) {
+        return count(query, null);
     }
 
     @Override
     public <T> long count(StructuredQueryDefinition query, Class<T> entityClass) {
-        return 0;
+        return search(query, 0, 0, entityClass).getTotalElements();
     }
 
     @Override
-    public void delete(Object id) {
-        delete(singletonList(id), null);
+    public void deleteById(Object id) {
+        deleteAll(singletonList(id), null);
     }
 
     @Override
-    public <T> void delete(Object id, Class<T> entityClass) {
+    public <T> void deleteById(Object id, Class<T> entityClass) {
         deleteAll(singletonList(id), entityClass);
     }
 
@@ -312,15 +373,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> void deleteAll(Class<T> entityClass) {
-        // TODO: If no entity class is supplied do we just delete directory "/"?  Is that safe/good?
+        // TODO: If no entity class is supplied do we just deleteById directory "/"?  Is that safe/good?
         if (entityClass == null)
-            throw new InvalidDataAccessApiUsageException("Entity class is required to determine scope of delete");
+            throw new InvalidDataAccessApiUsageException("Entity class is required to determine scope of deleteById");
 
-        // If the type is not stored in a collection there is no "quick" way to mass delete other than directory.  Can't easily do it by document properties
+        // If the type is not stored in a collection there is no "quick" way to mass deleteById other than directory.  Can't easily do it by document properties
         // TODO: Maybe uri lexicon for deleting without a collection, but can't assume it is on, though
         MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
         if (entity == null || entity.getTypePersistenceStrategy() != TypePersistenceStrategy.COLLECTION)
-            throw new InvalidDataAccessApiUsageException(String.format("Cannot determine delete scope for entity of type %s", entityClass.getName()));
+            throw new InvalidDataAccessApiUsageException(String.format("Cannot determine deleteById scope for entity of type %s", entityClass.getName()));
 
         deleteAll(entityClass.getSimpleName());
     }

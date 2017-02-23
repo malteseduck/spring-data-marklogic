@@ -1,9 +1,11 @@
 package org.springframework.data.marklogic.core;
 
+import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.pojo.PojoQueryBuilder;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 
 import java.util.List;
@@ -16,6 +18,12 @@ public interface MarkLogicOperations {
 
     <T> PojoQueryBuilder<T> queryBuilder(Class<T> entityClass);
 
+    StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query);
+
+    <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass);
+
+    StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query);
+
     Object write(Object entity);
 
     Object write(Object entity, String... collections);
@@ -24,25 +32,32 @@ public interface MarkLogicOperations {
 
     <T> List<T> write(List<T> entities, String... collections);
 
-    Object read(Object id);
+    // If the entity class is not specified return the "raw" result so that the client can convert to whatever they need
+
+    DocumentRecord read(Object id);
+
+    List<DocumentRecord> read(List<?> ids);
+
+    List<DocumentRecord> search(StructuredQueryDefinition query);
+
+    // If an entity class is specified then the template can convert all the entities before returning them
 
     <T> T read(Object id, Class<T> entityClass);
 
-    List<?> read(List<?> ids);
-
     <T> List<T> read(List<?> ids, Class<T> entityClass);
-
-    List<?> search(StructuredQueryDefinition query);
 
     <T> List<T> search(Class<T> entityClass);
 
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
-    Page<?> search(StructuredQueryDefinition query, int start);
+    // Using Spring page so we don't lose the paging information from the database - only if they "care" about pages (specifying start/stop, etc)
+    // Also this is done so there doesn't have to be another conversion "down the line" to get it into a Spring Page.
+
+    Page<DocumentRecord> search(StructuredQueryDefinition query, int start);
+
+    Page<DocumentRecord> search(StructuredQueryDefinition query, int start, int length);
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass);
-
-    <T> Page<T> search(StructuredQueryDefinition query, int start, int length);
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
 
@@ -50,19 +65,19 @@ public interface MarkLogicOperations {
 
     boolean exists(Object id);
 
-    <T> boolean exists(Object id, Class<T> entityClass);
+    <T> boolean exists(StructuredQueryDefinition query, Class<T> entityClass);
 
     long count(String... collections);
 
     <T> long count(Class<T> entityClass);
 
-    <T> long count(StructuredQueryDefinition query);
+    long count(StructuredQueryDefinition query);
 
     <T> long count(StructuredQueryDefinition query, Class<T> entityClass);
 
-    void delete(Object id);
+    void deleteById(Object id);
 
-    <T> void delete(Object id, Class<T> entityClass);
+    <T> void deleteById(Object id, Class<T> entityClass);
 
     <T> void delete(List<T> entities, Class<T> entityClass);
 

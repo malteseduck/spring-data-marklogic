@@ -1,0 +1,43 @@
+{
+  "range-path-index": [
+    {
+      "scalar-type": "string",
+      "path-expression": "/name",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
+      "scalar-type": "int",
+      "path-expression": "/age",
+      "collation": null,
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
+      "scalar-type": "dateTime",
+      "path-expression": "/birthtime",
+      "collation": null,
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    }
+  ],
+  "range-element-index": [
+    {
+      "scalar-type": "string",
+      "namespace-uri": null,
+      "localname": "name",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
+      "scalar-type": "int",
+      "namespace-uri": null,
+      "localname": "age",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    }
+  ]
+}

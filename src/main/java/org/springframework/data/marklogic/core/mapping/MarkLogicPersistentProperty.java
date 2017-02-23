@@ -20,4 +20,6 @@ public interface MarkLogicPersistentProperty extends PersistentProperty<MarkLogi
      * @return
      */
     boolean isExplicitIdProperty();
+
+    String getPath();
 }

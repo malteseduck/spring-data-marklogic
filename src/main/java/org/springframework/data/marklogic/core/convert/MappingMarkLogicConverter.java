@@ -54,7 +54,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     public void write(Object source, DocumentDescriptor doc) {
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(source.getClass());
 
-        if (entity.hasIdProperty()) {
+        if (entity != null && entity.hasIdProperty()) {
             PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
 
             if (Collection.class.isAssignableFrom(idProperty.getType()) || Map.class.isAssignableFrom(idProperty.getType()))
@@ -69,7 +69,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
             }
         } else {
-            throw new IllegalArgumentException("Your class " + entity.getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
+            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
         }
 
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
@@ -77,7 +77,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             doc.setMetadata(doc.getMetadata().withCollections(getTypeName(entity)));
         }
 
-        JacksonDatabindHandle contentHandle = new JacksonDatabindHandle(source);
+        JacksonDatabindHandle contentHandle = new JacksonDatabindHandle<>(source);
         if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
             contentHandle.setMapper(xmlMapper);
         } else {
@@ -91,7 +91,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(clazz);
 
         JacksonDatabindHandle<R> handle = new JacksonDatabindHandle<>(clazz);
-        if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
+        if (entity != null && entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
             handle.setMapper(xmlMapper);
         } else {
             handle.setMapper(objectMapper);
@@ -102,23 +102,24 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     @Override
     public <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass) {
-        final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
 
         final List<String> uris = ids.stream()
                 .flatMap(id -> {
-                    if (entityClass != null)
+                    if (entityClass != null) {
+                        final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
                         if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
                             return asList("/" + String.valueOf(id) + ".xml").stream();
                         } else {
                             return asList("/" + String.valueOf(id) + ".json").stream();
                         }
-                    else
+                    } else {
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
                         return asList(
                             "/" + String.valueOf(id) + ".json",
                             "/" + String.valueOf(id) + ".xml"
                         ).stream();
+                    }
                 })
                 .collect(Collectors.toList());
 

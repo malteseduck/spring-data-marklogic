@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.marklogic.InfrastructureConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -20,14 +21,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = InfrastructureConfiguration.class)
-public class BasicQueryTests {
+public class BasicQueryIT {
 
     private MarkLogicTemplate template;
     private PojoQueryBuilder qb;
 
-    private Person bobby;
-    private Person george;
-    private Person jane;
+    private Person bobby, george, jane;
+    private List<Person> all;
 
     @Autowired
     public void setClient(DatabaseClient client) {
@@ -43,7 +43,7 @@ public class BasicQueryTests {
         george = new Person("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-01-01T00:00:00Z"));
         jane = new Person("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-01-01T00:00:00Z"));
 
-        template.write(asList(bobby, george, jane));
+        all = template.write(asList(bobby, george, jane));
     }
 
     @After
@@ -53,6 +53,34 @@ public class BasicQueryTests {
 
     private void cleanDb() {
         template.deleteAll(Person.class);
+    }
+
+    @Test
+    public void testExists() throws Exception {
+        assertThat(template.exists(qb.value("age", 23), Person.class)).as("does exist").isTrue();
+        assertThat(template.exists(qb.value("occupation", "knight"), Person.class)).as("doesn't exist").isFalse();
+    }
+
+    @Test
+    public void testExistsById() throws Exception {
+        assertThat(template.exists(bobby.getId())).as("does exist").isTrue();
+        assertThat(template.exists("invalidid")).as("doesn't exist").isFalse();
+    }
+
+    @Test
+    public void testCount() throws Exception {
+        assertThat(template.count(Person.class)).isEqualTo(all.size());
+    }
+
+    @Test
+    public void testCountByCollections() throws Exception {
+        assertThat(template.count("Person")).isEqualTo(all.size());
+    }
+
+    @Test
+    public void testCountByQuery() throws Exception {
+        assertThat(template.count(qb.value("gender", "male"))).as("without type").isEqualTo(2);
+        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("with type").isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.repository.support;
 
+import com.marklogic.client.query.StructuredQueryBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,6 +19,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
     private final MarkLogicOperations operations;
     private final MarkLogicEntityInformation<T, ID> entityInformation;
+    private final StructuredQueryBuilder qb;
 
     public SimpleMarkLogicRepository(MarkLogicEntityInformation<T, ID> metadata, MarkLogicOperations operations) {
         Assert.notNull(metadata, "MarkLogicEntityInformation must not be null!");
@@ -25,18 +27,25 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
         this.entityInformation = metadata;
         this.operations = operations;
+        this.qb = operations.queryBuilder();
     }
 
     @Override
     public List<T> findAll(Sort sort) {
-        // TODO: When sorting support is added...
-        return findAll();
+        return operations.search(
+                operations.sortQuery(sort, null, entityInformation.getJavaType()),
+                entityInformation.getJavaType()
+        );
     }
 
     @Override
     public Page<T> findAll(Pageable pageable) {
-        // TODO: Support fill Pageable instead of just page bounds
-        return operations.search(null, pageable.getOffset(), pageable.getPageSize(), entityInformation.getJavaType());
+        return operations.search(
+                operations.sortQuery(pageable.getSort(), null, entityInformation.getJavaType()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityInformation.getJavaType()
+        );
     }
 
     @Override
@@ -60,7 +69,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public boolean exists(ID id) {
         Assert.notNull(id, "The given id must not be null");
-        return operations.exists(id, entityInformation.getJavaType());
+        return operations.exists(id);
     }
 
     @Override
@@ -82,7 +91,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public void delete(ID id) {
         Assert.notNull(id, "The given id must not be null");
-        operations.delete(id, entityInformation.getJavaType());
+        operations.deleteById(id, entityInformation.getJavaType());
     }
 
     @Override
@@ -94,7 +103,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public void delete(Iterable<? extends T> entities) {
         Assert.notNull(entities, "The given Iterable of entities must not be null");
-        operations.delete(entities, entityInformation.getJavaType());
+        operations.deleteById(entities, entityInformation.getJavaType());
     }
 
     @Override

@@ -46,7 +46,7 @@ public class MarkLogicQueryMethod extends QueryMethod {
 
         this.method = method;
         this.mappingContext = mappingContext;
-        this.format = mappingContext.getPersistentEntity(metadata.getDomainType()).getDocumentFormat();
+        this.format = mappingContext.getPersistentEntity(getEntityInformation().getJavaType()).getDocumentFormat();
     }
 
     public DocumentFormat getFormat() {

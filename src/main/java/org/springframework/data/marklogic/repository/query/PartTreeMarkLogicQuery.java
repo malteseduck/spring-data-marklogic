@@ -3,7 +3,6 @@ package org.springframework.data.marklogic.repository.query;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.mapping.DocumentFormat;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -13,29 +12,28 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
 
     private final PartTree tree;
     private final MappingContext<?, MarkLogicPersistentProperty> context;
+    private final MarkLogicOperations operations;
     private final ResultProcessor processor;
-    private final DocumentFormat format;
 
     public PartTreeMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations) {
         super(method, operations);
 
         this.processor = method.getResultProcessor();
         this.tree = new PartTree(method.getName(), processor.getReturnedType().getDomainType());
+        this.operations = operations;
         this.context = operations.getConverter().getMappingContext();
-        this.format = method.getFormat();
     }
 
     @Override
     protected StructuredQueryDefinition createQuery(ParameterAccessor accessor) {
-        MarkLogicQueryCreator creator = new MarkLogicQueryCreator(tree, accessor, context, format);
+        MarkLogicQueryCreator creator = new MarkLogicQueryCreator(tree, accessor, operations, context, (MarkLogicQueryMethod) getQueryMethod());
         StructuredQueryDefinition query = creator.createQuery();
 
         if (tree.isLimiting()) {
-            // TODO: Use a combined query to specify page length?
+            // TODO: Use a combined query to specify paging?
 //            query.limit(tree.getMaxResults());
         }
 
-        // TODO: Add sorting here as well?
         return query;
 
 //        TextCriteria textCriteria = accessor.getFullText();
@@ -62,6 +60,16 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
 //        }
 
 
+    }
+
+    @Override
+    protected boolean isCountQuery() {
+        return tree.isCountProjection();
+    }
+
+    @Override
+    protected boolean isExistsQuery() {
+        return tree.isExistsProjection();
     }
 
 }

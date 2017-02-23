@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.marklogic.InfrastructureConfiguration;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = InfrastructureConfiguration.class)
-public class TemplateCrudTests {
+public class TemplateCrudIT {
 
     private MarkLogicTemplate template;
 
@@ -44,6 +44,45 @@ public class TemplateCrudTests {
 
     private void cleanDb() {
         template.deleteAll(Person.class);
+    }
+
+    @Test
+    public void testDeleteById() {
+        Person bob = new Person("Bob");
+        Person george = new Person("Georg");
+
+        template.write(asList(bob, george));
+
+        template.deleteById(bob.getId());
+        assertThat(template.exists(bob.getId())).as("deleted by id").isFalse();
+
+        template.deleteById(george.getId(), Person.class);
+        assertThat(template.exists(george.getId())).as("deleted by id and type").isFalse();
+    }
+
+    @Test
+    public void testDeleteByIds() throws Exception {
+        Person bob = new Person("Bob");
+        Person george = new Person("George");
+
+        template.write(asList(bob, george));
+
+        template.deleteAll(asList(bob.getId()));
+        assertThat(template.exists(bob.getId())).as("without type").isFalse();
+
+        template.deleteAll(asList(george.getId()), Person.class);
+        assertThat(template.exists(george.getId())).as("with type").isFalse();
+    }
+
+    @Test
+    public void testDeleteEntities() throws Exception {
+        Person bob = new Person("Bob");
+        Person george = new Person("Georg");
+
+        template.write(asList(bob, george));
+
+        template.delete(asList(bob, george), Person.class);
+        assertThat(template.exists(asList(bob.getId(), george.getId()))).isFalse();
     }
 
     @Test
@@ -101,7 +140,7 @@ public class TemplateCrudTests {
         Throwable thrown = catchThrowable(() -> template.deleteAll(BadPerson.class));
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
-                .hasMessage("Cannot determine delete scope for entity of type org.springframework.data.marklogic.core.TemplateCrudTests$BadPerson");
+                .hasMessage("Cannot determine deleteById scope for entity of type org.springframework.data.marklogic.core.TemplateCrudIT$BadPerson");
     }
 
     @Test
@@ -119,7 +158,7 @@ public class TemplateCrudTests {
         Throwable thrown = catchThrowable(() -> template.deleteAll((Class) null));
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
-                .hasMessage("Entity class is required to determine scope of delete");
+                .hasMessage("Entity class is required to determine scope of deleteById");
     }
 
     public static class IntPerson {

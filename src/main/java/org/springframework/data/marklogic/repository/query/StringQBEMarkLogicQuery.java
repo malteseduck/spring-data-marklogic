@@ -14,4 +14,14 @@ public class StringQBEMarkLogicQuery extends AbstractMarkLogicQuery {
     protected StructuredQueryDefinition createQuery(ParameterAccessor accessor) {
         return null;
     }
+
+    @Override
+    protected boolean isCountQuery() {
+        return false;
+    }
+
+    @Override
+    protected boolean isExistsQuery() {
+        return false;
+    }
 }

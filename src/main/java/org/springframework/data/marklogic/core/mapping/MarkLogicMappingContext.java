@@ -22,7 +22,6 @@ public class MarkLogicMappingContext extends AbstractMappingContext<BasicMarkLog
 
     @Override
     protected <T> BasicMarkLogicPersistentEntity<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-        // TODO: Do we determine here which document manager needs to be used?
         return new BasicMarkLogicPersistentEntity<>(typeInformation);
     }
 

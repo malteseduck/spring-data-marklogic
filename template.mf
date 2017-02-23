@@ -1,0 +1,16 @@
+Bundle-SymbolicName: org.springframework.data.marklogic
+Bundle-Name: Spring Data MarkLogic Support
+Bundle-Vendor: Chris Cieslinski
+Bundle-ManifestVersion: 2
+Excluded-Imports:
+ org.springframework.data.marklogic.repository.*
+Export-Template:
+ org.springframework.data.marklogic.*;version="${project.version}"
+Import-Template:
+ com.fasterxml.jackson.*;version="${jackson:[=.=.=,+1.0.0)}";resolution:=optional,
+ com.marklogic.client.*;version="${marklogic.version:[=.=.=,+1.0.0)}",
+ javax.net.*;version="0",
+ org.slf4j.*;version="${slf4j:[=.=.=,+1.0.0)}",
+ org.springframework.*;version="${spring:[=.=.=.=,+1.0.0)}",
+ org.springframework.data.*;version="${springdata.commons.version:[=.=.=.=,+1.0.0)}",
+ org.w3c.dom.*;version="0"

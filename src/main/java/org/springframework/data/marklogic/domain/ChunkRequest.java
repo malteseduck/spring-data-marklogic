@@ -5,8 +5,6 @@ import org.springframework.data.domain.Sort;
 
 import java.io.Serializable;
 
-import static java.lang.Math.floor;
-
 /**
  * A request for a chunk of data with an offset and limit instead of page numbers and page sizes.
  */
@@ -28,7 +26,7 @@ public class ChunkRequest implements Pageable, Serializable {
 
     @Override
     public int getPageNumber() {
-        return (int) (floor(getOffset() % getPageSize()));
+        return getOffset() / getPageSize();
     }
 
     @Override

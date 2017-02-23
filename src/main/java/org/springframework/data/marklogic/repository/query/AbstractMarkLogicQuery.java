@@ -1,8 +1,8 @@
 package org.springframework.data.marklogic.repository.query;
 
 import com.marklogic.client.query.StructuredQueryDefinition;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
+import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.QueryMethod;
@@ -13,7 +13,6 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
     private final MarkLogicQueryMethod method;
     private final MarkLogicOperations operations;
-    private final EntityInstantiators instantiators;
 
     public AbstractMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations) {
         Assert.notNull(operations, "MarkLogicOperations must not be null!");
@@ -21,15 +20,16 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
         this.method = method;
         this.operations = operations;
-        this.instantiators = new EntityInstantiators();
     }
 
     @Override
     public Object execute(Object[] values) {
-        StructuredQueryDefinition query = createQuery(new ParametersParameterAccessor(method.getParameters(), values));
+        ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
+        StructuredQueryDefinition query = createQuery(accessor);
 
-        // TODO: Need results processing
-        return operations.search(query, method.getReturnedObjectType());
+        // TODO: Need results processing of any kind?
+        // TODO: What is required to support projections?
+        return getExecution(accessor).execute(query, method.getEntityInformation().getJavaType());
     }
 
     @Override
@@ -37,5 +37,23 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         return method;
     }
 
+    private MarkLogicQueryExecution getExecution(ParameterAccessor accessor) {
+        if (isExistsQuery()) {
+            return new ExistsExecution(operations);
+        } else if (isCountQuery()) {
+            return new CountExecution(operations);
+        } else if (method.isSliceQuery() || method.isPageQuery()) {
+            // TODO: Do we need to support slice differently?  A page is a slice...
+            return new PagedExecution(operations, accessor.getPageable());
+        } else if (method.isCollectionQuery()) {
+            return new EntityListExecution(operations);
+        } else {
+            return new SingleEntityExecution(operations);
+        }
+    }
+
     protected abstract StructuredQueryDefinition createQuery(ParameterAccessor accessor);
+
+    protected abstract boolean isCountQuery();
+    protected abstract boolean isExistsQuery();
 }

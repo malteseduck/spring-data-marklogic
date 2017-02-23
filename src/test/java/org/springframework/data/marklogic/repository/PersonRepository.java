@@ -26,6 +26,8 @@ import java.util.List;
 
 public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
+    List<Person> findAllByOrderByNameAsc();
+
     List<Person> findByName(String name);
 
     List<Person> findByNameStartsWith(String prefix);
@@ -34,9 +36,13 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByNameEndsWith(String postfix);
 
-    List<Person> findByNameOrderByAgeAsc(String name);
+    List<Person> findByOccupationOrderByNameAsc(String occupation);
 
-    List<Person> findByNameLike(String name);
+    List<Person> findByGenderLike(String gender);
+
+    List<Person> findByNameNotLike(String name);
+
+    List<Person> findByNameLikeOrderByNameAsc(String name, Sort sort);
 
     List<Person> findByNameNot(String name);
 
@@ -44,17 +50,15 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByNameNotIgnoreCase(String name);
 
-    List<Person> findByNameNotContains(String name);
+    List<Person> findByDescriptionContains(String... words);
 
-    List<Person> findByNameNotLike(String name);
-
-    List<Person> findByNameLikeOrderByNameAsc(String name, Sort sort);
+    List<Person> findByDescriptionNotContains(String... words);
 
     List<Person> findByHobbiesContains(List<String> hobbies);
 
     List<Person> findByHobbiesNotContains(List<String> hobbies);
 
-    Page<Person> findByNameLike(String name, Pageable pageable);
+    Page<Person> findByGenderLike(String gender, Pageable pageable);
 
     List<Person> findByNameIn(String... names);
 
