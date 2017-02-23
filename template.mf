@@ -8,9 +8,9 @@ Export-Template:
  org.springframework.data.marklogic.*;version="${project.version}"
 Import-Template:
  com.fasterxml.jackson.*;version="${jackson:[=.=.=,+1.0.0)}";resolution:=optional,
- com.marklogic.client.*;version="${marklogic.version:[=.=.=,+1.0.0)}",
+ com.marklogic.client.*;version="${marklogic:[=.=.=,+1.0.0)}",
  javax.net.*;version="0",
  org.slf4j.*;version="${slf4j:[=.=.=,+1.0.0)}",
  org.springframework.*;version="${spring:[=.=.=.=,+1.0.0)}",
- org.springframework.data.*;version="${springdata.commons.version:[=.=.=.=,+1.0.0)}",
+ org.springframework.data.*;version="${springdata.commons:[=.=.=.=,+1.0.0)}",
  org.w3c.dom.*;version="0"
