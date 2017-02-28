@@ -13,20 +13,20 @@ public class Person {
     private String id;
     private String name;
     private int age;
+    private boolean active = true;
     private String gender;
     private String occupation;
     private String description;
     private Instant birthtime;
     private List<String> hobbies;
+    private List<Pet> pets;
 
     public Person() {
         this.id = UUID.randomUUID().toString();
     }
 
     public Person(String name) {
-        this();
-        this.name = name;
-        this.birthtime = Instant.now();
+        this(name, 0, "female", "", "", Instant.now(), new ArrayList<>(), new ArrayList<>());
     }
 
     public Person(String name, int age, String gender, String occupation, String description, Instant birthtime) {
@@ -34,6 +34,10 @@ public class Person {
     }
 
     public Person(String name, int age, String gender, String occupation, String description, Instant birthtime, List<String> hobbies) {
+        this(name, age, gender, occupation, description, birthtime, hobbies, new ArrayList<>());
+    }
+
+    public Person(String name, int age, String gender, String occupation, String description, Instant birthtime, List<String> hobbies, List<Pet> pets) {
         this();
         this.name = name;
         this.age = age;
@@ -42,6 +46,7 @@ public class Person {
         this.description = description;
         this.birthtime = birthtime;
         this.hobbies = hobbies;
+        this.pets = pets;
     }
 
     public String getId() {
@@ -66,6 +71,14 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public String getGender() {
@@ -106,6 +119,40 @@ public class Person {
 
     public void setHobbies(List<String> hobbies) {
         this.hobbies = hobbies;
+    }
+
+    public List<Pet> getPets() {
+        return pets;
+    }
+
+    public void setPets(List<Pet> pets) {
+        this.pets = pets;
+    }
+
+    public static class Pet {
+        String name;
+        String type;
+
+        public Pet(String name, String type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
     }
 
     @Override

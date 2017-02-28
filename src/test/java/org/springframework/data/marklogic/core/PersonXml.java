@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.marklogic.core.mapping.Document;
+import org.springframework.data.marklogic.core.mapping.Indexed;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
+import static org.springframework.data.marklogic.core.mapping.IndexType.ELEMENT;
 
 @Document(format = XML)
 @JacksonXmlRootElement(localName = "person")
@@ -18,13 +20,25 @@ public class PersonXml {
 
     @Id
     private String id;
+
     private String lang;
+
+    @Indexed(type = ELEMENT)
     private String name;
+
+    @Indexed(type = ELEMENT)
     private int age;
+
+    private boolean active;
+
     private String gender;
+
     private String occupation;
+
     private String description;
+
     private Instant birthtime;
+
     private List<String> hobbies;
 
     public PersonXml() {
@@ -85,6 +99,14 @@ public class PersonXml {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public String getGender() {

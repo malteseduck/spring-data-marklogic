@@ -32,7 +32,7 @@ import java.util.Collections;
 
 public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigurationExtensionSupport {
 
-    private static final String MARKLOGIC_TEMPLATE_REF = "marklogic-template-ref";
+    private static final String MARKLOGIC_TEMPLATE_REF = "markLogic-template-ref";
 
     /*
      * (non-Javadoc)
@@ -40,7 +40,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
      */
     @Override
     protected String getModulePrefix() {
-        return "marklogic";
+        return "markLogic";
     }
 
     /*
@@ -77,7 +77,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
     @Override
     public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {
         Element element = config.getElement();
-        ParsingUtils.setPropertyReference(builder, element, MARKLOGIC_TEMPLATE_REF, "marklogicOperations");
+        ParsingUtils.setPropertyReference(builder, element, MARKLOGIC_TEMPLATE_REF, "markLogicOperations");
     }
 
     /*
@@ -87,6 +87,6 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
     @Override
     public void postProcess(BeanDefinitionBuilder builder, AnnotationRepositoryConfigurationSource config) {
         AnnotationAttributes attributes = config.getAttributes();
-        builder.addPropertyReference("marklogicOperations", attributes.getString("marklogicTemplateRef"));
+        builder.addPropertyReference("markLogicOperations", attributes.getString("markLogicTemplateRef"));
     }
 }

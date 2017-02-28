@@ -9,9 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.Person;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.Instant;
@@ -21,7 +23,11 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = PersonRepositoryIntegrationConfiguration.class)
+@ContextHierarchy({
+        @ContextConfiguration("classpath:integration.xml"),
+        @ContextConfiguration(classes = DatabaseConfiguration.class),
+        @ContextConfiguration(classes = PersonRepositoryIntegrationConfiguration.class)
+})
 public class PersonRepositoryIT {
 
     @Autowired
@@ -110,6 +116,12 @@ public class PersonRepositoryIT {
     public void findsPersonsByName() throws Exception {
         List<Person> people = repository.findByName("Jane");
         assertThat(people).containsExactly(jane);
+    }
+
+    @Test
+    public void findsPersonsByNameOrderedByAge() throws Exception {
+        List<Person> people = repository.findByGenderOrderByAge("female");
+        assertThat(people).containsExactly(andrea, jenny, jane);
     }
 
     @Test
@@ -254,7 +266,7 @@ public class PersonRepositoryIT {
 
     @Test
     public void findByHobbiesNotContains() throws Exception {
-        List<Person> people = repository.findByHobbiesNotContains(asList("running"));
+        List<Person> people = repository.findByHobbiesNotContaining(asList("running"));
         assertThat(people).doesNotContain(bobby, jane);
     }
 }

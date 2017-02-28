@@ -8,7 +8,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.marklogic.InfrastructureConfiguration;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.test.context.ContextConfiguration;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = InfrastructureConfiguration.class)
+@ContextConfiguration("classpath:integration.xml")
 public class TemplateCrudIT {
 
     private MarkLogicTemplate template;

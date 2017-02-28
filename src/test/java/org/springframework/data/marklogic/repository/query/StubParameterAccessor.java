@@ -72,7 +72,10 @@ class StubParameterAccessor implements ParameterAccessor {
 	 * @see org.springframework.data.repository.query.ParameterAccessor#iterator()
 	 */
 	public Iterator<Object> iterator() {
-		return Arrays.asList(values).iterator();
+		if (values == null)
+			return Arrays.asList(new Object[]{ null }).iterator();
+		else
+			return Arrays.asList(values).iterator();
 	}
 
 	/* 

@@ -1,16 +1,18 @@
 package org.springframework.data.marklogic;
 
-import com.marklogic.client.DatabaseClientFactory;
+import com.marklogic.client.DatabaseClient;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
-import org.springframework.data.marklogic.core.MarkLogicClientFactoryBean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,22 +25,15 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class InfrastructureConfiguration {
+@Configuration
+@ImportResource("classpath:integration.xml")
+public class DatabaseConfiguration {
 
-    private static final String HOST = "127.0.0.1";
-    private static final int PORT = 8000;
-    private static final String USERNAME = "admin";
-    private static final String PASSWORD = "admin";
+    private DatabaseClient client;
 
-    @Bean
-    public MarkLogicClientFactoryBean client() {
-        MarkLogicClientFactoryBean client = new MarkLogicClientFactoryBean();
-        client.setHost(HOST);
-        client.setPort(PORT);
-        client.setUser(USERNAME);
-        client.setPassword(PASSWORD);
-        client.setType(DatabaseClientFactory.Authentication.DIGEST);
-        return client;
+    @Autowired
+    public void setClient(DatabaseClient client) {
+        this.client = client;
     }
 
     @Bean
@@ -53,7 +48,7 @@ public class InfrastructureConfiguration {
 
     private CredentialsProvider provider() {
         CredentialsProvider provider = new BasicCredentialsProvider();
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(USERNAME, PASSWORD);
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(client.getUser(), client.getPassword());
         provider.setCredentials(AuthScope.ANY, credentials);
         return provider;
     }
@@ -68,7 +63,7 @@ public class InfrastructureConfiguration {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         restTemplate().exchange(
-                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(HOST, PORT),
+                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), client.getPort()),
                 HttpMethod.PUT,
                 new HttpEntity<>(json, headers),
                 Void.class

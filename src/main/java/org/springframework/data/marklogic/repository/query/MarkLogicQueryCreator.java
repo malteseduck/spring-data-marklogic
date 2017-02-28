@@ -123,43 +123,43 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
                 // TODO: Support range queries
                 throw new IllegalArgumentException("Unsupported keyword!");
             case IS_NOT_NULL:
-                return qb.not(createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part)));
+                return qb.not(createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part, property)));
             case IS_NULL:
-                return createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part));
+                return createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part, property));
             case NOT_IN:
-                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part)));
+                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
             case IN:
-                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part));
+                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
             case LIKE:
             case STARTING_WITH:
-                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s*"), shouldIgnoreCase(part));
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s*"), shouldIgnoreCase(part, property));
             case ENDING_WITH:
-                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "*%s"), shouldIgnoreCase(part));
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "*%s"), shouldIgnoreCase(part, property));
             case CONTAINING:
-                return createContainingCriteria(name, property, parameters, shouldIgnoreCase(part));
+                return createContainingCriteria(name, property, parameters, shouldIgnoreCase(part, property));
             case NOT_LIKE:
-                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part)));
+                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part, property)));
             case NOT_CONTAINING:
-                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part)));
+                return qb.not(createContainingCriteria(name, property, parameters, shouldIgnoreCase(part, property)));
             case REGEX:
                 // TODO: What types of regex is passed?  Can this really be supported
-                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s"), shouldIgnoreCase(part));
+                return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s"), shouldIgnoreCase(part, property));
             case EXISTS:
                 return qb.containerQuery((ContainerIndex) getTextIndex(name), qb.and());
             case TRUE:
-                return createValueCriteria(property, getTextIndex(name), true, shouldIgnoreCase(part));
+                return createValueCriteria(property, getTextIndex(name), true, shouldIgnoreCase(part, property));
             case FALSE:
-                return createValueCriteria(property, getTextIndex(name), false, shouldIgnoreCase(part));
+                return createValueCriteria(property, getTextIndex(name), false, shouldIgnoreCase(part, property));
             case NEAR:
             case WITHIN:
                 // TODO: Support near queries
                 // TODO: Support geo queries?
                 throw new IllegalArgumentException("Unsupported keyword!");
             case SIMPLE_PROPERTY:
-                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part));
+                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
             case NEGATING_SIMPLE_PROPERTY:
                 // TODO: is a not() query really the same thing as "negating simple"?
-                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part)));
+                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
             default:
                 throw new IllegalArgumentException("Unsupported keyword!");
         }
@@ -244,8 +244,13 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
             return qb.word(index, words);
     }
 
-    private boolean shouldIgnoreCase(Part part) {
-        return part.shouldIgnoreCase() == WHEN_POSSIBLE || part.shouldIgnoreCase() == ALWAYS;
+    private boolean shouldIgnoreCase(Part part, MarkLogicPersistentProperty property) {
+        boolean ignore = part.shouldIgnoreCase() == WHEN_POSSIBLE || part.shouldIgnoreCase() == ALWAYS;
+
+        if (ignore && !(property.getActualType().isAssignableFrom(String.class)))
+            throw new IllegalArgumentException(String.format("Property %s must be of type String in order to use 'IgnoreCase'", property.getName()));
+
+        return ignore;
     }
 
     private StructuredQueryDefinition createContainingCriteria(String name, MarkLogicPersistentProperty property, Iterator<Object> parameters, boolean ignoreCase) {

@@ -20,6 +20,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.marklogic.repository.support.MarkLogicRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
+import org.springframework.data.repository.query.QueryLookupStrategy;
 
 import java.lang.annotation.*;
 
@@ -69,6 +70,22 @@ public @interface EnableMarkLogicRepositories {
     String repositoryImplementationPostfix() default "Impl";
 
     /**
+     * Configures the location of where to find the Spring Data named queries properties file. Will default to
+     * {@code META-INFO/mongo-named-queries.properties}.
+     *
+     * @return
+     */
+    String namedQueriesLocation() default "";
+
+    /**
+     * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
+     * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+     *
+     * @return
+     */
+    QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
+
+    /**
      * Returns the {@link FactoryBean} class to be used for each repository instance. Defaults to
      * {@link MarkLogicRepositoryFactoryBean}.
      *
@@ -89,5 +106,5 @@ public @interface EnableMarkLogicRepositories {
      *
      * @return
      */
-    String marklogicTemplateRef() default "marklogicTemplate";
+    String markLogicTemplateRef() default "markLogicTemplate";
 }

@@ -17,18 +17,22 @@ package org.springframework.data.marklogic.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findAllByOrderByNameAsc();
 
     List<Person> findByName(String name);
+
+    List<Person> findByGenderOrderByAge(String gender);
 
     List<Person> findByNameStartsWith(String prefix);
 
@@ -46,17 +50,27 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByNameNot(String name);
 
+    List<Person> findByNameIsNull();
+
+    List<Person> findByNameNotNull();
+
+    List<Person> findByActiveTrue();
+
+    List<Person> findByActiveFalse();
+
     List<Person> findByNameIgnoreCase(String name);
 
     List<Person> findByNameNotIgnoreCase(String name);
 
-    List<Person> findByDescriptionContains(String... words);
+    List<Person> findByAgeIgnoreCase(int age);
+
+    List<Person> findByDescriptionContaining(String... words);
 
     List<Person> findByDescriptionNotContains(String... words);
 
     List<Person> findByHobbiesContains(List<String> hobbies);
 
-    List<Person> findByHobbiesNotContains(List<String> hobbies);
+    List<Person> findByHobbiesNotContaining(List<String> hobbies);
 
     Page<Person> findByGenderLike(String gender, Pageable pageable);
 
@@ -70,11 +84,24 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByAge(int age);
 
+    List<Person> findByAgeExists();
+
+    List<Person> findByPets(Person.Pet pet);
+
+    List<Person> findByPetsName(String name);
+
+    List<Person> findByPetsNameIgnoreCase(String name);
+
+    // Range queries
     List<Person> findByAgeBetween(int from, int to);
 
     List<Person> findByBirthtimeLessThan(Instant date);
 
     List<Person> findByBirthtimeGreaterThan(Instant date);
+
+    List<Person> findByAgeLessThanEqual(int age);
+
+    List<Person> findByAgeGreaterThanEqual(int age);
 
     // Annotated queries (QBE)
     @Query(value = "{ 'name' : ?0 }", extract = "[ '/firstname', '/description' ]")
@@ -88,4 +115,17 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     boolean existsByName(String name);
 
+    // Limiting queries
+
+    Person findFirstByName(String name);
+
+    List<Person> findTop3ByNameOrderByName(String name);
+
+    Page<Person> findFirst2ByNameOrderByName(String name, Pageable page);
+
+    Slice<Person> findTop1ByNameOrderByName(String name, Pageable page);
+
+    // Streaming queries
+
+    Stream<Person> readAllByAgeNotNull();
 }
