@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -31,7 +32,7 @@ public class BasicQueryIT {
     @Autowired
     public void setClient(DatabaseClient client) {
         template = new MarkLogicTemplate(client);
-        qb = template.queryBuilder(Person.class);
+        qb = template.qb(Person.class);
     }
 
     @Before
@@ -105,20 +106,27 @@ public class BasicQueryIT {
         assertThat(people.getTotalPages()).isEqualTo(2);
     }
 
-    @Ignore("not yet implemented - requires range index")
     @Test
     public void testQuerySorted() {
-        List<Person> people = template.search(qb.and(), Person.class);
+        List<Person> people = template.search(
+                template.sortQuery(new Sort("name"), null),
+                Person.class
+        );
 
         assertThat(people).containsExactly(bobby, george, jane);
     }
 
-    @Ignore("not yet implemented - requires range index")
     @Test
     public void testQueryByValueSorted() {
-        List<Person> people = template.search(qb.value("gender", "male"), Person.class);
+        List<Person> people = template.search(
+                template.sortQuery(
+                        new Sort("name"),
+                        qb.value("gender", "male")
+                ),
+                Person.class
+        );
 
-        assertThat(people).containsExactly(bobby, george, jane);
+        assertThat(people).containsExactly(bobby, george);
     }
 
     @Ignore("not yet implemented")

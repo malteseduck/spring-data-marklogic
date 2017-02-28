@@ -1,8 +1,8 @@
 package org.springframework.data.marklogic.core;
 
+import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.pojo.PojoQueryBuilder;
-import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -12,17 +12,21 @@ import java.util.List;
 
 public interface MarkLogicOperations {
 
-    StructuredQueryBuilder queryBuilder();
+    // To avoid re-implementing all functionality in this template just give access to the DatabaseClient object so
+    // that it can be used for more advanced query/configuration/etc. constructs
+    DatabaseClient client();
 
-    StructuredQueryBuilder queryBuilder(String options);
+    // Build a query builder for the specified entity type using any configuration in @Document
+    <T> PojoQueryBuilder<T> qb(Class<T> entityClass);
 
-    <T> PojoQueryBuilder<T> queryBuilder(Class<T> entityClass);
-
+    // Query-building helpers that are commonly needed but somewhat complicated to implement
     StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query);
 
     <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass);
 
     StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query);
+
+    // Entity peristence - no need to specify the class since it can be determined from the object
 
     Object write(Object entity);
 
@@ -50,7 +54,7 @@ public interface MarkLogicOperations {
 
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
-    // Using Spring page so we don't lose the paging information from the database - only if they "care" about pages (specifying start/stop, etc)
+    // Using Spring Page so we don't lose the paging information from the database - only if they "care" about pages (specifying start/stop, etc)
     // Also this is done so there doesn't have to be another conversion "down the line" to get it into a Spring Page.
 
     Page<DocumentRecord> search(StructuredQueryDefinition query, int start);
@@ -61,11 +65,13 @@ public interface MarkLogicOperations {
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
 
-    // TODO: How to deal with sorting?  Allow un-indexed sorts? create @Index annotation to specify type and only allow those?  Assume based on doc type (element, path)?  How match on nested paths?
+    // Document existence
 
     boolean exists(Object id);
 
     <T> boolean exists(StructuredQueryDefinition query, Class<T> entityClass);
+
+    // Counting
 
     long count(String... collections);
 
@@ -74,6 +80,8 @@ public interface MarkLogicOperations {
     long count(StructuredQueryDefinition query);
 
     <T> long count(StructuredQueryDefinition query, Class<T> entityClass);
+
+    // Document/collection deletes
 
     void deleteById(Object id);
 
@@ -90,6 +98,4 @@ public interface MarkLogicOperations {
     <T> void deleteAll(Class<T> entityClass);
 
     MarkLogicConverter getConverter();
-
-//    void clear();
 }

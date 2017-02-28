@@ -31,7 +31,7 @@ public class BasicXmlQueryIT {
     @Autowired
     public void setClient(DatabaseClient client) {
         template = new MarkLogicTemplate(client);
-        qb = template.queryBuilder();
+        qb = new StructuredQueryBuilder();
     }
 
     @Before

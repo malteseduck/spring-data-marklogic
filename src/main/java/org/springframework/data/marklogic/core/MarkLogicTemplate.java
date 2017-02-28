@@ -24,6 +24,7 @@ import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -38,12 +39,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private MarkLogicConverter converter;
     private PersistenceExceptionTranslator exceptionTranslator;
     private DatabaseClient client;
+    private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     public MarkLogicTemplate(DatabaseClient client) {
         this(client, null);
     }
 
     public MarkLogicTemplate(DatabaseClient client, MarkLogicConverter converter) {
+        Assert.notNull(client, "A database client object is required!");
         this.client = client;
         this.converter = converter == null ? getDefaultConverter() : converter;
         this.exceptionTranslator = new MarkLogicExceptionTranslator();
@@ -71,6 +74,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     <T> T executeQuery(QueryCallback<T> action) {
+        // TODO: Transactional stuff?
+
         try {
             return action.doInMarkLogic(client.newQueryManager());
         } catch (RuntimeException e) {
@@ -79,19 +84,21 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public StructuredQueryBuilder queryBuilder() {
-        return queryBuilder((String) null);
+    public DatabaseClient client() {
+        return client;
     }
 
     @Override
-    public StructuredQueryBuilder queryBuilder(String options) {
-        return new StructuredQueryBuilder(options);
-    }
+    public <T> PojoQueryBuilder<T> qb(Class<T> entityClass) {
+        MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
+        if (entity == null)
+            throw new InvalidDataAccessApiUsageException(String.format("Cannot determine entity type from %s", entityClass.getName()));
 
-    @Override
-    public <T> PojoQueryBuilder<T> queryBuilder(Class<T> entityClass) {
-        // TODO: If wrapping is configured then we want to wrap the queries
-        return new PojoQueryBuilderImpl<>(entityClass, false);
+        // TODO: Actually support this configuration.  Can be used here, in the mapper configuration, and in sorting index query stuff
+//        if (entity.getObjectWrapping() == ObjectWrapping.FULL_CLASS)
+//            return new PojoQueryBuilderImpl<T>(entityClass, true);
+//        else
+            return new PojoQueryBuilderImpl<>(entityClass, false);
     }
 
     @Override
@@ -277,7 +284,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             // TODO: Is here the best place to check this?
             StructuredQueryDefinition finalQuery;
-            if (query != null) finalQuery = query; else finalQuery = queryBuilder().and();
+            if (query != null) finalQuery = query; else finalQuery = qb.and();
 
             // MarkLogic uses 1-based indexing, whereas the rest of us use 0-based, so convert and query
             DocumentPage docPage = manager.search(converter.wrapQuery(finalQuery, entityClass), start + 1);
@@ -301,7 +308,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public long count(String... collections) {
-        return count(queryBuilder().collection(collections));
+        return count(qb.collection(collections));
     }
 
     @Override

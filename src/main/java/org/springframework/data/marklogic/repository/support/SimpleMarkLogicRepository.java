@@ -1,6 +1,6 @@
 package org.springframework.data.marklogic.repository.support;
 
-import com.marklogic.client.query.StructuredQueryBuilder;
+import com.marklogic.client.pojo.PojoQueryBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,7 +19,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
     private final MarkLogicOperations operations;
     private final MarkLogicEntityInformation<T, ID> entityInformation;
-    private final StructuredQueryBuilder qb;
+    private final PojoQueryBuilder<T> qb;
 
     public SimpleMarkLogicRepository(MarkLogicEntityInformation<T, ID> metadata, MarkLogicOperations operations) {
         Assert.notNull(metadata, "MarkLogicEntityInformation must not be null!");
@@ -27,7 +27,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
         this.entityInformation = metadata;
         this.operations = operations;
-        this.qb = operations.queryBuilder();
+        this.qb = operations.qb(entityInformation.getJavaType());
     }
 
     @Override

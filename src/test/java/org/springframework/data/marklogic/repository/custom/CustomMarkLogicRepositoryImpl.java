@@ -18,7 +18,7 @@ public class CustomMarkLogicRepositoryImpl implements CustomMarkLogicRepository 
 
     @PostConstruct
     public void init() {
-        qb = operations.queryBuilder(Person.class);
+        qb = operations.qb(Person.class);
     }
 
     @Override
@@ -27,7 +27,7 @@ public class CustomMarkLogicRepositoryImpl implements CustomMarkLogicRepository 
 
         return records.stream()
                 .map(record -> {
-                    // TODO: Determine which type the record is and convert? Even if we had something like "_class" how would we get it?
+                    // TODO: Determine which type the record is and convert?
                     return record.getContentAs(Person.class);
                 }).collect(Collectors.toList());
     }
