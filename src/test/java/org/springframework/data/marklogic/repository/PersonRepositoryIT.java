@@ -41,7 +41,7 @@ public class PersonRepositoryIT {
     List<Person> all;
 
     @Before
-    public void setUp() {
+    public void init() {
         cleanDb();
 
         andrea = new Person("Andrea", 17, "female", "food prep", "There isn't much to say", Instant.parse("2016-04-01T00:00:00Z"), asList("sewing", "karate"));
@@ -55,14 +55,13 @@ public class PersonRepositoryIT {
     }
 
     @After
-    public void tearDown() {
+    public void clean() {
         cleanDb();
     }
 
     private void cleanDb() {
         repository.deleteAll();
     }
-
 
     @Test
     public void findsPersonById() throws Exception {
@@ -182,8 +181,10 @@ public class PersonRepositoryIT {
         assertThat(page.isFirst()).isTrue();
         assertThat(page.isLast()).isFalse();
         assertThat(page.getNumberOfElements()).isEqualTo(2);
-        assertThat(page.getTotalElements()).isEqualTo(3);
         assertThat(page).containsExactly(andrea, jane);
+
+        // Wildcard index required for result total to be correct
+        assertThat(page.getTotalElements()).isEqualTo(3);
     }
 
     @Test

@@ -1,6 +1,5 @@
 package org.springframework.data.marklogic.repository.custom;
 
-import org.springframework.data.marklogic.core.Person;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 
@@ -8,8 +7,12 @@ import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 public class Contact extends Person {
     String phone;
 
+    public Contact() {
+        super();
+    }
+
     public Contact(String name, String phone) {
-        super(name);
+        super(name, "contact");
         this.phone = phone;
     }
 

@@ -35,7 +35,7 @@ public class BasicXmlQueryIT {
     }
 
     @Before
-    public void setUp() {
+    public void init() {
         cleanDb();
 
         bobby = new PersonXml("Bobby", 23, "male", "dentist", "", Instant.parse("2016-01-01T00:00:00Z"));
@@ -46,7 +46,7 @@ public class BasicXmlQueryIT {
     }
 
     @After
-    public void tearDown() {
+    public void clean() {
         cleanDb();
     }
 

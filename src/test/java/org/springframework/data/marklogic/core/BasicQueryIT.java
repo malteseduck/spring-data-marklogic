@@ -2,14 +2,13 @@ package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.pojo.PojoQueryBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.marklogic.InvalidMarkLogicApiUsageException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -29,6 +28,9 @@ public class BasicQueryIT {
     private Person bobby, george, jane;
     private List<Person> all;
 
+    @Rule
+    public ExpectedException expectation = ExpectedException.none();
+
     @Autowired
     public void setClient(DatabaseClient client) {
         template = new MarkLogicTemplate(client);
@@ -36,7 +38,7 @@ public class BasicQueryIT {
     }
 
     @Before
-    public void setUp() {
+    public void init() {
         cleanDb();
 
         bobby = new Person("Bobby", 23, "male", "dentist", "", Instant.parse("2016-01-01T00:00:00Z"));
@@ -47,7 +49,7 @@ public class BasicQueryIT {
     }
 
     @After
-    public void tearDown() {
+    public void clean() {
         cleanDb();
     }
 
@@ -109,8 +111,8 @@ public class BasicQueryIT {
     @Test
     public void testQuerySorted() {
         List<Person> people = template.search(
-                template.sortQuery(new Sort("name"), null),
-                Person.class
+            template.sortQuery(new Sort("name"), null),
+            Person.class
         );
 
         assertThat(people).containsExactly(bobby, george, jane);
@@ -119,14 +121,25 @@ public class BasicQueryIT {
     @Test
     public void testQueryByValueSorted() {
         List<Person> people = template.search(
-                template.sortQuery(
-                        new Sort("name"),
-                        qb.value("gender", "male")
-                ),
-                Person.class
+            template.sortQuery(
+                new Sort("name"),
+                qb.value("gender", "male")
+            ),
+            Person.class
         );
 
         assertThat(people).containsExactly(bobby, george);
+    }
+
+    @Test
+    public void testHandleBadSortException() throws Exception {
+        expectation.expect(InvalidMarkLogicApiUsageException.class);
+        expectation.expectMessage("SEARCH-BADORDERBY");
+
+        template.search(
+            template.sortQuery(new Sort("blabbitybloobloo"), null),
+            Person.class
+        );
     }
 
     @Ignore("not yet implemented")

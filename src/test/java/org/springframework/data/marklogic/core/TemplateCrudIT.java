@@ -43,12 +43,15 @@ public class TemplateCrudIT {
 
     private void cleanDb() {
         template.deleteAll(Person.class);
+        template.deleteAll(InstantPerson.class);
+        template.deleteAll(IntPerson.class);
+        template.deleteAll(asList("badfred"), BadPerson.class);
     }
 
     @Test
     public void testDeleteById() {
         Person bob = new Person("Bob");
-        Person george = new Person("Georg");
+        Person george = new Person("George");
 
         template.write(asList(bob, george));
 
@@ -76,11 +79,10 @@ public class TemplateCrudIT {
     @Test
     public void testDeleteEntities() throws Exception {
         Person bob = new Person("Bob");
-        Person george = new Person("Georg");
+        Person george = new Person("George");
 
         template.write(asList(bob, george));
-
-        template.delete(asList(bob, george), Person.class);
+        template.delete(asList(bob, george));
         assertThat(template.exists(asList(bob.getId(), george.getId()))).isFalse();
     }
 
@@ -120,6 +122,18 @@ public class TemplateCrudIT {
     }
 
     @Test
+    public void testBatchReadByEntity() {
+        Person bob = new Person("bob");
+        Person fred = new Person("fred");
+
+        template.write(asList(bob, fred));
+
+        List<Person> people = template.search(Person.class);
+        assertThat(people).extracting(Person::getName)
+                .containsExactlyInAnyOrder("bob", "fred");
+    }
+
+    @Test
     public void testNoIdAnnotationFailure() throws Exception {
         Object person = new Object() {};
 
@@ -146,6 +160,7 @@ public class TemplateCrudIT {
     public void testSearchConstrainedToCollection() {
         Person bob = new Person("bob");
         BadPerson fred = new BadPerson("fred");
+        fred.setId("badfred");
 
         template.write(asList(bob, fred));
         List<Person> people = template.search(Person.class);

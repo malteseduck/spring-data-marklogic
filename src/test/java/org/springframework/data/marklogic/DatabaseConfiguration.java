@@ -63,7 +63,8 @@ public class DatabaseConfiguration {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         restTemplate().exchange(
-                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), client.getPort()),
+                // Need to use the management port for configuring the database
+                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), 8002),
                 HttpMethod.PUT,
                 new HttpEntity<>(json, headers),
                 Void.class

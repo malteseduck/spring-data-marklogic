@@ -34,8 +34,7 @@ import java.util.List;
 import static com.marklogic.client.query.StructuredQueryBuilder.Operator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.data.marklogic.repository.query.QueryTestUtils.creator;
-import static org.springframework.data.marklogic.repository.query.QueryTestUtils.queryMethod;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.*;
 
 public class MarkLogicQueryCreatorTests {
 
@@ -47,7 +46,7 @@ public class MarkLogicQueryCreatorTests {
 
     @Before
     public void setUp() throws SecurityException, NoSuchMethodException {
-        operations = new MarkLogicTemplate(null, new MappingMarkLogicConverter(new MarkLogicMappingContext()));
+        operations = new MarkLogicTemplate(client(), new MappingMarkLogicConverter(new MarkLogicMappingContext()));
     }
 
     @Test

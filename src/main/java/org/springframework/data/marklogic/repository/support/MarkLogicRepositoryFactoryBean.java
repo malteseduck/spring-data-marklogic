@@ -18,14 +18,14 @@ package org.springframework.data.marklogic.repository.support;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
 
 public class MarkLogicRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
-        extends RepositoryFactoryBeanSupport<T, S, ID> {
+        extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
 
     private MarkLogicOperations operations;
     private boolean mappingContextConfigured = false;
@@ -48,15 +48,8 @@ public class MarkLogicRepositoryFactoryBean<T extends Repository<S, ID>, S, ID e
         this.mappingContextConfigured = true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.springframework.data.repository.support.RepositoryFactoryBeanSupport
-     * #createRepositoryFactory()
-     */
     @Override
-    protected final RepositoryFactorySupport createRepositoryFactory() {
+    protected RepositoryFactorySupport doCreateRepositoryFactory() {
         return getFactoryInstance(operations);
     }
 
@@ -64,13 +57,18 @@ public class MarkLogicRepositoryFactoryBean<T extends Repository<S, ID>, S, ID e
         return new MarkLogicRepositoryFactory(operations);
     }
 
+    @Override
+    public void setTransactionManager(String transactionManager) {
+        super.setTransactionManager(transactionManager);
+    }
+
     /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.springframework.data.repository.support.RepositoryFactoryBeanSupport
-     * #afterPropertiesSet()
-     */
+         * (non-Javadoc)
+         *
+         * @see
+         * org.springframework.data.repository.support.RepositoryFactoryBeanSupport
+         * #afterPropertiesSet()
+         */
     @Override
     public void afterPropertiesSet() {
 

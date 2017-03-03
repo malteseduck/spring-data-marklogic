@@ -15,6 +15,7 @@ import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonXmlRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.client;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.creator;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.queryMethod;
 
@@ -28,7 +29,7 @@ public class MarkLogicQueryCreatorXmlTests {
 
     @Before
     public void setUp() throws SecurityException, NoSuchMethodException {
-        operations = new MarkLogicTemplate(null, new MappingMarkLogicConverter(new MarkLogicMappingContext()));
+        operations = new MarkLogicTemplate(client(), new MappingMarkLogicConverter(new MarkLogicMappingContext()));
     }
 
     @Test

@@ -1,4 +1,5 @@
 {
+  "trailing-wildcard-searches": true,
   "range-path-index": [
     {
       "scalar-type": "string",

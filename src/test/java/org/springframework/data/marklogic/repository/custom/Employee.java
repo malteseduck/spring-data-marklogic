@@ -1,6 +1,5 @@
 package org.springframework.data.marklogic.repository.custom;
 
-import org.springframework.data.marklogic.core.Person;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 
@@ -8,8 +7,12 @@ import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 public class Employee extends Person {
     String title;
 
+    public Employee() {
+        super();
+    }
+
     public Employee(String name, String title) {
-        super(name);
+        super(name, "employee");
         this.title = title;
     }
 

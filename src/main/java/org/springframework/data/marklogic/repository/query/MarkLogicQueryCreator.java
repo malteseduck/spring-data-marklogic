@@ -233,6 +233,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
     private StructuredQueryDefinition createWordCriteria(MarkLogicPersistentProperty property, TextIndex index, String[] words, boolean ignoreCase) {
         List<String> options = new ArrayList<>();
 
+        // TODO: Wildcarded search mess with the result estimate without a wildcard index, so what is the best way to let the user know, or what can we do?
         // If there are any wild cards we need to specify the "wildcarded" options so it processes correctly
         if (Stream.of(words).anyMatch(word ->  word.contains("*"))) options.add("wildcarded");
 

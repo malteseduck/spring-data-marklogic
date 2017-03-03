@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.client;
 
 public class CombinedQueryTests {
 
@@ -26,7 +27,7 @@ public class CombinedQueryTests {
     @Test
     public void testSorted() throws Exception {
         StructuredQueryDefinition query =
-                new MarkLogicTemplate(null)
+                new MarkLogicTemplate(client())
                         .sortQuery(new Sort("name"), null, null);
 
         String serialized = query.serialize();

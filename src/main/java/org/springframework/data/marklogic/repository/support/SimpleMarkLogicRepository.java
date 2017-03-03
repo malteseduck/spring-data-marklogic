@@ -97,7 +97,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public void delete(T entity) {
         Assert.notNull(entity, "The given entity must not be null");
-        operations.delete(singletonList(entity), entityInformation.getJavaType());
+        operations.delete(singletonList(entity));
     }
 
     @Override

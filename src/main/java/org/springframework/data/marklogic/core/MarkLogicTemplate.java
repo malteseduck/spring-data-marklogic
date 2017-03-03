@@ -1,6 +1,7 @@
 package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.document.DocumentWriteSet;
@@ -18,12 +19,14 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -31,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContextAware {
@@ -63,21 +67,25 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         this.applicationContext = applicationContext;
     }
 
-    <T> T execute(DocumentCallback<T> action) {
-        // TODO: Transactional stuff?
+    private Transaction getCurrentTransaction() {
+        TransactionHolder holder = (TransactionHolder) TransactionSynchronizationManager.getResource(client());
+        Transaction tx = null;
 
+        if (holder != null) tx = holder.getTransaction();
+        return tx;
+    }
+
+    <T> T execute(DocumentCallback<T> action) {
         try {
-            return action.doInMarkLogic(client.newDocumentManager());
+            return action.doInMarkLogic(client().newDocumentManager(), getCurrentTransaction());
         } catch (RuntimeException e) {
             throw potentiallyConvertRuntimeException(e, exceptionTranslator);
         }
     }
 
     <T> T executeQuery(QueryCallback<T> action) {
-        // TODO: Transactional stuff?
-
         try {
-            return action.doInMarkLogic(client.newQueryManager());
+            return action.doInMarkLogic(client().newQueryManager(), getCurrentTransaction());
         } catch (RuntimeException e) {
             throw potentiallyConvertRuntimeException(e, exceptionTranslator);
         }
@@ -198,7 +206,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                         })
                         .collect(Collectors.toList());
 
-        return execute((manager) -> {
+        return execute((manager, transaction) -> {
             if (!docs.isEmpty()) {
                 DocumentWriteSet writeSet = manager.newWriteSet();
                 for (DocumentDescriptor doc : docs) {
@@ -208,7 +216,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
                     writeSet.add(doc.getUri(), doc.getMetadata(), doc.getContent());
                 }
-                manager.write(writeSet);
+                manager.write(writeSet, transaction);
             }
             return entities;
         });
@@ -233,9 +241,9 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> List<T> read(List<?> ids, Class<T> entityClass) {
         final List<String> uris = converter.getDocumentUris(ids, entityClass);
 
-        return execute((manager) -> {
+        return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
-            DocumentPage page = manager.read(uris.toArray(new String[0]));
+            DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
             if ( page == null || page.hasNext() == false ) {
                 throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
@@ -247,7 +255,10 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public List<DocumentRecord> search(StructuredQueryDefinition query) {
-        return null;
+        DocumentPage page = search(query, 0, -1);
+        final List<DocumentRecord> results = new ArrayList<>();
+        page.iterator().forEachRemaining(results::add);
+        return results;
     }
 
     @Override
@@ -262,8 +273,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Page<DocumentRecord> search(StructuredQueryDefinition query, int start) {
-        return null;
+    public DocumentPage search(StructuredQueryDefinition query, int start) {
+        return search(query, start, -1);
     }
 
     @Override
@@ -272,14 +283,20 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Page<DocumentRecord> search(StructuredQueryDefinition query, int start, int length) {
-        return null;
+    public DocumentPage search(StructuredQueryDefinition query, int start, int length) {
+        return execute((manager, transaction) -> {
+            if (length >= 0) manager.setPageLength(length);
+
+            StructuredQueryDefinition finalQuery;
+            if (query != null) finalQuery = query; else finalQuery = qb.and();
+
+            return manager.search(finalQuery, start + 1, transaction);
+        });
     }
 
     @Override
     public <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
-        // TODO: Sorting here?
-        return execute((manager) -> {
+        return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
             // TODO: Is here the best place to check this?
@@ -287,7 +304,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             if (query != null) finalQuery = query; else finalQuery = qb.and();
 
             // MarkLogic uses 1-based indexing, whereas the rest of us use 0-based, so convert and query
-            DocumentPage docPage = manager.search(converter.wrapQuery(finalQuery, entityClass), start + 1);
+            DocumentPage docPage = manager.search(converter.wrapQuery(finalQuery, entityClass), start + 1, transaction);
             List<T> results = toEntityList(entityClass, docPage);
 
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
@@ -297,7 +314,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public boolean exists(Object id) {
         final List<String> uris = converter.getDocumentUris(singletonList(id));
-        return execute((manager) -> uris.stream().anyMatch(uri -> manager.exists(uri) != null));
+        return execute((manager, transaction) -> uris.stream().anyMatch(uri -> manager.exists(uri, transaction) != null));
     }
 
     @Override
@@ -337,7 +354,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> void delete(List<T> entities, Class<T> entityClass) {
+    public <T> void delete(List<T> entities) {
         List<String> uris =
                 entities.stream()
                         .map(entity -> {
@@ -347,8 +364,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                         })
                         .collect(Collectors.toList());
 
-        execute((manager) -> {
-            manager.delete(uris.toArray(new String[0]));
+        execute((manager, transaction) -> {
+            manager.delete(transaction, uris.toArray(new String[0]));
             return null;
         });
     }
@@ -362,18 +379,21 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> void deleteAll(List<?> ids, Class<T> entityClass) {
         final List<String> uris = converter.getDocumentUris(ids, entityClass);
 
-        execute((manager) -> {
-            manager.delete(uris.toArray(new String[0]));
+        execute((manager, transaction) -> {
+            manager.delete(transaction, uris.toArray(new String[0]));
             return null;
         });
     }
 
     @Override
     public void deleteAll(String... collections) {
-        executeQuery((manager) -> {
-            DeleteQueryDefinition deleteQuery = manager.newDeleteDefinition();
-            deleteQuery.setCollections(collections);
-            manager.delete(deleteQuery);
+        executeQuery((manager, transaction) -> {
+            // The REST API only supports deleting one collection at a time, so we need to send a request for each
+            asList(collections).forEach(collection -> {
+                DeleteQueryDefinition deleteQuery = manager.newDeleteDefinition();
+                deleteQuery.setCollections(collection);
+                manager.delete(deleteQuery, transaction);
+            });
             return null;
         });
     }

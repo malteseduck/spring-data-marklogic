@@ -75,6 +75,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
             if (doc.getMetadata() == null) doc.setMetadata(new DocumentMetadataHandle());
             doc.setMetadata(doc.getMetadata().withCollections(getTypeName(entity)));
+        } else {
+            doc.setMetadata(new DocumentMetadataHandle());
         }
 
         JacksonDatabindHandle contentHandle = new JacksonDatabindHandle<>(source);
@@ -97,6 +99,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             handle.setMapper(objectMapper);
         }
 
+        // TODO: If something is annotated with @Id do we want to put the URI into that field?  In cases where data is already there it would cause round trip issues if we don't, but what issues does it cause if we do?
         return doc.getRecord().getContent(handle).get();
     }
 
@@ -135,6 +138,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     public <T> StructuredQueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
         if (entityClass != null) {
             MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
+
+            // TODO: If type information is configured on a property then add the value clause here
             if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
                 List<String> collections = new ArrayList<>();
                 Collections.addAll(collections, query.getCollections());

@@ -1,6 +1,7 @@
 package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.pojo.PojoQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
@@ -57,9 +58,9 @@ public interface MarkLogicOperations {
     // Using Spring Page so we don't lose the paging information from the database - only if they "care" about pages (specifying start/stop, etc)
     // Also this is done so there doesn't have to be another conversion "down the line" to get it into a Spring Page.
 
-    Page<DocumentRecord> search(StructuredQueryDefinition query, int start);
+    DocumentPage search(StructuredQueryDefinition query, int start);
 
-    Page<DocumentRecord> search(StructuredQueryDefinition query, int start, int length);
+    DocumentPage search(StructuredQueryDefinition query, int start, int length);
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass);
 
@@ -87,7 +88,7 @@ public interface MarkLogicOperations {
 
     <T> void deleteById(Object id, Class<T> entityClass);
 
-    <T> void delete(List<T> entities, Class<T> entityClass);
+    <T> void delete(List<T> entities);
 
     void deleteAll(List<?> ids);
 
@@ -96,6 +97,10 @@ public interface MarkLogicOperations {
     void deleteAll(String... collections);
 
     <T> void deleteAll(Class<T> entityClass);
+
+    // TODO: Implement streaming functions
+
+    // TODO: Implement some functions that make it easy to get values from range indexes
 
     MarkLogicConverter getConverter();
 }
