@@ -17,9 +17,11 @@
 package org.springframework.data.marklogic;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.FailedRequestException;
 import org.springframework.transaction.InvalidIsolationLevelException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -83,13 +85,22 @@ public class MarkLogicTransactionManager extends AbstractPlatformTransactionMana
 	@Override
 	protected void doCommit(DefaultTransactionStatus status) throws TransactionException {
 		TransactionHolder holder = (TransactionHolder) status.getTransaction();
-		if (holder != null && holder.isTransactionActive()) holder.getTransaction().commit();
+		try {
+			if (holder != null && holder.isTransactionActive()) holder.getTransaction().commit();
+		} catch (FailedRequestException ex) {
+			throw new TransactionSystemException("Could not commit MarkLogic transaction", ex);
+		}
 	}
 
 	@Override
 	protected void doRollback(DefaultTransactionStatus status) throws TransactionException {
 		TransactionHolder holder = (TransactionHolder) status.getTransaction();
-		if (holder != null && holder.isTransactionActive()) holder.getTransaction().rollback();
+		try {
+			if (holder != null && holder.isTransactionActive()) holder.getTransaction().rollback();
+		} catch (FailedRequestException ex) {
+			throw new TransactionSystemException("Could not rollback MarkLogic transaction", ex);
+
+		}
 	}
 
 	@Override
