@@ -14,7 +14,7 @@ public interface MarkLogicClientFactory {
     DatabaseClient getClient() throws DataAccessException;
 
     /**
-     * Creates a {@link DatabaseClient} instance to access the data source with the given name.
+     * Creates a {@link DatabaseClient} instance to access the data source withOptions the given name.
      *
      * @param sourceName must not be {@literal null} or empty.
      * @return
@@ -23,7 +23,7 @@ public interface MarkLogicClientFactory {
     DatabaseClient getClient(String sourceName) throws DataAccessException;
 
     /**
-     * Creates a {@link DatabaseClient} instance to access the data source with the given name / account.
+     * Creates a {@link DatabaseClient} instance to access the data source withOptions the given name / account.
      *
      * @param sourceName must not be {@literal null} or empty.
      * @param user name of account

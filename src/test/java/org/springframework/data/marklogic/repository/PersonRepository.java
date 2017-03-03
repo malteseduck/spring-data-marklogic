@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.Pet;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -86,7 +87,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByAgeExists();
 
-    List<Person> findByPets(Person.Pet pet);
+    List<Person> findByPets(Pet pet);
 
     List<Person> findByPetsName(String name);
 
@@ -103,17 +104,35 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByAgeGreaterThanEqual(int age);
 
-    // Annotated queries (QBE)
-    @Query(value = "{ 'name' : ?0 }", extract = "[ '/firstname', '/description' ]")
-    List<Person> findByThePersonsName(String name);
-
-    @Query("{'age' : { '$lt' : ?0 } }")
-    List<Person> findByAgeLessThan(int age, Sort sort);
-
     // Exists/count checks
     long countByName(String name);
 
     boolean existsByName(String name);
+
+    // Annotated queries (QBE)
+    @Query("{ name : ?0 }")
+    Person qbeFindByName(String name);
+
+    @Query("{ 'name' : '?0' }")
+    Person qbeFindByNameQuoted(String name);
+
+    @Query("{ 'pets' : ?0 }")
+    List<Person> qbeFindByPet(Pet pet);
+
+    @Query("{ name : ?0, pet : ?1 }")
+    Person qbeFindByLastnameAndPet(String lastname, Pet pet);
+
+    @Query("{name: ?#{[0]} }")
+    List<Person> qbeFindByQueryWithExpression(String param0);
+
+    @Query("{id:?#{ [0] ? { $exists: {} } : [1] }}")
+    List<Person> qbeFindByQueryWithExpressionAndNestedObject(boolean param0, String param1);
+
+    @Query(value = "{ $or : [{age : ?0 }, {'age' : '?0'}] }")
+    boolean qbeFindByAgeQuotedAndUnquoted(int age);
+
+    @Query("{ arg0 : ?0, arg1 : ?1 }")
+    List<Person> qbeFindByStringWithWildcardChar(String arg0, String arg1);
 
     // Limiting queries
 

@@ -37,7 +37,7 @@ public @interface EnableMarkLogicRepositories {
     String[] value() default {};
 
     /**
-     * Base packages to scan for annotated components. {@link #value()} is an alias for (and mutually exclusive with) this
+     * Base packages to scan for annotated components. {@link #value()} is an alias for (and mutually exclusive withOptions) this
      * attribute. Use {@link #basePackageClasses()} for a type-safe alternative to String-based package names.
      */
     String[] basePackages() default {};
@@ -102,7 +102,7 @@ public @interface EnableMarkLogicRepositories {
     Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
     /**
-     * Configures the name of the {@link org.springframework.data.marklogic.core.MarkLogicTemplate} bean to be used with the repositories detected.
+     * Configures the name of the {@link org.springframework.data.marklogic.core.MarkLogicTemplate} bean to be used withOptions the repositories detected.
      *
      * @return
      */

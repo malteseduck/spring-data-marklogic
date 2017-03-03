@@ -82,7 +82,7 @@ public class BasicQueryIT {
     @Test
     public void testCountByQuery() throws Exception {
         assertThat(template.count(qb.value("gender", "male"))).as("without type").isEqualTo(2);
-        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("with type").isEqualTo(2);
+        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("withOptions type").isEqualTo(2);
     }
 
     @Test

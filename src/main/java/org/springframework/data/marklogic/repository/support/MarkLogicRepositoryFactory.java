@@ -22,7 +22,7 @@ import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.marklogic.repository.query.MarkLogicEntityInformation;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryMethod;
-import org.springframework.data.marklogic.repository.query.StringQBEMarkLogicQuery;
+import org.springframework.data.marklogic.repository.query.StringMarkLogicQuery;
 import org.springframework.data.marklogic.repository.query.PartTreeMarkLogicQuery;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
@@ -47,7 +47,7 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
     /**
-     * Creates a new {@link MarkLogicRepositoryFactory} with the given {@link MarkLogicOperations}.
+     * Creates a new {@link MarkLogicRepositoryFactory} withOptions the given {@link MarkLogicOperations}.
      *
      * @param operations must not be {@literal null}.
      */
@@ -128,7 +128,7 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
             MarkLogicQueryMethod queryMethod = new MarkLogicQueryMethod(method, metadata, factory, mappingContext);
 
             if (queryMethod.hasAnnotatedQuery())
-                return new StringQBEMarkLogicQuery(queryMethod, operations);
+                return new StringMarkLogicQuery(queryMethod, operations, EXPRESSION_PARSER, evaluationContextProvider);
             else
                 return new PartTreeMarkLogicQuery(queryMethod, operations);
         }

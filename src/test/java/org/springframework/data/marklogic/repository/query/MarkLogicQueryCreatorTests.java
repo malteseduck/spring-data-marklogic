@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.Pet;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
@@ -325,8 +326,8 @@ public class MarkLogicQueryCreatorTests {
     @Test
     public void testFindByObject() throws Exception {
         StructuredQueryDefinition query = creator(
-                queryMethod(PersonRepository.class, "findByPets", Person.Pet.class),
-                new Person.Pet("Fluffy", "lion")
+                queryMethod(PersonRepository.class, "findByPets", Pet.class),
+                new Pet("Fluffy", "lion")
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
@@ -334,7 +335,7 @@ public class MarkLogicQueryCreatorTests {
                 );
     }
 
-    private class CoolPet extends Person.Pet {
+    private class CoolPet extends Pet {
         int age;
 
         public CoolPet(String name, String type, int age) {
@@ -346,7 +347,7 @@ public class MarkLogicQueryCreatorTests {
     @Test
     public void testFindByObjectWithSubclass() throws Exception {
         StructuredQueryDefinition query = creator(
-                queryMethod(PersonRepository.class, "findByPets", Person.Pet.class),
+                queryMethod(PersonRepository.class, "findByPets", Pet.class),
                 new CoolPet("Fluffy", "lion", 10)
         ).createQuery();
         assertThat(query.serialize())
@@ -358,10 +359,10 @@ public class MarkLogicQueryCreatorTests {
     @Test
     public void testThrowsExceptionWhenArgumentNotMatchingDeclaration() throws Exception {
         expectation.expect(IllegalArgumentException.class);
-        expectation.expectMessage("Expected parameter type of " + Person.Pet.class);
+        expectation.expectMessage("Expected parameter type of " + Pet.class);
 
         StructuredQueryDefinition query = creator(
-                queryMethod(PersonRepository.class, "findByPets", Person.Pet.class),
+                queryMethod(PersonRepository.class, "findByPets", Pet.class),
                 "Fluffy"
         ).createQuery();
     }

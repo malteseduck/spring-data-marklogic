@@ -7,9 +7,7 @@ import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.pojo.PojoQueryBuilder;
-import com.marklogic.client.query.DeleteQueryDefinition;
-import com.marklogic.client.query.StructuredQueryBuilder;
-import com.marklogic.client.query.StructuredQueryDefinition;
+import com.marklogic.client.query.*;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -150,7 +148,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                 }
                 options.append("</sort-order>");
 
-                queryDefinition.with(options.toString());
+                queryDefinition.withOptions(options.toString());
             });
 
             return queryDefinition;
@@ -246,7 +244,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
             if ( page == null || page.hasNext() == false ) {
-                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
+                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " withOptions ids: " + ids);
             }
 
             return toEntityList(entityClass, page);
@@ -287,8 +285,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            StructuredQueryDefinition finalQuery;
-            if (query != null) finalQuery = query; else finalQuery = qb.and();
+            QueryDefinition finalQuery=  finalQuery(query);
 
             return manager.search(finalQuery, start + 1, transaction);
         });
@@ -299,16 +296,28 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            // TODO: Is here the best place to check this?
-            StructuredQueryDefinition finalQuery;
-            if (query != null) finalQuery = query; else finalQuery = qb.and();
+            QueryDefinition finalQuery=  finalQuery(query);
 
-            // MarkLogic uses 1-based indexing, whereas the rest of us use 0-based, so convert and query
-            DocumentPage docPage = manager.search(converter.wrapQuery(finalQuery, entityClass), start + 1, transaction);
+            DocumentPage docPage;
+            if (finalQuery instanceof RawQueryByExampleDefinition)
+                docPage = manager.search(finalQuery, start + 1, transaction);
+            else
+                docPage = manager.search(converter.wrapQuery((StructuredQueryDefinition) finalQuery, entityClass), start + 1, transaction);
+
             List<T> results = toEntityList(entityClass, docPage);
 
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
         });
+    }
+
+    private QueryDefinition finalQuery(StructuredQueryDefinition query) {
+        // TODO: Is here the best place to check this?
+        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isRaw())
+            return ((CombinedQueryDefinition) query).getRaw();
+        else if (query != null)
+            return query;
+        else
+            return qb.and();
     }
 
     @Override

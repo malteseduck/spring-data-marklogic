@@ -57,7 +57,7 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
      */
     @Override
     protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
-        // TODO: Does this make it required to annotation a persistable class with @Document?
+        // TODO: Does this make it required to annotation a persistable class withOptions @Document?
         return Collections.<Class<? extends Annotation>>singleton(Document.class);
     }
 

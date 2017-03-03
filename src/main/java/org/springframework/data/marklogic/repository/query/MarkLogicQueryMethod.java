@@ -58,7 +58,6 @@ public class MarkLogicQueryMethod extends QueryMethod {
     }
 
     String getAnnotatedQuery() {
-
         String query = (String) AnnotationUtils.getValue(getQueryAnnotation());
         return StringUtils.hasText(query) ? query : null;
     }

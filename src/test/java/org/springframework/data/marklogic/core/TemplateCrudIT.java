@@ -73,7 +73,7 @@ public class TemplateCrudIT {
         assertThat(template.exists(bob.getId())).as("without type").isFalse();
 
         template.deleteAll(asList(george.getId()), Person.class);
-        assertThat(template.exists(george.getId())).as("with type").isFalse();
+        assertThat(template.exists(george.getId())).as("withOptions type").isFalse();
     }
 
     @Test
@@ -140,7 +140,7 @@ public class TemplateCrudIT {
         Throwable thrown = catchThrowable(() -> template.write(person));
 
         assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("does not have a method or field annotated with org.springframework.data.annotation.Id");
+                .hasMessageContaining("does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
     }
 
     @Document(typeStrategy = TypePersistenceStrategy.NONE)

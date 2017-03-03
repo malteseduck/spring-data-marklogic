@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.Pet;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -44,12 +45,12 @@ public class PersonRepositoryIT {
     public void init() {
         cleanDb();
 
-        andrea = new Person("Andrea", 17, "female", "food prep", "There isn't much to say", Instant.parse("2016-04-01T00:00:00Z"), asList("sewing", "karate"));
-        bobby = new Person("Bobby", 23, "male", "dentist", "", Instant.parse("2016-01-01T00:00:00Z"), asList("running", "origami"));
-        george = new Person("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-02-01T00:00:00Z"), asList("fishing", "hunting", "sewing"));
+        andrea = new Person("Andrea", 17, "female", "food prep", "There isn't much to say", Instant.parse("2016-04-01T00:00:00Z"), asList("sewing", "karate"), asList(new Pet("Fluffy", "cat")));
+        bobby = new Person("Bobby", 23, "male", "dentist", "", Instant.parse("2016-01-01T00:00:00Z"), asList("running", "origami"), asList(new Pet("Bowwow", "dog")));
+        george = new Person("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-02-01T00:00:00Z"), asList("fishing", "hunting", "sewing"), asList(new Pet("Hazelnut", "snake"), new Pet("Snoopy", "dog")));
         henry = new Person("Henry", 32, "male", "construction", "He built my house", Instant.parse("2016-05-01T00:00:00Z"), asList("carpentry", "gardening"));
         jane = new Person("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-03-01T00:00:00Z"), asList("fencing", "archery", "running"));
-        jenny = new Person("Jenny", 41, "female", "dentist", "", Instant.parse("2016-06-01T00:00:00Z"), asList("gymnastics"));
+        jenny = new Person("Jenny", 41, "female", "dentist", "", Instant.parse("2016-06-01T00:00:00Z"), asList("gymnastics"), asList(new Pet("Powderkeg", "wolverine")));
 
         all = repository.save(asList(jenny, bobby, george, jane, andrea, henry));
     }
@@ -269,5 +270,11 @@ public class PersonRepositoryIT {
     public void findByHobbiesNotContains() throws Exception {
         List<Person> people = repository.findByHobbiesNotContaining(asList("running"));
         assertThat(people).doesNotContain(bobby, jane);
+    }
+
+    @Test
+    public void testFindByPetQBE() throws Exception {
+        List<Person> people = repository.qbeFindByPet(new Pet("Fluffy", "cat"));
+        assertThat(people).containsExactly(andrea);
     }
 }

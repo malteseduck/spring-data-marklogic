@@ -18,7 +18,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-// TODO: This test relies on the database being configured with DatabaseConfiguration so add in what is necessary to get that right here
+// TODO: This test relies on the database being configured withOptions DatabaseConfiguration so add in what is necessary to get that right here
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
 public class CustomRepositoryIT {

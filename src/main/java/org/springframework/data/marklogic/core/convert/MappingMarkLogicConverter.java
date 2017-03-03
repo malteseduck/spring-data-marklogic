@@ -69,7 +69,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
             }
         } else {
-            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
+            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
         }
 
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
@@ -99,7 +99,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             handle.setMapper(objectMapper);
         }
 
-        // TODO: If something is annotated with @Id do we want to put the URI into that field?  In cases where data is already there it would cause round trip issues if we don't, but what issues does it cause if we do?
+        // TODO: If something is annotated withOptions @Id do we want to put the URI into that field?  In cases where data is already there it would cause round trip issues if we don't, but what issues does it cause if we do?
         return doc.getRecord().getContent(handle).get();
     }
 
@@ -158,7 +158,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .setDateFormat(simpleDateFormat8601)
                 .registerModule(new JavaTimeModule())
-                // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem with larger data sets
+                // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem withOptions larger data sets
                 .disableDefaultTyping();
 
         try {

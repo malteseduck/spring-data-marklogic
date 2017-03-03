@@ -1,6 +1,9 @@
 package org.springframework.data.marklogic.repository.query;
 
 import com.marklogic.client.impl.AbstractQueryDefinition;
+import com.marklogic.client.io.Format;
+import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.util.StringUtils;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition implements CombinedQueryDefinition {
 
     private StructuredQueryDefinition structuredQuery;
+    private RawQueryByExampleDefinition qbe;
     private List<String> options;
     private String qtext;
     private String sparql;
@@ -34,14 +38,21 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         this.structuredQuery = structuredQuery;
     }
 
+    public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe) {
+        this();
+        qbe.withHandle(new StringHandle("{ $query: " + qbe.toString() + " }").withFormat(Format.JSON));
+        this.qbe = qbe;
+    }
+
     @Override
     public String serialize() {
         StringBuilder search = new StringBuilder();
 
         search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
 
-        if (structuredQuery != null)
+        if (structuredQuery != null) {
             search.append(structuredQuery.serialize());
+        }
 
         if (!options.isEmpty())
             search.append("<options>")
@@ -64,6 +75,16 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
+    public boolean isRaw() {
+        return qbe != null;
+    }
+
+    @Override
+    public RawQueryByExampleDefinition getRaw() {
+        return qbe;
+    }
+
+    @Override
     public CombinedQueryDefinition and(StructuredQueryDefinition query) {
         if (structuredQuery != null)
             structuredQuery = qb.and(structuredQuery, query);
@@ -73,13 +94,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public CombinedQueryDefinition with(String options) {
+    public CombinedQueryDefinition withOptions(String options) {
         this.options.add(options);
         return this;
     }
 
     @Override
-    public CombinedQueryDefinition with(List<String> options) {
+    public CombinedQueryDefinition withOptions(List<String> options) {
         this.options.addAll(options);
         return this;
     }

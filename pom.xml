@@ -75,7 +75,7 @@
             <version>${marklogic}</version>
         </dependency>
 
-        <!-- Jackson Configuration -->
+        <!-- JSON Configuration -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
