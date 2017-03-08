@@ -5,10 +5,12 @@ import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.pojo.PojoQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface MarkLogicOperations {
@@ -26,6 +28,9 @@ public interface MarkLogicOperations {
     <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass);
 
     StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query);
+
+    // Database configuration - requires the "admin" role in the user account
+    void configure(Resource configuration) throws IOException;
 
     // Entity peristence - no need to specify the class since it can be determined from the object
 

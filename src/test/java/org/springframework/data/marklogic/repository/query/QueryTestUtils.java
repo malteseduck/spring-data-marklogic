@@ -25,7 +25,7 @@ public class QueryTestUtils {
 
     static SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23);
+    private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23, "nobody", "nothing", DatabaseClientFactory.Authentication.DIGEST);
 
     public static DatabaseClient client() {
         return client;

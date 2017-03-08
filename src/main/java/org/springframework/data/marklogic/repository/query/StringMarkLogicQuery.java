@@ -2,7 +2,6 @@ package org.springframework.data.marklogic.repository.query;
 
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.repository.query.ExpressionEvaluatingParameterBinder.BindingContext;
@@ -47,16 +46,16 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
     @Override
     protected StructuredQueryDefinition createQuery(ParameterAccessor accessor) {
+        Class<?> type = getQueryMethod().getEntityInformation().getJavaType();
         String queryString = parameterBinder.bind(this.query, accessor, new BindingContext(getQueryMethod().getParameters(), queryParameterBindings));
-        RawQueryByExampleDefinition def = operations.client().newQueryManager().newRawQueryByExampleDefinition(
-                new StringHandle(queryString).withFormat(Format.JSON)
+
+        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(
+                operations.client().newQueryManager().newRawQueryByExampleDefinition(
+                    new StringHandle(queryString).withFormat(Format.JSON)
+            )
         );
 
-        // TODO: Determine if really using collections
-        // TODO: Paging, sorting?  can't be done?
-        def.setCollections(getQueryMethod().getEntityInformation().getJavaType().getSimpleName());
-
-        return new CombinedQueryDefinitionBuilder(def);
+        return operations.sortQuery(accessor.getSort(), query, type);
     }
 
     @Override

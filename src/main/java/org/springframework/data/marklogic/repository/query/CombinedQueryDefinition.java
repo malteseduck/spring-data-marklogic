@@ -9,11 +9,15 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     String serialize();
 
-    boolean isRaw();
+    boolean isQbe();
 
-    RawQueryByExampleDefinition getRaw();
+    RawQueryByExampleDefinition getQbe();
+
+    CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe);
 
     CombinedQueryDefinition and(StructuredQueryDefinition query);
+
+    CombinedQueryDefinition withCollections(String... collections);
 
     CombinedQueryDefinition withOptions(String options);
 

@@ -110,16 +110,19 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     boolean existsByName(String name);
 
     // Annotated queries (QBE)
-    @Query("{ name : ?0 }")
+    @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
-    @Query("{ 'name' : '?0' }")
+    @Query("{ gender: ?0 }")
+    Page<Person> qbeFindByGenderWithPageable(String gender, Pageable pageable);
+
+    @Query("{ 'name': '?0' }")
     Person qbeFindByNameQuoted(String name);
 
-    @Query("{ 'pets' : ?0 }")
+    @Query("{ 'pets': ?0 }")
     List<Person> qbeFindByPet(Pet pet);
 
-    @Query("{ name : ?0, pet : ?1 }")
+    @Query("{ name: ?0, pet: ?1 }")
     Person qbeFindByLastnameAndPet(String lastname, Pet pet);
 
     @Query("{name: ?#{[0]} }")
@@ -128,10 +131,10 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{id:?#{ [0] ? { $exists: {} } : [1] }}")
     List<Person> qbeFindByQueryWithExpressionAndNestedObject(boolean param0, String param1);
 
-    @Query(value = "{ $or : [{age : ?0 }, {'age' : '?0'}] }")
+    @Query(value = "{ $or: [{ age: ?0 }, {'age': '?0'}] }")
     boolean qbeFindByAgeQuotedAndUnquoted(int age);
 
-    @Query("{ arg0 : ?0, arg1 : ?1 }")
+    @Query("{ arg0: ?0, arg1: ?1 }")
     List<Person> qbeFindByStringWithWildcardChar(String arg0, String arg1);
 
     // Limiting queries

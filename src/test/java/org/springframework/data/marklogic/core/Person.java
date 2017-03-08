@@ -1,6 +1,8 @@
 package org.springframework.data.marklogic.core;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.marklogic.core.mapping.IndexType;
+import org.springframework.data.marklogic.core.mapping.Indexed;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ public class Person {
     private boolean active = true;
     private String gender;
     private String occupation;
+    @Indexed(type = IndexType.ELEMENT)
     private String description;
     private Instant birthtime;
     private List<String> hobbies;

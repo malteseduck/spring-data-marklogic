@@ -25,6 +25,8 @@ import java.util.Iterator;
 class StubParameterAccessor implements ParameterAccessor {
 
 	private final Object[] values;
+	private Pageable pageable;
+	private Sort sort;
 
 	public static ParameterAccessor getAccessor(Object... parameters) {
 		return new StubParameterAccessor(parameters);
@@ -33,6 +35,18 @@ class StubParameterAccessor implements ParameterAccessor {
 	@SuppressWarnings("unchecked")
 	public StubParameterAccessor(Object... values) {
 		this.values = values;
+
+		Pageable pageable =
+				(Pageable) Arrays.stream(values)
+                        .filter(value -> value instanceof Pageable)
+                        .findFirst().orElse(null);
+
+		if (pageable != null) sort = pageable.getSort();
+		else
+			sort =
+					(Sort) Arrays.stream(values)
+							.filter(value -> value instanceof Sort)
+							.findFirst().orElse(null);
 	}
 
 	/*
@@ -40,7 +54,7 @@ class StubParameterAccessor implements ParameterAccessor {
 	 * @see org.springframework.data.repository.query.ParameterAccessor#getPageable()
 	 */
 	public Pageable getPageable() {
-		return null;
+		return pageable;
 	}
 
 	/*
@@ -64,7 +78,7 @@ class StubParameterAccessor implements ParameterAccessor {
 	 * @see org.springframework.data.repository.query.ParameterAccessor#getSort()
 	 */
 	public Sort getSort() {
-		return null;
+		return sort;
 	}
 
 	/*

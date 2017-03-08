@@ -18,6 +18,9 @@ package org.springframework.data.marklogic.repository.query;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 import org.springframework.data.marklogic.core.Pet;
@@ -27,6 +30,8 @@ import org.springframework.data.marklogic.repository.PersonRepository;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.domain.Sort.Direction.ASC;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.*;
 
 public class StringMarkLogicQueryTests {
@@ -47,7 +52,40 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(rawQuery("{ name: 'Bubba' }"));
+				.isEqualTo("{ search: { $query: { name: \"Bubba\" }, options: {} } }");
+	}
+
+	@Test
+	public void bindsSimplePropertyWithPageable() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
+				"female", new PageRequest(0, 2, ASC, "name")
+		);
+		// TODO: Should this be a multipart string?
+		assertThat(query.serialize())
+				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"path-index\":{\"text\":\"/name\"}} } } }");
+	}
+
+	@Test
+	public void bindsSimplePropertyWithPageableElementSort() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
+				"female", new PageRequest(0, 2, ASC, "description")
+		);
+		// TODO: Should this be a multipart string?
+		assertThat(query.serialize())
+				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"element\":{\"ns\":\"\",\"name\":\"description\"}} } } }");
+	}
+
+	@Test
+	public void bindsSimplePropertyWithPageableMultipleSort() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
+				"female", new PageRequest(0, 2, new Sort(ASC, "name").and(new Sort(DESC, "age")))
+		);
+		// TODO: Should this be a multipart string?
+		assertThat(query.serialize())
+				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"path-index\":{\"text\":\"/name\"}}, \"sort-order\":{\"direction\":\"descending\",\"path-index\":{\"text\":\"/age\"}} } } }");
 	}
 
 	@Test
@@ -57,7 +95,7 @@ public class StringMarkLogicQueryTests {
 				new Pet("Fluffy", "cat")
 		);
 		assertThat(query.serialize())
-				.isEqualTo(rawQuery("{ pet: { name: 'Fluffy', type: 'cat' } }"));
+				.isEqualTo("{ search: { $query: { 'pets': {\"name\":\"Fluffy\",\"type\":\"cat\"} }, options: {} } }");
 	}
 //
 //	@Test
@@ -382,78 +420,4 @@ public class StringMarkLogicQueryTests {
 //		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", Pattern.compile("^(calamity)"))));
 //	}
 //
-//	private StringBasedMongoQuery createQueryForMethod(String name, Class<?>... parameters) throws Exception {
-//
-//		Method method = SampleRepository.class.getMethod(name, parameters);
-//		ProjectionFactory factory = new SpelAwareProxyProjectionFactory();
-//		MongoQueryMethod queryMethod = new MongoQueryMethod(method, new DefaultRepositoryMetadata(SampleRepository.class),
-//				factory, converter.getMappingContext());
-//		return new StringBasedMongoQuery(queryMethod, operations, PARSER, DefaultEvaluationContextProvider.INSTANCE);
-//	}
-//
-//	private interface SampleRepository extends Repository<Person, Long> {
-//
-//		@Query("{ 'lastname' : ?0 }")
-//		Person findByLastname(String lastname);
-//
-//		@Query("{ 'lastname' : ?0 }")
-//		Person findByLastnameAsBinary(byte[] lastname);
-//
-//		@Query("{ 'lastname' : '?0' }")
-//		Person findByLastnameQuoted(String lastname);
-//
-//		@Query("{ 'lastname' : { '$regex' : '^(?0)'} }")
-//		Person findByLastnameRegex(String lastname);
-//
-//		@Query("{ 'address' : ?0 }")
-//		Person findByAddress(Address address);
-//
-//		@Query("{ 'lastname' : ?0, 'address' : ?1 }")
-//		Person findByLastnameAndAddress(String lastname, Address address);
-//
-//		@Query("{ fans : { $not : { $size : 0 } } }")
-//		Person findByHavingSizeFansNotZero();
-//
-//		@Query(value = "{ 'lastname' : ?0 }", delete = true)
-//		void removeByLastname(String lastname);
-//
-//		@Query(value = "{ 'lastname' : ?0 }", delete = true, count = true)
-//		void invalidMethod(String lastname);
-//
-//		@Query(value = "?0", fields = "?1")
-//		DBObject findByParameterizedCriteriaAndFields(DBObject criteria, Map<String, Integer> fields);
-//
-//		@Query("{'title': { $regex : '^?0', $options : 'i'}}")
-//		List<DBObject> findByTitleBeginsWithExplicitQuoting(String title);
-//
-//		@Query("{$where: 'return this.date.getUTCMonth() == ?2 && this.date.getUTCDay() == ?3;'}")
-//		List<DBObject> findByQueryWithParametersInExpression(int param1, int param2, int param3, int param4);
-//
-//		@Query("{ 'reference' : { $ref : 'reference', $id : ?0 }}")
-//		Object methodWithManuallyDefinedDbRef(String id);
-//
-//		@Query("{ ?0 : ?1}")
-//		Object methodWithPlaceholderInKeyOfJsonStructure(String keyReplacement, String valueReplacement);
-//
-//		@Query("{'lastname': ?#{[0]} }")
-//		List<Person> findByQueryWithExpression(String param0);
-//
-//		@Query("{'id':?#{ [0] ? { $exists :true} : [1] }}")
-//		List<Person> findByQueryWithExpressionAndNestedObject(boolean param0, String param1);
-//
-//		@Query("{'id':?#{ [0] ? { $exists :true} : [1] }, 'foo':42, 'bar': ?#{ [0] ? { $exists :false} : [1] }}")
-//		List<Person> findByQueryWithExpressionAndMultipleNestedObjects(boolean param0, String param1, String param2);
-//
-//		@Query(value = "{ $or : [{'age' : ?0 }, {'displayAge' : '?0'}] }")
-//		boolean findByAgeQuotedAndUnquoted(int age);
-//
-//		@Query(value = "{ 'lastname' : ?0 }", exists = true)
-//		boolean existsByLastname(String lastname);
-//
-//		@Query("{ 'arg0' : ?0, 'arg1' : ?1 }")
-//		List<Person> findByStringWithWildcardChar(String arg0, String arg1);
-//
-//		@Query("{ 'arg0' : ?0 }")
-//		List<Person> findByWithBsonArgument(DBObject arg0);
-//	}
 }

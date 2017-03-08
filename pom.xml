@@ -21,6 +21,7 @@
         <marklogic>3.0.7</marklogic>
         <springdata.commons>1.13.0.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
+        <json>20160810</json>
 
         <!-- Testing versions -->
         <mockito>2.2.0</mockito>
@@ -61,6 +62,17 @@
             <artifactId>spring-expression</artifactId>
         </dependency>
 
+        <!-- For RestTemplate use against the MarkLogic REST API -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient}</version>
+        </dependency>
+
         <!-- Spring Data -->
         <dependency>
             <groupId>org.springframework.data</groupId>
@@ -86,6 +98,11 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson}</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json}</version>
+        </dependency>
 
         <!-- Jackson XML Configuration -->
         <!-- Projects using XML in the database will have to include these also -->
@@ -108,17 +125,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpclient}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

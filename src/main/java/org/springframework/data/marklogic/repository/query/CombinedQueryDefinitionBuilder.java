@@ -6,6 +6,8 @@ import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import org.json.JSONObject;
+import org.json.XML;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
  * combined query from what we have.
  */
 public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition implements CombinedQueryDefinition {
+
+    // TODO: Support XML QBE?
 
     private StructuredQueryDefinition structuredQuery;
     private RawQueryByExampleDefinition qbe;
@@ -40,7 +44,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe) {
         this();
-        qbe.withHandle(new StringHandle("{ $query: " + qbe.toString() + " }").withFormat(Format.JSON));
+        qbe.withHandle(new StringHandle(qbe.toString()).withFormat(Format.JSON));
         this.qbe = qbe;
     }
 
@@ -48,40 +52,95 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public String serialize() {
         StringBuilder search = new StringBuilder();
 
-        search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
+        // TODO: Switch to use multi-part so we can keep options as XML?  Converting to
+        if (isQbe()) {
+            search.append("{ search: { ");
 
-        if (structuredQuery != null) {
-            search.append(structuredQuery.serialize());
+            if (qbe != null) {
+                search.append("$query: " + qbe.toString());
+            }
+
+            if (!options.isEmpty()) {
+                search.append(", ").append("options: { ")
+                        .append(
+                                options.stream()
+                                        .map(option -> XML.toJSONObject(option))
+                                        .map(option -> {
+                                            // Fix path indexes - they don't convert "nicely" like many of the other indexes
+                                            // TODO: This doesn't support any additional options that may exist (namespaces?) Does this matter?
+                                            String index = (String) option.query("/sort-order/path-index");
+                                            if (!StringUtils.isEmpty(index)) {
+                                                return new JSONObject()
+                                                        .put("sort-order", new JSONObject()
+                                                                .put("direction", option.query("/sort-order/direction"))
+                                                                .put("path-index", new JSONObject()
+                                                                        .put("text", index)
+                                                                )
+                                                        );
+                                            } else {
+                                                return option;
+                                            }
+                                        })
+                                        .map(JSONObject::toString)
+                                        // The conversion wraps the JSON as an object, but inside the options they are just property names/values
+                                        .map(string -> string.substring(1, string.length() - 1))
+                                        .collect(Collectors.joining(", "))
+                        )
+                        .append(" }");
+            } else {
+                // We need an empty options node or the REST API is unhappy, which makes us unhappy
+                search.append(", options: {}");
+            }
+
+            search.append(" } }");
+
+        } else {
+
+            search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
+
+            // TODO: Can we put the structured query in "additional-query" if the "main" query is a QBE?
+            if (structuredQuery != null && !isQbe()) {
+                search.append(structuredQuery.serialize());
+            }
+
+            if (!options.isEmpty())
+                search.append("<options>")
+                        .append(options.stream().collect(Collectors.joining()))
+                        .append("</options>");
+
+            if (!StringUtils.isEmpty(qtext))
+                search.append("<qtext>")
+                        .append(qtext)
+                        .append("</qtext>");
+
+            if (!StringUtils.isEmpty(sparql))
+                search.append("<sparql>")
+                        .append(qtext)
+                        .append("</sparql>");
+
+            search.append("</search>");
         }
-
-        if (!options.isEmpty())
-            search.append("<options>")
-                    .append(options.stream().collect(Collectors.joining()))
-                    .append("</options>");
-
-        if (!StringUtils.isEmpty(qtext))
-            search.append("<qtext>")
-                    .append(qtext)
-                    .append("</qtext>");
-
-        if (!StringUtils.isEmpty(sparql))
-            search.append("<sparql>")
-                    .append(qtext)
-                    .append("</sparql>");
-
-        search.append("</search>");
 
         return search.toString();
     }
 
     @Override
-    public boolean isRaw() {
+    public boolean isQbe() {
         return qbe != null;
     }
 
     @Override
-    public RawQueryByExampleDefinition getRaw() {
+    public RawQueryByExampleDefinition getQbe() {
+        if (qbe != null) {
+            qbe.setHandle(new StringHandle(serialize()).withFormat(Format.JSON));
+        }
         return qbe;
+    }
+
+    @Override
+    public CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe) {
+        this.qbe = qbe;
+        return this;
     }
 
     @Override
@@ -91,6 +150,11 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         else
             structuredQuery = query;
         return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition withCollections(String... collections) {
+        return and(qb.collection(collections));
     }
 
     @Override

@@ -5,20 +5,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.repository.config.EnableMarkLogicRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-// TODO: This test relies on the database being configured withOptions DatabaseConfiguration so add in what is necessary to get that right here
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
 public class CustomRepositoryIT {
@@ -28,6 +31,9 @@ public class CustomRepositoryIT {
     @ImportResource("classpath:integration.xml")
     static class Config {}
 
+    @Value("classpath:database-properties.json")
+    private Resource configuration;
+
     @Autowired
     private MarkLogicOperations operations;
 
@@ -36,8 +42,14 @@ public class CustomRepositoryIT {
 
     private Person bobby, george, jane;
 
+
+    @PostConstruct
+    public void configure() throws IOException {
+        operations.configure(configuration);
+    }
+
     @Before
-    public void init() {
+    public void init() throws IOException {
         cleanDb();
 
         bobby = new Employee("Bobby", "Senior Engineer");

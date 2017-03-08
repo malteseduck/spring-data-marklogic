@@ -5,12 +5,24 @@ import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.document.DocumentWriteSet;
+import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
+import com.marklogic.client.impl.RESTServices;
 import com.marklogic.client.pojo.PojoQueryBuilder;
-import com.marklogic.client.query.*;
+import com.marklogic.client.query.DeleteQueryDefinition;
+import com.marklogic.client.query.QueryDefinition;
+import com.marklogic.client.query.StructuredQueryBuilder;
+import com.marklogic.client.query.StructuredQueryDefinition;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
@@ -24,10 +36,20 @@ import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriTemplate;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +63,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private MarkLogicConverter converter;
     private PersistenceExceptionTranslator exceptionTranslator;
     private DatabaseClient client;
+    private RestTemplate restTemplate;
+    private RESTServices services;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     public MarkLogicTemplate(DatabaseClient client) {
@@ -52,6 +76,36 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         this.client = client;
         this.converter = converter == null ? getDefaultConverter() : converter;
         this.exceptionTranslator = new MarkLogicExceptionTranslator();
+
+        // Create a RestTemplate instance for use directly against the REST API because there are some things that aren't fully supported in the client
+        HttpClient httpClient = HttpClientBuilder
+                .create()
+                .setDefaultCredentialsProvider(provider())
+                .build();
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        this.restTemplate = new RestTemplate(factory);
+
+//        FormHttpMessageConverter formConverter = new FormHttpMessageConverter() {
+//            @Override
+//            public boolean canRead(Class<?> clazz, MediaType mediaType) {
+//                if (clazz == MultiValueMap.class) {
+//                    return true;
+//                }
+//                return super.canRead(clazz, mediaType);
+//            }
+//        };
+//
+//        this.restTemplate.getMessageConverters().add(formConverter);
+
+        services = ((DatabaseClientImpl) client).getServices();
+    }
+
+    private CredentialsProvider provider() {
+        CredentialsProvider provider = new BasicCredentialsProvider();
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(client.getUser(), client.getPassword());
+        provider.setCredentials(new AuthScope(client.getHost(), AuthScope.ANY_PORT, AuthScope.ANY_REALM), credentials);
+        return provider;
     }
 
     private static final MarkLogicConverter getDefaultConverter() {
@@ -174,6 +228,22 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public void configure(Resource configuration) throws IOException {
+        String json = new String(Files.readAllBytes(Paths.get(configuration.getURI())));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // TODO: Make management port configurable? Or try using services to post?
+        restTemplate.exchange(
+                // Need to use the management port for configuring the database
+                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), 8002),
+                HttpMethod.PUT,
+                new HttpEntity<>(json, headers),
+                Void.class
+        );
+    }
+
+    @Override
     public Object write(Object entity) {
         return write(entity, null);
     }
@@ -285,7 +355,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            QueryDefinition finalQuery=  finalQuery(query);
+            QueryDefinition finalQuery = finalQuery(query);
 
             return manager.search(finalQuery, start + 1, transaction);
         });
@@ -296,24 +366,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            QueryDefinition finalQuery=  finalQuery(query);
-
-            DocumentPage docPage;
-            if (finalQuery instanceof RawQueryByExampleDefinition)
-                docPage = manager.search(finalQuery, start + 1, transaction);
-            else
-                docPage = manager.search(converter.wrapQuery((StructuredQueryDefinition) finalQuery, entityClass), start + 1, transaction);
+            QueryDefinition finalQuery = finalQuery(converter.wrapQuery(query, entityClass));
+            DocumentPage docPage = manager.search(finalQuery, start + 1, transaction);
 
             List<T> results = toEntityList(entityClass, docPage);
-
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
         });
     }
 
     private QueryDefinition finalQuery(StructuredQueryDefinition query) {
-        // TODO: Is here the best place to check this?
-        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isRaw())
-            return ((CombinedQueryDefinition) query).getRaw();
+        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe())
+            return ((CombinedQueryDefinition) query).getQbe();
         else if (query != null)
             return query;
         else

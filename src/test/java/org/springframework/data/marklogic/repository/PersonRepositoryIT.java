@@ -273,8 +273,23 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindByNameQBE() throws Exception {
+        Person person = repository.qbeFindByName("Bobby");
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
     public void testFindByPetQBE() throws Exception {
         List<Person> people = repository.qbeFindByPet(new Pet("Fluffy", "cat"));
         assertThat(people).containsExactly(andrea);
+    }
+
+    @Test
+    public void testFindByGenderWithPageableQBE() throws Exception {
+        Page<Person> people = repository.qbeFindByGenderWithPageable(
+                "female",
+                new PageRequest(0, 2, Sort.Direction.ASC, "name")
+        );
+        assertThat(people).containsExactly(andrea, jane);
     }
 }

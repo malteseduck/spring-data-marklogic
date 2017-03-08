@@ -136,7 +136,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     @Override
     public <T> StructuredQueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
-        if (entityClass != null) {
+        if (entityClass != null && query != null) {
             MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
 
             // TODO: If type information is configured on a property then add the value clause here
