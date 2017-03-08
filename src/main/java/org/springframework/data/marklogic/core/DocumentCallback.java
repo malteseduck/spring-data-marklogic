@@ -4,5 +4,5 @@ import com.marklogic.client.Transaction;
 import com.marklogic.client.document.DocumentManager;
 
 public interface DocumentCallback<T> {
-    T doInMarkLogic(DocumentManager mgr, Transaction transaction);
+    T doWithDocumentManager(DocumentManager mgr, Transaction transaction);
 }

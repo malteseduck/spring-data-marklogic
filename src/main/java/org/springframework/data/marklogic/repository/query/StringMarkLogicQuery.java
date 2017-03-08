@@ -2,6 +2,7 @@ package org.springframework.data.marklogic.repository.query;
 
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.repository.query.ExpressionEvaluatingParameterBinder.BindingContext;
@@ -50,9 +51,8 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         String queryString = parameterBinder.bind(this.query, accessor, new BindingContext(getQueryMethod().getParameters(), queryParameterBindings));
 
         CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(
-                operations.client().newQueryManager().newRawQueryByExampleDefinition(
-                    new StringHandle(queryString).withFormat(Format.JSON)
-            )
+                (RawQueryByExampleDefinition) operations.executeWithClient((client, transaction) ->
+                    client.newQueryManager().newRawQueryByExampleDefinition(new StringHandle(queryString).withFormat(Format.JSON)))
         );
 
         return operations.sortQuery(accessor.getSort(), query, type);

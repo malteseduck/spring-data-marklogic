@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.core;
 import com.marklogic.client.DatabaseClient;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +96,21 @@ public class TemplateCrudIT {
         Person saved = template.read(person.getId(), Person.class);
         assertThat(saved).isNotNull();
         assertThat(saved.getId()).isEqualTo(person.getId());
+    }
+
+    @Test
+    @Ignore("not yet implemented because not supported in WriteSet")
+    public void testSimpleWriteAutoId() {
+        Person person = new Person("Bob");
+        person.setId(null);
+
+        template.write(person);
+
+        List<Person> people = template.search(Person.class);
+        assertThat(people).hasSize(1);
+        assertThat(people.get(0).getId())
+                .isNotNull()
+                .isNotEqualTo("null");
     }
 
     @Test

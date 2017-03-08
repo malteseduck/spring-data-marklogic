@@ -2,12 +2,14 @@ package org.springframework.data.marklogic.core.mapping;
 
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.Format;
 import com.marklogic.client.io.marker.ContentHandle;
 
 public class DocumentDescriptor {
 
     private String uri;
     private DocumentMetadataHandle metadata;
+    private Format format;
 
     // TODO - is there a "generic" way to do this for read/write?
     private ContentHandle content;
@@ -59,5 +61,13 @@ public class DocumentDescriptor {
 
     public void setMetadata(DocumentMetadataHandle metadata) {
         this.metadata = metadata;
+    }
+
+    public Format getFormat() {
+        return format;
+    }
+
+    public void setFormat(Format format) {
+        this.format = format;
     }
 }

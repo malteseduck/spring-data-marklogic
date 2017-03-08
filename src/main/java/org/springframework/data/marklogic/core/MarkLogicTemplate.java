@@ -1,10 +1,9 @@
 package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.Transaction;
-import com.marklogic.client.document.DocumentPage;
-import com.marklogic.client.document.DocumentRecord;
-import com.marklogic.client.document.DocumentWriteSet;
+import com.marklogic.client.document.*;
 import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.impl.RESTServices;
@@ -33,6 +32,7 @@ import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.*;
+import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
@@ -67,6 +67,11 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private RESTServices services;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
+    public MarkLogicTemplate() {
+        // Default to local host DB on default port if nothing is specified
+        this(DatabaseClientFactory.newClient("localhost", 8000), null);
+    }
+
     public MarkLogicTemplate(DatabaseClient client) {
         this(client, null);
     }
@@ -85,19 +90,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
         this.restTemplate = new RestTemplate(factory);
-
-//        FormHttpMessageConverter formConverter = new FormHttpMessageConverter() {
-//            @Override
-//            public boolean canRead(Class<?> clazz, MediaType mediaType) {
-//                if (clazz == MultiValueMap.class) {
-//                    return true;
-//                }
-//                return super.canRead(clazz, mediaType);
-//            }
-//        };
-//
-//        this.restTemplate.getMessageConverters().add(formConverter);
-
         services = ((DatabaseClientImpl) client).getServices();
     }
 
@@ -120,32 +112,38 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     private Transaction getCurrentTransaction() {
-        TransactionHolder holder = (TransactionHolder) TransactionSynchronizationManager.getResource(client());
+        TransactionHolder holder = (TransactionHolder) TransactionSynchronizationManager.getResource(client);
         Transaction tx = null;
 
         if (holder != null) tx = holder.getTransaction();
         return tx;
     }
 
-    <T> T execute(DocumentCallback<T> action) {
+    @Override
+    public <T> T execute(DocumentCallback<T> action) {
         try {
-            return action.doInMarkLogic(client().newDocumentManager(), getCurrentTransaction());
-        } catch (RuntimeException e) {
-            throw potentiallyConvertRuntimeException(e, exceptionTranslator);
-        }
-    }
-
-    <T> T executeQuery(QueryCallback<T> action) {
-        try {
-            return action.doInMarkLogic(client().newQueryManager(), getCurrentTransaction());
+            return action.doWithDocumentManager(client.newDocumentManager(), getCurrentTransaction());
         } catch (RuntimeException e) {
             throw potentiallyConvertRuntimeException(e, exceptionTranslator);
         }
     }
 
     @Override
-    public DatabaseClient client() {
-        return client;
+    public Object executeWithClient(ClientCallback action) {
+        try {
+            return action.doWithClient(client, getCurrentTransaction());
+        } catch (RuntimeException e) {
+            throw potentiallyConvertRuntimeException(e, exceptionTranslator);
+        }
+    }
+
+    @Override
+    public <T> T executeQuery(QueryCallback<T> action) {
+        try {
+            return action.doWithQueryManager(client.newQueryManager(), getCurrentTransaction());
+        } catch (RuntimeException e) {
+            throw potentiallyConvertRuntimeException(e, exceptionTranslator);
+        }
     }
 
     @Override
@@ -263,8 +261,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> List<T> write(List<T> entities, String... collections) {
 
         // TODO: Versioning?
-        // TODO: ID generation/updating?
-
         List<DocumentDescriptor> docs =
                 entities.stream()
                         .map(entity -> {
@@ -284,7 +280,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                         doc.setMetadata(doc.getMetadata().withCollections(collections));
                     }
 
-                    writeSet.add(doc.getUri(), doc.getMetadata(), doc.getContent());
+                    if (doc.getUri() != null) {
+                        writeSet.add(doc.getUri(), doc.getMetadata(), doc.getContent());
+                    } else {
+                        // TODO: How to use uri template with a write set?  Is there a way?
+                        DocumentUriTemplate template = manager.newDocumentUriTemplate(doc.getFormat().toString());
+//                        com.marklogic.client.document.DocumentDescriptor desc = manager.create(template, doc.getMetadata(), doc.getContent());
+                        writeSet.add((String) null, doc.getMetadata(), doc.getContent());
+                    }
                 }
                 manager.write(writeSet, transaction);
             }

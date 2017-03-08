@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static org.springframework.data.marklogic.core.mapping.DocumentFormat.JSON;
+import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
 
 public class MappingMarkLogicConverter implements MarkLogicConverter, InitializingBean {
 
@@ -66,10 +68,10 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
             try {
                 // TODO: Better way to do this?
+                // TODO: Support document URI templates if the ID value is null
                 Object id = idProperty.getGetter().invoke(source);
                 doc.setUri(getDocumentUris(asList(id), entity.getType()).get(0));
             } catch (Exception e) {
-                // TODO: Support document URI templates
                 throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
             }
         } else {
@@ -89,6 +91,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         } else {
             contentHandle.setMapper(objectMapper);
         }
+
+        doc.setFormat(entity.getDocumentFormat().toFormat());
         doc.setContent(contentHandle);
     }
 
@@ -103,8 +107,20 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             handle.setMapper(objectMapper);
         }
 
-        // TODO: If something is annotated withOptions @Id do we want to put the URI into that field?  In cases where data is already there it would cause round trip issues if we don't, but what issues does it cause if we do?
-        return doc.getRecord().getContent(handle).get();
+        R mapped = doc.getRecord().getContent(handle).get();
+
+        // We assume that the ID from the database is the correct one, so update the property with the @Id annotation with the "correct" ID
+        if (entity != null && entity.hasIdProperty() && mapped != null) {
+            PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
+            try {
+                // TODO: Better way to do this?
+                idProperty.getSetter().invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat()));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
+            }
+        }
+
+        return mapped;
     }
 
     @Override
@@ -114,17 +130,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .flatMap(id -> {
                     if (entityClass != null) {
                         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
-                        if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
-                            return Stream.of("/" + String.valueOf(id) + ".xml");
-                        } else {
-                            return Stream.of("/" + String.valueOf(id) + ".json");
-                        }
+                        return Stream.of(idToUri(id, entity.getDocumentFormat()));
                     } else {
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
                         return Stream.of(
-                            "/" + String.valueOf(id) + ".json",
-                            "/" + String.valueOf(id) + ".xml"
+                                idToUri(id, JSON),
+                                idToUri(id, XML)
                         );
                     }
                 })
@@ -136,6 +148,15 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     @Override
     public List<String> getDocumentUris(List<? extends Object> ids) {
         return getDocumentUris(ids, null);
+    }
+
+    private Object uriToId(String uri, DocumentFormat format) {
+        // TODO: For other types other than String what do we do?
+        return uri.substring(1, uri.indexOf("." + format.toString().toLowerCase()));
+    }
+
+    private String idToUri(Object id, DocumentFormat format) {
+        return "/" + String.valueOf(id) + "." + format.toString().toLowerCase();
     }
 
     @Override

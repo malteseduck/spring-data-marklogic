@@ -1,6 +1,5 @@
 package org.springframework.data.marklogic.core;
 
-import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -15,10 +14,6 @@ import java.util.List;
 
 public interface MarkLogicOperations {
 
-    // To avoid re-implementing all functionality in this template just give access to the DatabaseClient object so
-    // that it can be used for more advanced query/configuration/etc. constructs
-    DatabaseClient client();
-
     // Build a query builder for the specified entity type using any configuration in @Document
     <T> PojoQueryBuilder<T> qb(Class<T> entityClass);
 
@@ -31,6 +26,14 @@ public interface MarkLogicOperations {
 
     // Database configuration - requires the "admin" role in the user account
     void configure(Resource configuration) throws IOException;
+
+    // Callback methods for accessing different low-level APIs available on the client
+    // TODO: Add additional callbacks for different managers and other stuff on the client?  Add one for access to the client?
+    <T> T execute(DocumentCallback<T> action);
+
+    Object executeWithClient(ClientCallback action);
+
+    <T> T executeQuery(QueryCallback<T> action);
 
     // Entity peristence - no need to specify the class since it can be determined from the object
 
