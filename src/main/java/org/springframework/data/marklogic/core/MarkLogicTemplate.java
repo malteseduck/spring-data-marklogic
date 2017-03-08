@@ -279,6 +279,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                 DocumentWriteSet writeSet = manager.newWriteSet();
                 for (DocumentDescriptor doc : docs) {
                     if (collections != null && collections.length > 0) {
+                        // If collections are specified then those are the ones that will be used - we expect things to be how we specify
+                        doc.getMetadata().getCollections().clear();
                         doc.setMetadata(doc.getMetadata().withCollections(collections));
                     }
 
@@ -355,7 +357,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            QueryDefinition finalQuery = finalQuery(query);
+            QueryDefinition finalQuery = converter.wrapQuery(query, null);
 
             return manager.search(finalQuery, start + 1, transaction);
         });
@@ -366,21 +368,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            QueryDefinition finalQuery = finalQuery(converter.wrapQuery(query, entityClass));
+            QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
             DocumentPage docPage = manager.search(finalQuery, start + 1, transaction);
 
             List<T> results = toEntityList(entityClass, docPage);
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
         });
-    }
-
-    private QueryDefinition finalQuery(StructuredQueryDefinition query) {
-        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe())
-            return ((CombinedQueryDefinition) query).getQbe();
-        else if (query != null)
-            return query;
-        else
-            return qb.and();
     }
 
     @Override

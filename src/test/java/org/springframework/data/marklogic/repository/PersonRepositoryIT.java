@@ -37,7 +37,7 @@ public class PersonRepositoryIT {
     @Autowired
     MarkLogicOperations operations;
 
-    private Person bobby, george, jane, jenny, andrea, henry;
+    private Person bobby, george, jane, jenny, andrea, henry, freddy;
 
     List<Person> all;
 
@@ -53,6 +53,9 @@ public class PersonRepositoryIT {
         jenny = new Person("Jenny", 41, "female", "dentist", "", Instant.parse("2016-06-01T00:00:00Z"), asList("gymnastics"), asList(new Pet("Powderkeg", "wolverine")));
 
         all = repository.save(asList(jenny, bobby, george, jane, andrea, henry));
+
+        freddy = new Person("Freddy", 27, "male", "policeman", "", Instant.parse("2016-08-01T00:00:00Z"), asList("gaming"));
+        operations.write(freddy, "OtherPeople");
     }
 
     @After
@@ -62,6 +65,7 @@ public class PersonRepositoryIT {
 
     private void cleanDb() {
         repository.deleteAll();
+        operations.deleteAll("OtherPeople");
     }
 
     @Test
@@ -291,5 +295,14 @@ public class PersonRepositoryIT {
                 new PageRequest(0, 2, Sort.Direction.ASC, "name")
         );
         assertThat(people).containsExactly(andrea, jane);
+    }
+
+    @Test
+    public void testFindByGenderQBEHonorsCollections() throws Exception {
+        Page<Person> people = repository.qbeFindByGenderWithPageable(
+                "male",
+                new PageRequest(0, 20, Sort.Direction.ASC, "name")
+        );
+        assertThat(people).containsExactly(bobby, george, henry);
     }
 }

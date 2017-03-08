@@ -60,6 +60,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 search.append("$query: " + qbe.toString());
             }
 
+
             if (!options.isEmpty()) {
                 search.append(", ").append("options: { ")
                         .append(
@@ -132,6 +133,11 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public RawQueryByExampleDefinition getQbe() {
         if (qbe != null) {
+            // Copy all the configuration from the combined query object so we don't loose any information as we pass back just the raw query object
+            qbe.setCollections(getCollections());
+            qbe.setDirectory(getDirectory());
+            qbe.setResponseTransform(getResponseTransform());
+            qbe.setOptionsName(getOptionsName());
             qbe.setHandle(new StringHandle(serialize()).withFormat(Format.JSON));
         }
         return qbe;

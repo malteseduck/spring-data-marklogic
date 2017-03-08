@@ -8,6 +8,8 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.JacksonDatabindHandle;
+import com.marklogic.client.query.QueryDefinition;
+import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +18,12 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.*;
+import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -111,17 +115,17 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                     if (entityClass != null) {
                         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
                         if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
-                            return asList("/" + String.valueOf(id) + ".xml").stream();
+                            return Stream.of("/" + String.valueOf(id) + ".xml");
                         } else {
-                            return asList("/" + String.valueOf(id) + ".json").stream();
+                            return Stream.of("/" + String.valueOf(id) + ".json");
                         }
                     } else {
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
-                        return asList(
+                        return Stream.of(
                             "/" + String.valueOf(id) + ".json",
                             "/" + String.valueOf(id) + ".xml"
-                        ).stream();
+                        );
                     }
                 })
                 .collect(Collectors.toList());
@@ -135,8 +139,11 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     }
 
     @Override
-    public <T> StructuredQueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
-        if (entityClass != null && query != null) {
+    public <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
+        if (query == null) {
+            query = new StructuredQueryBuilder().and();
+        }
+        if (entityClass != null) {
             MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
 
             // TODO: If type information is configured on a property then add the value clause here
@@ -147,7 +154,10 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 query.setCollections(collections.toArray(new String[0]));
             }
         }
-        return query;
+        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe())
+            return ((CombinedQueryDefinition) query).getQbe();
+        else
+            return query;
     }
 
     @Override
