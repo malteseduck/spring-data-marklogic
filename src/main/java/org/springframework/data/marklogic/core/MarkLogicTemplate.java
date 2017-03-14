@@ -36,6 +36,8 @@ import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.data.marklogic.repository.query.convert.DefaultMarkLogicQueryConversionService;
+import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -61,6 +63,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     private ApplicationContext applicationContext;
     private MarkLogicConverter converter;
+    private QueryConversionService queryConversionService;
     private PersistenceExceptionTranslator exceptionTranslator;
     private DatabaseClient client;
     private RestTemplate restTemplate;
@@ -77,9 +80,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     public MarkLogicTemplate(DatabaseClient client, MarkLogicConverter converter) {
+        this(client, converter, null);
+    }
+
+    public MarkLogicTemplate(DatabaseClient client, MarkLogicConverter converter, QueryConversionService queryConversionService) {
         Assert.notNull(client, "A database client object is required!");
         this.client = client;
         this.converter = converter == null ? getDefaultConverter() : converter;
+        this.queryConversionService = queryConversionService == null ? getDefaultQueryConverter() : queryConversionService;
         this.exceptionTranslator = new MarkLogicExceptionTranslator();
 
         // Create a RestTemplate instance for use directly against the REST API because there are some things that aren't fully supported in the client
@@ -103,6 +111,11 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private static final MarkLogicConverter getDefaultConverter() {
         MappingMarkLogicConverter converter = new MappingMarkLogicConverter(new MarkLogicMappingContext());
         converter.afterPropertiesSet();
+        return converter;
+    }
+
+    private static final QueryConversionService getDefaultQueryConverter() {
+        DefaultMarkLogicQueryConversionService converter = new DefaultMarkLogicQueryConversionService();
         return converter;
     }
 
@@ -484,6 +497,10 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public MarkLogicConverter getConverter() {
         return converter;
+    }
+
+    public QueryConversionService getQueryConversionService() {
+        return queryConversionService;
     }
 
     private static RuntimeException potentiallyConvertRuntimeException(RuntimeException ex,

@@ -52,6 +52,8 @@ public class PersonRepositoryIT {
         jane = new Person("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-03-01T00:00:00Z"), asList("fencing", "archery", "running"));
         jenny = new Person("Jenny", 41, "female", "dentist", "", Instant.parse("2016-06-01T00:00:00Z"), asList("gymnastics"), asList(new Pet("Powderkeg", "wolverine")));
 
+        henry.setRankings(asList(1, 2, 3));
+
         all = repository.save(asList(jenny, bobby, george, jane, andrea, henry));
 
         freddy = new Person("Freddy", 27, "male", "policeman", "", Instant.parse("2016-08-01T00:00:00Z"), asList("gaming"));
@@ -69,31 +71,31 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void findsPersonById() throws Exception {
+    public void testFindsPersonById() throws Exception {
         Person found = repository.findOne(bobby.getId());
         assertThat(found).isEqualTo(bobby);
     }
 
     @Test
-    public void findsAllPeople() throws Exception {
+    public void testFindsAllPeople() throws Exception {
         List<Person> people = repository.findAll();
         assertThat(people).containsAll(all);
     }
 
     @Test
-    public void findsAllPeopleOrderedByName() throws Exception {
+    public void testFindsAllPeopleOrderedByName() throws Exception {
         List<Person> people = repository.findAll(new Sort("name"));
         assertThat(people).containsExactly(andrea, bobby, george, henry, jane, jenny);
     }
 
     @Test
-    public void findsAllWithGivenIds() {
+    public void testFindsAllWithGivenIds() {
         Iterable<Person> people = repository.findAll(asList(george.getId(), bobby.getId()));
         assertThat(people).containsExactlyInAnyOrder(george, bobby);
     }
 
     @Test
-    public void deletesPersonCorrectly() throws Exception {
+    public void testDeletesPersonCorrectly() throws Exception {
         repository.delete(george);
 
         List<Person> people = repository.findAll();
@@ -102,7 +104,7 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void deletesPersonByIdCorrectly() {
+    public void testDeletesPersonByIdCorrectly() {
         repository.delete(bobby.getId());
 
         List<Person> people = repository.findAll();
@@ -111,31 +113,31 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void findsPersonsOrderedByName() throws Exception {
+    public void testFindsPersonsOrderedByName() throws Exception {
         List<Person> people = repository.findAllByOrderByNameAsc();
         assertThat(people).containsExactly(andrea, bobby, george, henry, jane, jenny);
     }
 
     @Test
-    public void findsPersonsByName() throws Exception {
+    public void testFindsPersonsByName() throws Exception {
         List<Person> people = repository.findByName("Jane");
         assertThat(people).containsExactly(jane);
     }
 
     @Test
-    public void findsPersonsByNameOrderedByAge() throws Exception {
+    public void testFindsPersonsByNameOrderedByAge() throws Exception {
         List<Person> people = repository.findByGenderOrderByAge("female");
         assertThat(people).containsExactly(andrea, jenny, jane);
     }
 
     @Test
-    public void findPersonsByOccupationOrderedByName() throws Exception {
+    public void testFindPersonsByOccupationOrderedByName() throws Exception {
         List<Person> people = repository.findByOccupationOrderByNameAsc("dentist");
         assertThat(people).containsExactly(bobby, jenny);
     }
 
     @Test
-    public void findsPersonsByNameIn() throws Exception {
+    public void testFindsPersonsByNameIn() throws Exception {
         List<Person> people = repository.findByNameIn("Jane", "George");
         assertThat(people).containsExactlyInAnyOrder(jane, george);
     }
@@ -147,31 +149,37 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void findsPersonsByNameInNull() throws Exception {
+    public void testFindsPersonsByNameInNull() throws Exception {
         List<Person> people = repository.findByNameIn(null);
         assertThat(people).isNullOrEmpty();
     }
 
     @Test
-    public void findsPersonsByAge() throws Exception {
+    public void testFindsPersonsByAge() throws Exception {
         List<Person> people = repository.findByAge(23);
         assertThat(people).containsExactly(bobby);
     }
 
     @Test
-    public void findsPersonsByGenderLike() throws Exception {
+    public void testFindsPersonByBirthtime() throws Exception {
+        Person person = repository.findByBirthtime(Instant.parse("2016-01-01T00:00:00Z"));
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
+    public void testFindsPersonsByGenderLike() throws Exception {
         List<Person> people = repository.findByGenderLike("ma*");
         assertThat(people).containsExactlyInAnyOrder(bobby, george, henry);
     }
 
     @Test
-    public void findsPersonsByNameNotLike() throws Exception {
+    public void testFindsPersonsByNameNotLike() throws Exception {
         List<Person> people = repository.findByNameNotLike("Bo*");
         assertThat(people).doesNotContain(bobby);
     }
 
     @Test
-    public void findsPagedPersonsOrderedByName() throws Exception {
+    public void testFindsPagedPersonsOrderedByName() throws Exception {
         Page<Person> page = repository.findAll(new PageRequest(1, 2, Sort.Direction.ASC, "name"));
         assertThat(page.isFirst()).isFalse();
         assertThat(page.isLast()).isFalse();
@@ -179,7 +187,7 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void executesPagedFinderCorrectly() throws Exception {
+    public void testExecutesPagedFinderCorrectly() throws Exception {
         Page<Person> page = repository.findByGenderLike("fem*",
                 new PageRequest(0, 2, Sort.Direction.ASC, "name"));
         
@@ -193,12 +201,12 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void existsWorksCorrectly() {
+    public void testExistsWorksCorrectly() {
         assertThat(repository.exists(bobby.getId())).isTrue();
     }
 
     @Test
-    public void findsPeopleUsingNotPredicate() {
+    public void testFindsPeopleUsingNotPredicate() {
         List<Person> people = repository.findByNameNot("Andrea");
         
         assertThat(people)
@@ -207,51 +215,51 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void executesAndQueryCorrectly() {
+    public void tesetExecutesAndQueryCorrectly() {
         List<Person> people = repository.findByNameAndAge("Bobby", 23);
 
         assertThat(people).containsExactly(bobby);
     }
 
     @Test
-    public void executesOrQueryCorrectly() {
+    public void testExecutesOrQueryCorrectly() {
         List<Person> people = repository.findByNameOrAge("Bobby", 23);
 
         assertThat(people).containsExactly(bobby);
     }
 
     @Test
-    public void executesDerivedCountProjection() {
+    public void testExecutesDerivedCountProjection() {
         assertThat(repository.countByName("George")).isEqualTo(1);
     }
 
     @Test
-    public void executesDerivedExistsProjectionToBoolean() {
+    public void testExecutesDerivedExistsProjectionToBoolean() {
         assertThat(repository.existsByName("Jane")).as("does exist").isTrue();
         assertThat(repository.existsByName("Brunhilda")).as("doesn't exist").isFalse();
     }
 
     @Test
-    public void executesDerivedStartsWithQueryCorrectly() {
+    public void testExecutesDerivedStartsWithQueryCorrectly() {
         List<Person> people = repository.findByNameStartsWith("J");
         
         assertThat(people).containsExactlyInAnyOrder(jenny, jane);
     }
 
     @Test
-    public void executesDerivedEndsWithQueryCorrectly() {
+    public void testFxecutesDerivedEndsWithQueryCorrectly() {
         List<Person> people = repository.findByNameEndsWith("nny");
         assertThat(people).containsExactly(jenny);
     }
     
     @Test
-    public void findByNameIgnoreCase() {
+    public void testFindByNameIgnoreCase() {
         List<Person> people = repository.findByNameIgnoreCase("george");
         assertThat(people).containsExactly(george);
     }
 
     @Test
-    public void findByNameNotIgnoreCase() {
+    public void testFindByNameNotIgnoreCase() {
         List<Person> people = repository.findByNameNotIgnoreCase("george");
         assertThat(people)
                 .hasSize(all.size()-1)
@@ -259,21 +267,27 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void findByNameStartingWithIgnoreCase() {
+    public void testFindByNameStartingWithIgnoreCase() {
         List<Person> people = repository.findByNameStartingWithIgnoreCase("ge");
         assertThat(people).containsExactly(george);
     }
 
     @Test
-    public void findByHobbiesContains() throws Exception {
+    public void testFindByHobbiesContains() throws Exception {
         List<Person> people = repository.findByHobbiesContains(asList("running"));
         assertThat(people).containsExactlyInAnyOrder(bobby, jane);
     }
 
     @Test
-    public void findByHobbiesNotContains() throws Exception {
+    public void testFindByHobbiesNotContains() throws Exception {
         List<Person> people = repository.findByHobbiesNotContaining(asList("running"));
         assertThat(people).doesNotContain(bobby, jane);
+    }
+
+    @Test
+    public void testFindByPet() throws Exception {
+        List<Person> people = repository.findByPets(new Pet("Powderkeg", "wolverine"));
+        assertThat(people).containsExactly(jenny);
     }
 
     @Test

@@ -26,6 +26,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.context.PersistentPropertyPath;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
+import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
 import org.springframework.data.repository.query.parser.Part;
@@ -47,6 +48,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
     private static final Logger LOG = LoggerFactory.getLogger(MarkLogicQueryCreator.class);
     private final MarkLogicOperations operations;
     private final MarkLogicQueryMethod method;
+    private final QueryConversionService converter;
     private final MappingContext<?, MarkLogicPersistentProperty> context;
     private final StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
@@ -59,6 +61,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
         this.operations = operations;
         this.context = context;
         this.method = method;
+        this.converter = operations.getQueryConversionService();
     }
 
     /*
@@ -123,13 +126,13 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
                 // TODO: Support range queries
                 throw new IllegalArgumentException("Unsupported keyword!");
             case IS_NOT_NULL:
-                return qb.not(createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part, property)));
+                return qb.not(createValueCriteria(getTextIndex(name), null, shouldIgnoreCase(part, property)));
             case IS_NULL:
-                return createValueCriteria(property, getTextIndex(name), null, shouldIgnoreCase(part, property));
+                return createValueCriteria(getTextIndex(name), null, shouldIgnoreCase(part, property));
             case NOT_IN:
-                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
+                return qb.not(createValueCriteria(getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
             case IN:
-                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
+                return createValueCriteria(getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
             case LIKE:
             case STARTING_WITH:
                 return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "%s*"), shouldIgnoreCase(part, property));
@@ -147,19 +150,19 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
             case EXISTS:
                 return qb.containerQuery((ContainerIndex) getTextIndex(name), qb.and());
             case TRUE:
-                return createValueCriteria(property, getTextIndex(name), true, shouldIgnoreCase(part, property));
+                return createValueCriteria(getTextIndex(name), true, shouldIgnoreCase(part, property));
             case FALSE:
-                return createValueCriteria(property, getTextIndex(name), false, shouldIgnoreCase(part, property));
+                return createValueCriteria(getTextIndex(name), false, shouldIgnoreCase(part, property));
             case NEAR:
             case WITHIN:
                 // TODO: Support near queries
                 // TODO: Support geo queries?
                 throw new IllegalArgumentException("Unsupported keyword!");
             case SIMPLE_PROPERTY:
-                return createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
+                return createValueCriteria(getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property));
             case NEGATING_SIMPLE_PROPERTY:
                 // TODO: is a not() query really the same thing as "negating simple"?
-                return qb.not(createValueCriteria(property, getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
+                return qb.not(createValueCriteria(getTextIndex(name), parameters.next(), shouldIgnoreCase(part, property)));
             default:
                 throw new IllegalArgumentException("Unsupported keyword!");
         }
@@ -180,50 +183,67 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
                 .toArray(String[]::new);
     }
 
-    private StructuredQueryDefinition createValueCriteria(MarkLogicPersistentProperty property, TextIndex index, Object values, boolean ignoreCase) {
+    private StructuredQueryDefinition createValueCriteria(TextIndex index, Object values, boolean ignoreCase) {
         List<String> options = new ArrayList<>();
 
         if (ignoreCase) options.add("case-insensitive");
 
-        // TODO: Is there a better way to do this logic?
+        return converter.convert(index, values, options);
 
-        if (values == null) {
-            if (!options.isEmpty())
-                return qb.value(index, null, options.toArray(new String[0]), 1.0, (String) null);
-            else
-                return qb.value(index, (String) null);
-        } else if (values.getClass().isArray() || property.isCollectionLike()) {
-            if (values instanceof Boolean[]) {
-                throw new IllegalArgumentException("Condition for property '" + property.getName() + "' can not match multiple boolean values");
-            } else if (values instanceof Number[]) {
-                if (!options.isEmpty())
-                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
-                else
-                    return qb.value(index, asArray(values, Number[].class));
-            } else {
-                if (!options.isEmpty())
-                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
-                else
-                    return qb.value(index, asArray(values, String[].class));
-            }
-        } else {
-            if (values instanceof Boolean) {
-                if (!options.isEmpty())
-                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Boolean.class));
-                else
-                    return qb.value(index, as(values, Boolean.class));
-            } else if (values instanceof Number) {
-                if (!options.isEmpty())
-                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Number.class));
-                else
-                    return qb.value(index, as(values, Number.class));
-            } else {
-                if (!options.isEmpty())
-                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, String.class));
-                else
-                    return qb.value(index, as(values, String.class));
-            }
-        }
+//        if (values == null) {
+//            if (!options.isEmpty())
+//                return qb.value(index, null, options.toArray(new String[0]), 1.0, (String) null);
+//            else
+//                return qb.value(index, (String) null);
+//        } else if (values.getClass().isArray() || values instanceof Collection) {
+//            if (values instanceof Boolean[]) {
+//                return null;
+//            } else if (values instanceof Number[]) {
+//                if (!options.isEmpty())
+//                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
+//                else
+//                    return qb.value(index, asArray(values, Number[].class));
+//            } else {
+//                if (!options.isEmpty())
+//                    return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
+//                else
+//                    return qb.value(index, asArray(values, String[].class));
+//            }
+//        } else {
+//            if (values instanceof Boolean) {
+//                if (!options.isEmpty())
+//                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Boolean.class));
+//                else
+//                    return qb.value(index, as(values, Boolean.class));
+//            } else if (values instanceof Number) {
+//                if (!options.isEmpty())
+//                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, Number.class));
+//                else
+//                    return qb.value(index, as(values, Number.class));
+//            } else {
+//                // TODO: Can't just do toString() - this will most likely not get what we want
+//                if (!options.isEmpty())
+//                    return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values.toString(), String.class));
+//                else
+//                    return qb.value(index, as(values.toString(), String.class));
+//            }
+//        }
+    }
+
+    private StructuredQueryDefinition createBooleanValueCriteria(MarkLogicPersistentProperty property, TextIndex index,  Object values) {
+        return null;
+    }
+
+    private StructuredQueryDefinition createNumberValueCriteria(MarkLogicPersistentProperty property, TextIndex index,  Object values) {
+        return null;
+    }
+
+    private StructuredQueryDefinition createStringValueCriteria(MarkLogicPersistentProperty property, TextIndex index,  Object values, boolean ignoreCase) {
+        return null;
+    }
+
+    private StructuredQueryDefinition createObjectCriteria(MarkLogicPersistentProperty property, TextIndex index,  Object values) {
+        return null;
     }
 
     private StructuredQueryDefinition createWordCriteria(MarkLogicPersistentProperty property, TextIndex index, String[] words) {
@@ -257,7 +277,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
     private StructuredQueryDefinition createContainingCriteria(String name, MarkLogicPersistentProperty property, Iterator<Object> parameters, boolean ignoreCase) {
 
         if (property.isCollectionLike()) {
-            return createValueCriteria(property, getTextIndex(name), parameters.next(), ignoreCase);
+            return createValueCriteria(getTextIndex(name), parameters.next(), ignoreCase);
         }
 
         return createWordCriteria(property, getTextIndex(name), formatWords(parameters.next(), "*%s*"), ignoreCase);
@@ -284,6 +304,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
             return (T[]) values;
         }
 
-        return Arrays.copyOf(new Object[] { values }, 1, type);
+        // TODO: This won't work for objects, so what do we do?
+        return Arrays.copyOf(new Object[] { values.toString() }, 1, type);
     }
 }

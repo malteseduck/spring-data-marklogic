@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.JacksonDatabindHandle;
@@ -20,6 +19,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,14 +33,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     private static final Logger LOG = LoggerFactory.getLogger(MappingMarkLogicConverter.class);
 
-    private static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-    private static SimpleDateFormat simpleDateFormat8601 = new SimpleDateFormat(ISO_8601_FORMAT);
+    public static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    public static SimpleDateFormat simpleDateFormat8601 = new SimpleDateFormat(ISO_8601_FORMAT);
     static { simpleDateFormat8601.setTimeZone(TimeZone.getTimeZone("UTC")); }
 
     private MappingContext mappingContext;
     private ObjectMapper objectMapper;
-
-    private XmlMapper xmlMapper = new XmlMapper();
+    private ObjectMapper xmlMapper;
 
     public MappingMarkLogicConverter(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext) {
         this.mappingContext = mappingContext;
@@ -75,7 +74,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
             }
         } else {
-            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
+            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
         }
 
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
@@ -86,7 +85,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         }
 
         JacksonDatabindHandle contentHandle = new JacksonDatabindHandle<>(source);
-        if (entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
+        if (mapAsXml(entity)) {
             contentHandle.setMapper(xmlMapper);
         } else {
             contentHandle.setMapper(objectMapper);
@@ -101,7 +100,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(clazz);
 
         JacksonDatabindHandle<R> handle = new JacksonDatabindHandle<>(clazz);
-        if (entity != null && entity.getDocumentFormat() == DocumentFormat.XML && xmlMapper != null) {
+        if (mapAsXml(entity)) {
             handle.setMapper(xmlMapper);
         } else {
             handle.setMapper(objectMapper);
@@ -114,9 +113,10 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
             try {
                 // TODO: Better way to do this?
-                idProperty.getSetter().invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat()));
+                Method setter = idProperty.getSetter();
+                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat()));
             } catch (Exception e) {
-                throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
+                throw new IllegalArgumentException("Unable to set value of @Id from " + idProperty.getName());
             }
         }
 
@@ -143,6 +143,11 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .collect(Collectors.toList());
 
         return uris;
+    }
+
+    @Override
+    public boolean mapAsXml(MarkLogicPersistentEntity entity) {
+        return entity != null && entity.getDocumentFormat() == XML && xmlMapper != null;
     }
 
     @Override
@@ -193,17 +198,22 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .disableDefaultTyping();
 
         try {
-            Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
-            xmlMapper = (XmlMapper) new XmlMapper()
+            // TODO: Is it just easier/better to include the dumb library?  It will cause the default behavior to change for Spring Web stuff
+            Class mapperClass = Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
+            xmlMapper = ((ObjectMapper) mapperClass.newInstance())
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                     .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
                     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                    .setDateFormat(simpleDateFormat8601)
+                    .setDateFormat(MappingMarkLogicConverter.simpleDateFormat8601)
                     .registerModule(new JavaTimeModule())
                     .disableDefaultTyping();
         } catch (ClassNotFoundException e) {
             LOG.warn("com.fasterxml.jackson.dataformat:jackson-dataformat-xml needs to be included in order to use Java->XML conversion");
+        } catch (IllegalAccessException e) {
+            LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
+        } catch (InstantiationException e) {
+            LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
         }
 
     }

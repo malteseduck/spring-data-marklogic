@@ -71,6 +71,8 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByHobbiesContains(List<String> hobbies);
 
+    List<Person> findByRankingsContains(List<Integer> ratings);
+
     List<Person> findByHobbiesNotContaining(List<String> hobbies);
 
     Page<Person> findByGenderLike(String gender, Pageable pageable);
@@ -81,9 +83,13 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByNameAndAge(String name, int age);
 
+    List<Person> findByNameAndAgeAllIgnoreCase(String name, int age);
+
     List<Person> findByNameOrAge(String name, int age);
 
     List<Person> findByAge(int age);
+
+    Person findByBirthtime(Instant birthtime);
 
     List<Person> findByAgeExists();
 
@@ -93,7 +99,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByPetsNameIgnoreCase(String name);
 
-    // Range queries
+    // ====== Range queries ======
     List<Person> findByAgeBetween(int from, int to);
 
     List<Person> findByBirthtimeLessThan(Instant date);
@@ -104,12 +110,18 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByAgeGreaterThanEqual(int age);
 
-    // Exists/count checks
+    // ====== Exists/count checks ======
     long countByName(String name);
 
     boolean existsByName(String name);
 
-    // Annotated queries (QBE)
+    // ====== Delete checks ======
+    // TODO: Implement delete-by-query logic?  Require uri lexicon?
+    void deleteById(String id);
+
+    void deleteByName(String name);
+
+    // ====== Annotated queries (QBE) ======
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
@@ -137,8 +149,8 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ arg0: ?0, arg1: ?1 }")
     List<Person> qbeFindByStringWithWildcardChar(String arg0, String arg1);
 
-    // Limiting queries
-
+    // ====== Limiting queries ======
+    // TODO: Implement limiting query logic
     Person findFirstByName(String name);
 
     List<Person> findTop3ByNameOrderByName(String name);
@@ -147,7 +159,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     Slice<Person> findTop1ByNameOrderByName(String name, Pageable page);
 
-    // Streaming queries
+    // ====== Streaming queries ======
 
     Stream<Person> readAllByAgeNotNull();
 }

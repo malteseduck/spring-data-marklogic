@@ -8,8 +8,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.InvalidMarkLogicApiUsageException;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.Instant;
@@ -19,7 +21,10 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:integration.xml")
+@ContextHierarchy({
+        @ContextConfiguration("classpath:integration.xml"),
+        @ContextConfiguration(classes = DatabaseConfiguration.class)
+})
 public class BasicQueryIT {
 
     private MarkLogicTemplate template;

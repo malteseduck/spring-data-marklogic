@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
+import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 
 import java.io.IOException;
 import java.util.List;
@@ -108,7 +109,11 @@ public interface MarkLogicOperations {
 
     // TODO: Implement streaming functions
 
+    // TODO: Implement patch functions
+
     // TODO: Implement some functions that make it easy to get values from range indexes
 
     MarkLogicConverter getConverter();
+
+    QueryConversionService getQueryConversionService();
 }

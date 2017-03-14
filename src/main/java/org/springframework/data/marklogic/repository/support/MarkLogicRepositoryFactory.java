@@ -99,6 +99,8 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
         if (entity == null) {
             throw new MappingException(
                     String.format("Could not lookup mapping metadata for domain class %s!", domainClass.getName()));
+        } else if (!entity.hasIdProperty()) {
+            throw new IllegalArgumentException("Your entity of type " + domainClass.getName() + " does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
         }
 
         return new MappingMarkLogicEntityInformation(entity, entity.getIdProperty().getType());

@@ -60,7 +60,6 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 search.append("$query: " + qbe.toString());
             }
 
-
             if (!options.isEmpty()) {
                 search.append(", ").append("options: { ")
                         .append(

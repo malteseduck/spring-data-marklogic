@@ -282,6 +282,18 @@ public class MarkLogicQueryCreatorTests {
     }
 
     @Test
+    public void testUsingContainsOnIntegerCollection() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByRankingsContains", List.class),
+                asList(1, 2)
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.value(qb.jsonProperty("rankings"), 1, 2).serialize()
+                );
+    }
+
+    @Test
     public void testQueryOnLeafProperty() throws Exception {
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByPetsName", String.class),
@@ -331,7 +343,10 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("hobbies"), (String) null).serialize()
+                        qb.containerQuery(qb.jsonProperty("pets"), qb.and(
+                                qb.value(qb.jsonProperty("name"), "Fluffy"),
+                                qb.value(qb.jsonProperty("type"), "lion")
+                        )).serialize()
                 );
     }
 
@@ -341,6 +356,10 @@ public class MarkLogicQueryCreatorTests {
         public CoolPet(String name, String type, int age) {
             super(name, type);
             this.age = age;
+        }
+
+        public int getAge() {
+            return age;
         }
     }
 
@@ -352,7 +371,11 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("hobbies"), (String) null).serialize()
+                        qb.containerQuery(qb.jsonProperty("pets"), qb.and(
+                                qb.value(qb.jsonProperty("name"), "Fluffy"),
+                                qb.value(qb.jsonProperty("type"), "lion"),
+                                qb.value(qb.jsonProperty("age"), 10)
+                        )).serialize()
                 );
     }
 
@@ -373,6 +396,23 @@ public class MarkLogicQueryCreatorTests {
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByGenderOrderByAge", String.class),
                 "female"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        operations.sortQuery(
+                                new Sort("age"),
+                                qb.value(qb.jsonProperty("gender"), "female"),
+                                Person.class
+                        ).serialize()
+                );
+    }
+
+    @Test
+    public void testDeleteByField() throws Exception {
+
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "deleteById", String.class),
+                "23"
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(

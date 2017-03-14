@@ -156,7 +156,7 @@ public class TemplateCrudIT {
         Throwable thrown = catchThrowable(() -> template.write(person));
 
         assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
+                .hasMessageContaining("does not have a method or field annotated with org.springframework.data.annotation.Id");
     }
 
     @Document(typeStrategy = TypePersistenceStrategy.NONE)

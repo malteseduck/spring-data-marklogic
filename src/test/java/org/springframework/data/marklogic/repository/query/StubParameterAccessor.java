@@ -36,17 +36,19 @@ class StubParameterAccessor implements ParameterAccessor {
 	public StubParameterAccessor(Object... values) {
 		this.values = values;
 
-		Pageable pageable =
-				(Pageable) Arrays.stream(values)
-                        .filter(value -> value instanceof Pageable)
-                        .findFirst().orElse(null);
-
-		if (pageable != null) sort = pageable.getSort();
-		else
-			sort =
-					(Sort) Arrays.stream(values)
-							.filter(value -> value instanceof Sort)
+		if (values != null) {
+			Pageable pageable =
+					(Pageable) Arrays.stream(values)
+							.filter(value -> value instanceof Pageable)
 							.findFirst().orElse(null);
+
+			if (pageable != null) sort = pageable.getSort();
+			else
+				sort =
+						(Sort) Arrays.stream(values)
+								.filter(value -> value instanceof Sort)
+								.findFirst().orElse(null);
+		}
 	}
 
 	/*

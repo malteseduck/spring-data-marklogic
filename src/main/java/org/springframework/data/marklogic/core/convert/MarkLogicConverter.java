@@ -15,6 +15,7 @@ public interface MarkLogicConverter extends
         EntityConverter<MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty, Object, DocumentDescriptor>, EntityWriter<Object, DocumentDescriptor>,
         EntityReader<Object, DocumentDescriptor> {
 
+    boolean mapAsXml(MarkLogicPersistentEntity entity);
 
     List<String> getDocumentUris(List<?> ids);
 

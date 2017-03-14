@@ -19,8 +19,8 @@ interface MarkLogicQueryExecution {
         private final Pageable pageable;
 
         PagedExecution(MarkLogicOperations operations, Pageable pageable) {
-            Assert.notNull(operations);
-            Assert.notNull(pageable);
+            Assert.notNull(operations, "MongoOperations must not be null!");
+            Assert.notNull(pageable, "Need a Pageable in order to page");
             this.operations = operations;
             this.pageable = pageable;
         }
@@ -59,7 +59,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         SingleEntityExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations);
+            Assert.notNull(operations, "MongoOperations must not be null!");
             this.operations = operations;
         }
 
@@ -70,6 +70,7 @@ interface MarkLogicQueryExecution {
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
             Page<?> page = operations.search(query, 0, 1, type);
+//            return page.hasNext() ? null : page.iterator().next();
             return page.iterator().next();
         }
     }
@@ -79,7 +80,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         CountExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations);
+            Assert.notNull(operations, "MongoOperations must not be null!");
             this.operations = operations;
         }
 
@@ -98,7 +99,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         ExistsExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations);
+            Assert.notNull(operations, "MongoOperations must not be null!");
             this.operations = operations;
         }
 
