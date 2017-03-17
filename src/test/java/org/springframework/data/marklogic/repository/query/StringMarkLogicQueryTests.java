@@ -34,6 +34,12 @@ import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.domain.Sort.Direction.DESC;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.*;
 
+/**
+ * Tests all the QBE queries.  You may notice that some of the properties in the "expected" JSON contain an '%' character.  These will be
+ * stripped out during the comparison and are there so "valid" MarkLogic JSON can be created from a structure that may contain duplicate keys.
+ * Duplicate keys are allowed in MarkLogic, but not in many JSON creators/parsers.  Single quotes are converted to double quotes as well.  This was
+ * all done so the tests are more readable.
+ */
 public class StringMarkLogicQueryTests {
 
 	SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -52,7 +58,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo("{ search: { $query: { name: \"Bubba\" }, options: {} } }");
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
 	}
 
 	@Test
@@ -63,7 +69,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"path-index\":{\"text\":\"/name\"}} } } }");
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female' }, 'options': { 'sort-order': { 'direction' : 'ascending', 'path-index': { 'text': '/name' } } } } }"));
 	}
 
 	@Test
@@ -74,7 +80,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"element\":{\"ns\":\"\",\"name\":\"description\"}} } } }");
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female' }, 'options': { 'sort-order': { 'direction': 'ascending', 'element': { 'ns': '', 'name': 'description' } } } } }"));
 	}
 
 	@Test
@@ -85,7 +91,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo("{ search: { $query: { gender: \"female\" }, options: { \"sort-order\":{\"direction\":\"ascending\",\"path-index\":{\"text\":\"/name\"}}, \"sort-order\":{\"direction\":\"descending\",\"path-index\":{\"text\":\"/age\"}} } } }");
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female'}, 'options': { 'sort-order': { 'direction': 'ascending', 'path-index': { 'text': '/name' } }, 'sort-order%': { 'direction': 'descending', 'path-index': { 'text': '/age' } } } } }"));
 	}
 
 	@Test
@@ -95,8 +101,19 @@ public class StringMarkLogicQueryTests {
 				new Pet("Fluffy", "cat")
 		);
 		assertThat(query.serialize())
-				.isEqualTo("{ search: { $query: { 'pets': {\"name\":\"Fluffy\",\"type\":\"cat\"} }, options: {} } }");
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'pets': { 'name': 'Fluffy', 'type': 'cat' } }, 'options': {} } }"));
 	}
+
+	@Test
+	public void testConvertsToProperJSON() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonRepository.class, "qbeFindByName", String.class),
+				"Bubba"
+		);
+		assertThat(query.serialize())
+				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
+	}
+
 //
 //	@Test
 //	public void bindsMultipleParametersCorrectly() throws Exception {
@@ -161,8 +178,8 @@ public class StringMarkLogicQueryTests {
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
 //
 //		assertThat(query.getQueryObject(),
-//				is(new BasicQuery("{ \"firstname\": \"first\", \"lastname\": \"last\"}").getQueryObject()));
-//		assertThat(query.getFieldsObject(), is(new BasicQuery(null, "{ \"lastname\": 1}").getFieldsObject()));
+//				is(new BasicQuery("{ 'firstname': 'first', 'lastname': 'last'}").getQueryObject()));
+//		assertThat(query.getFieldsObject(), is(new BasicQuery(null, "{ 'lastname': 1}").getFieldsObject()));
 //	}
 //
 //	@Test // DATAMONGO-420
@@ -271,7 +288,7 @@ public class StringMarkLogicQueryTests {
 //				String.class);
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
-//		org.springframework.data.mongodb.core.query.Query reference = new BasicQuery("{ \"id\" : { \"$exists\" : true}}");
+//		org.springframework.data.mongodb.core.query.Query reference = new BasicQuery("{ 'id' : { '$exists' : true}}");
 //
 //		assertThat(query.getQueryObject(), is(reference.getQueryObject()));
 //	}
@@ -285,7 +302,7 @@ public class StringMarkLogicQueryTests {
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
 //		org.springframework.data.mongodb.core.query.Query reference = new BasicQuery(
-//				"{ \"id\" : { \"$exists\" : true} , \"foo\" : 42 , \"bar\" : { \"$exists\" : false}}");
+//				"{ 'id' : { '$exists' : true} , 'foo' : 42 , 'bar' : { '$exists' : false}}");
 //
 //		assertThat(query.getQueryObject(), is(reference.getQueryObject()));
 //	}
@@ -339,7 +356,7 @@ public class StringMarkLogicQueryTests {
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
 //		assertThat(query.getQueryObject(),
-//				is(JSON.parse("{ \"arg0\" : \"argWith?1andText\" , \"arg1\" : \"nothing-special\"}")));
+//				is(JSON.parse("{ 'arg0' : 'argWith?1andText' , 'arg1' : 'nothing-special'}")));
 //	}
 //
 //	@Test // DATAMONGO-1565
@@ -358,12 +375,12 @@ public class StringMarkLogicQueryTests {
 //	public void shouldQuoteStringReplacementContainingQuotesCorrectly() throws Exception {
 //
 //		StringBasedMongoQuery mongoQuery = createQueryForMethod("findByLastnameQuoted", String.class);
-//		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, "Matthews\", password: \"foo");
+//		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, "Matthews', password: 'foo");
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
 //		assertThat(query.getQueryObject(),
 //				is(not(new BasicDBObjectBuilder().add("lastname", "Matthews").add("password", "foo").get())));
-//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "Matthews\", password: \"foo")));
+//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "Matthews', password: 'foo")));
 //	}
 //
 //	@Test // DATAMONGO-1565
@@ -371,21 +388,21 @@ public class StringMarkLogicQueryTests {
 //
 //		StringBasedMongoQuery mongoQuery = createQueryForMethod("findByLastnameQuoted", String.class);
 //		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter,
-//				"\"Dave Matthews\", password: 'foo");
+//				"'Dave Matthews', password: 'foo");
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
 //		assertThat(query.getQueryObject(),
-//				is((DBObject) new BasicDBObject("lastname", "\"Dave Matthews\", password: 'foo")));
+//				is((DBObject) new BasicDBObject("lastname", "'Dave Matthews', password: 'foo")));
 //	}
 //
 //	@Test // DATAMONGO-1565, DATAMONGO-1575
 //	public void shouldQuoteComplexQueryStringCorrectly() throws Exception {
 //
 //		StringBasedMongoQuery mongoQuery = createQueryForMethod("findByLastnameQuoted", String.class);
-//		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, "{ $ne : \"calamity\" }");
+//		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, "{ $ne : 'calamity' }");
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
-//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "{ $ne : \"calamity\" }")));
+//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "{ $ne : 'calamity' }")));
 //	}
 //
 //	@Test // DATAMONGO-1565, DATAMONGO-1575
@@ -393,10 +410,10 @@ public class StringMarkLogicQueryTests {
 //
 //		StringBasedMongoQuery mongoQuery = createQueryForMethod("findByLastnameQuoted", String.class);
 //		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter,
-//				"{ $ne : \"\\\"calamity\\\"\" }");
+//				"{ $ne : '\\'calamity\\'' }");
 //
 //		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
-//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "{ $ne : \"\\\"calamity\\\"\" }")));
+//		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", "{ $ne : '\\'calamity\\'' }")));
 //	}
 //
 //	@Test // DATAMONGO-1575

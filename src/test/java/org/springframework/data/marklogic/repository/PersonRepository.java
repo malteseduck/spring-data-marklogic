@@ -131,6 +131,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ 'name': '?0' }")
     Person qbeFindByNameQuoted(String name);
 
+    @Query("{ 'name': 'Bobby' }")
+    Person qbeFindBobby();
+
     @Query("{ 'pets': ?0 }")
     List<Person> qbeFindByPet(Pet pet);
 

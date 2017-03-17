@@ -48,53 +48,52 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         this.qbe = qbe;
     }
 
+    // Allows us to generate a "random" name for a JSON property so we can support multiple options with the same name
+    private String unique(String name) {
+        return name + "%" + Math.round(Math.random() * 1000);
+    }
+
     @Override
     public String serialize() {
-        StringBuilder search = new StringBuilder();
-
-        // TODO: Switch to use multi-part so we can keep options as XML?  Converting to
+        // TODO: Switch to use multi-part so we can keep options as XML?
         if (isQbe()) {
-            search.append("{ search: { ");
-
-            if (qbe != null) {
-                search.append("$query: " + qbe.toString());
-            }
+            JSONObject search = new JSONObject();
 
             if (!options.isEmpty()) {
-                search.append(", ").append("options: { ")
-                        .append(
-                                options.stream()
-                                        .map(option -> XML.toJSONObject(option))
-                                        .map(option -> {
-                                            // Fix path indexes - they don't convert "nicely" like many of the other indexes
-                                            // TODO: This doesn't support any additional options that may exist (namespaces?) Does this matter?
-                                            String index = (String) option.query("/sort-order/path-index");
-                                            if (!StringUtils.isEmpty(index)) {
-                                                return new JSONObject()
-                                                        .put("sort-order", new JSONObject()
-                                                                .put("direction", option.query("/sort-order/direction"))
-                                                                .put("path-index", new JSONObject()
-                                                                        .put("text", index)
-                                                                )
-                                                        );
-                                            } else {
-                                                return option;
-                                            }
-                                        })
-                                        .map(JSONObject::toString)
-                                        // The conversion wraps the JSON as an object, but inside the options they are just property names/values
-                                        .map(string -> string.substring(1, string.length() - 1))
-                                        .collect(Collectors.joining(", "))
-                        )
-                        .append(" }");
+                JSONObject optionsJson = new JSONObject();
+                options.stream()
+                    .map(option -> XML.toJSONObject(option))
+                    .forEach(option -> {
+                        // Fix path indexes - they don't convert "nicely" like many of the other indexes
+                        String index = (String) option.query("/sort-order/path-index");
+                        if (!StringUtils.isEmpty(index)) {
+                            optionsJson
+                                    .put(unique("sort-order"), new JSONObject()
+                                            .put("direction", option.query("/sort-order/direction"))
+                                            .put("path-index", new JSONObject()
+                                                    .put("text", index)
+                                            )
+                                    );
+                        } else {
+                            option.keys().forEachRemaining(key -> optionsJson.put(unique(key), option.get(key)));
+                        }
+                    });
+
+                search.put("options", optionsJson);
             } else {
                 // We need an empty options node or the REST API is unhappy, which makes us unhappy
-                search.append(", options: {}");
+                search.put("options", new JSONObject());
             }
 
-            search.append(" } }");
+            if (qbe != null) {
+                search.put("$query", new JSONObject(qbe.toString()));
+            }
 
+            // Make sure it is "proper" JSON so that MarkLogic is happy
+            return new JSONObject().put("search", search).toString()
+                    .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
         } else {
+            StringBuilder search = new StringBuilder();
 
             search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
 
@@ -119,9 +118,8 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                         .append("</sparql>");
 
             search.append("</search>");
+            return search.toString();
         }
-
-        return search.toString();
     }
 
     @Override

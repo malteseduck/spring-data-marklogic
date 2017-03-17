@@ -297,6 +297,18 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindBobby() throws Exception {
+        Person person = repository.qbeFindBobby();
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
+    public void testFindByNameQBEQuoted() throws Exception {
+        Person person = repository.qbeFindByNameQuoted("Bobby");
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
     public void testFindByPetQBE() throws Exception {
         List<Person> people = repository.qbeFindByPet(new Pet("Fluffy", "cat"));
         assertThat(people).containsExactly(andrea);

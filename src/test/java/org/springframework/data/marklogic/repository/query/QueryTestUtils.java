@@ -4,6 +4,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import org.json.JSONObject;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
@@ -35,6 +36,10 @@ public class QueryTestUtils {
         return new CombinedQueryDefinitionBuilder(
                 client().newQueryManager().newRawQueryByExampleDefinition(new StringHandle(qbe))
         ).serialize();
+    }
+
+    public static String jsonQuery(String qbe) {
+        return new JSONObject(qbe).toString().replace("%", "");
     }
 
     public static MarkLogicQueryMethod queryMethod(Class<?> repository, String name, Class<?>... parameters) throws Exception {

@@ -59,7 +59,7 @@ class ExpressionEvaluatingParameterBinder {
 	}
 
 	/**
-	 * Replaced the parameter placeholders withOptions the actual parameter values from the given {@link ParameterBinding}s.
+	 * Replaced the parameter placeholders with the actual parameter values from the given {@link ParameterBinding}s.
 	 * 
 	 * @param input must not be {@literal null} or empty.
 	 * @param accessor must not be {@literal null}.
@@ -104,8 +104,8 @@ class ExpressionEvaluatingParameterBinder {
 	}
 
 	/**
-	 * Sanitize String binding by replacing single quoted values withOptions double quotes which prevents potential single quotes
-	 * contained in replacement to interfere withOptions the Json parsing. Also take care of complex objects by removing the
+	 * Sanitize String binding by replacing single quoted values with double quotes which prevents potential single quotes
+	 * contained in replacement to interfere with the Json parsing. Also take care of complex objects by removing the
 	 * quotation entirely.
 	 *
 	 * @param buffer the {@link StringBuffer} to operate upon.
@@ -377,7 +377,7 @@ class ExpressionEvaluatingParameterBinder {
 
 		/**
 		 * @param string
-		 * @return {@literal true} if {@literal string} ends withOptions a single/double quote.
+		 * @return {@literal true} if {@literal string} ends with a single/double quote.
 		 */
 		public static boolean endsWithQuote(String string) {
 			return string.endsWith("'") || string.endsWith("\"");
@@ -387,7 +387,7 @@ class ExpressionEvaluatingParameterBinder {
 		 * Remove trailing quoting from {@literal quoted}.
 		 *
 		 * @param quoted
-		 * @return {@literal quoted} withOptions removed quotes.
+		 * @return {@literal quoted} with removed quotes.
 		 */
 		public static String unquoteSuffix(String quoted) {
 			return quoted.substring(0, quoted.length() - 1);
@@ -397,7 +397,7 @@ class ExpressionEvaluatingParameterBinder {
 		 * Remove leading and trailing quoting from {@literal quoted}.
 		 *
 		 * @param quoted
-		 * @return {@literal quoted} withOptions removed quotes.
+		 * @return {@literal quoted} with removed quotes.
 		 */
 		public static String unquote(String quoted) {
 			return quoted.substring(1, quoted.length() - 1);

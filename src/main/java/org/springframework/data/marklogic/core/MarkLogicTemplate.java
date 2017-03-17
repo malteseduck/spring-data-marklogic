@@ -103,8 +103,16 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     private CredentialsProvider provider() {
         CredentialsProvider provider = new BasicCredentialsProvider();
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(client.getUser(), client.getPassword());
-        provider.setCredentials(new AuthScope(client.getHost(), AuthScope.ANY_PORT, AuthScope.ANY_REALM), credentials);
+        UsernamePasswordCredentials credentials;
+        // TODO: Find a way to get this to work in the 4.0 version of the library, or if it is released use that one
+        try {
+            credentials = new UsernamePasswordCredentials(
+                    (String) client.getClass().getMethod("getUser").invoke(client),
+                    (String) client.getClass().getMethod("getPassword").invoke(client)
+            );
+            provider.setCredentials(new AuthScope(client.getHost(), AuthScope.ANY_PORT, AuthScope.ANY_REALM), credentials);
+        } catch (Exception e ) {
+        }
         return provider;
     }
 
