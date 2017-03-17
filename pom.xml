@@ -167,7 +167,7 @@
         <repository>
             <id>lds-nexus</id>
             <name>Release Repository</name>
-            <url></url>
+            <url>https://code.ldschurch.org/repository/lds-repo</url>
         </repository>
     </distributionManagement>
 </project>
