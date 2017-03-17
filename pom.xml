@@ -162,4 +162,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>lds-nexus</id>
+            <name>Release Repository</name>
+            <url></url>
+        </repository>
+    </distributionManagement>
 </project>
