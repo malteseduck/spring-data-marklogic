@@ -166,8 +166,11 @@
     <distributionManagement>
         <repository>
             <id>lds-nexus</id>
-            <name>Release Repository</name>
             <url>https://code.ldschurch.org/nexus/content/repositories/lds-repo</url>
         </repository>
+        <snapshotRepository>
+            <id>lds-nexus</id>
+            <url>https://code.ldschurch.org/nexus/content/repositories/lds-snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
 </project>
