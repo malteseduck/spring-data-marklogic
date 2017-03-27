@@ -114,7 +114,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             try {
                 // TODO: Better way to do this?
                 Method setter = idProperty.getSetter();
-                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri().replace("/" + entity.getType().getSimpleName().toLowerCase(), ""), entity.getDocumentFormat()));
+                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat()));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Unable to set value of @Id from " + idProperty.getName());
             }
@@ -130,8 +130,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .flatMap(id -> {
                     if (entityClass != null) {
                         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
-                        // TODO: Make this configurable
-                        return Stream.of("/" + entityClass.getSimpleName().toLowerCase() + idToUri(id, entity.getDocumentFormat()));
+                        return Stream.of(idToUri(id, entity.getDocumentFormat()));
                     } else {
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
