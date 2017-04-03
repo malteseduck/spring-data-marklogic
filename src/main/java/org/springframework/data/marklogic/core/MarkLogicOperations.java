@@ -32,15 +32,15 @@ public interface MarkLogicOperations {
     // TODO: Add additional callbacks for different managers and other stuff on the client?  Add one for access to the client?
     <T> T execute(DocumentCallback<T> action);
 
-    Object executeWithClient(ClientCallback action);
+    <T> T executeWithClient(ClientCallback<T> action);
 
     <T> T executeQuery(QueryCallback<T> action);
 
     // Entity peristence - no need to specify the class since it can be determined from the object
 
-    Object write(Object entity);
+    <T> T write(T entity);
 
-    Object write(Object entity, String... collections);
+    <T> T write(T entity, String... collections);
 
     <T> List<T> write(List<T> entities);
 

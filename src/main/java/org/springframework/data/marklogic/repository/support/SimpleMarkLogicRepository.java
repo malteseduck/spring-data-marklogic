@@ -49,6 +49,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <S extends T> S save(S entity) {
         Assert.notNull(entity, "Entity must not be null");
         return (S) operations.write(entity);

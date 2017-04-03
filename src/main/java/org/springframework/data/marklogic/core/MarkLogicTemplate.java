@@ -150,7 +150,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Object executeWithClient(ClientCallback action) {
+    public <T> T executeWithClient(ClientCallback<T> action) {
         try {
             return action.doWithClient(client, getCurrentTransaction());
         } catch (RuntimeException e) {
@@ -263,19 +263,19 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public Object write(Object entity) {
-        return write(entity, null);
+    public <T> T write(T entity) {
+        return write(entity, (String[]) null);
     }
 
     @Override
-    public Object write(final Object entity, String... collections) {
+    public <T> T write(final T entity, String... collections) {
         // TODO: Safer...
         return write(singletonList(entity), collections).get(0);
     }
 
     @Override
     public <T> List<T> write(List<T> entities) {
-        return write(entities, null);
+        return write(entities, (String[]) null);
     }
 
     @Override
@@ -490,14 +490,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public <T> void deleteAll(Class<T> entityClass) {
         // TODO: If no entity class is supplied do we just deleteById directory "/"?  Is that safe/good?
-        if (entityClass == null)
+        if (entityClass == null) {
             throw new InvalidDataAccessApiUsageException("Entity class is required to determine scope of deleteById");
+        }
 
-        // If the type is not stored in a collection there is no "quick" way to mass deleteById other than directory.  Can't easily do it by document properties
+        // If the type is not stored in a collection there is no "quick" way to mass deleteById other than directory.
+        // Can't easily do it by document properties
         // TODO: Maybe uri lexicon for deleting without a collection, but can't assume it is on, though
         MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
-        if (entity == null || entity.getTypePersistenceStrategy() != TypePersistenceStrategy.COLLECTION)
+        if (entity == null || entity.getTypePersistenceStrategy() != TypePersistenceStrategy.COLLECTION) {
             throw new InvalidDataAccessApiUsageException(String.format("Cannot determine deleteById scope for entity of type %s", entityClass.getName()));
+        }
 
         deleteAll(entityClass.getSimpleName());
     }

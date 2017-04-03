@@ -1,18 +1,22 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.impl.AbstractQueryDefinition;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
-import org.json.JSONObject;
-import org.json.XML;
-import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.util.StringUtils;
 
 /**
  * Allow us to keep a running build of query/options so we can set them throughout the different processing levels.  The
@@ -30,6 +34,9 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private String qtext;
     private String sparql;
     private StructuredQueryBuilder qb;
+    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonNodeCreator factory = JsonNodeFactory.instance;
+
 
     public CombinedQueryDefinitionBuilder() {
         super();
@@ -56,41 +63,52 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public String serialize() {
         // TODO: Switch to use multi-part so we can keep options as XML?
+        // TODO: Use Jackson library
         if (isQbe()) {
-            JSONObject search = new JSONObject();
+            ObjectNode search = factory.objectNode();
 
             if (!options.isEmpty()) {
-                JSONObject optionsJson = new JSONObject();
+                ObjectNode optionsJson = factory.objectNode();
                 options.stream()
-                    .map(option -> XML.toJSONObject(option))
+                    .map(option -> {
+                        try {
+                            return objectMapper.readTree(option);
+                        } catch (IOException ex) {
+                            throw new IllegalArgumentException(option);
+                        }
+                    })
                     .forEach(option -> {
                         // Fix path indexes - they don't convert "nicely" like many of the other indexes
-                        String index = (String) option.query("/sort-order/path-index");
+                        String index = (String) option.at("/sort-order/path-index").asText();
                         if (!StringUtils.isEmpty(index)) {
                             optionsJson
-                                    .put(unique("sort-order"), new JSONObject()
-                                            .put("direction", option.query("/sort-order/direction"))
-                                            .put("path-index", new JSONObject()
+                                    .set(unique("sort-order"), factory.objectNode()
+                                            .put("direction", option.at("/sort-order/direction").asText())
+                                            .set("path-index", factory.objectNode()
                                                     .put("text", index)
                                             )
                                     );
                         } else {
-                            option.keys().forEachRemaining(key -> optionsJson.put(unique(key), option.get(key)));
+                            option.fieldNames().forEachRemaining(key -> optionsJson.set(unique(key), option.get(key)));
                         }
                     });
 
-                search.put("options", optionsJson);
+                search.set("options", optionsJson);
             } else {
                 // We need an empty options node or the REST API is unhappy, which makes us unhappy
-                search.put("options", new JSONObject());
+                search.set("options", factory.objectNode());
             }
 
             if (qbe != null) {
-                search.put("$query", new JSONObject(qbe.toString()));
+                try {
+                    search.set("$query", objectMapper.readTree(qbe.toString()));
+                } catch (IOException ex) {
+                    throw new IllegalArgumentException(qbe.toString());
+                }
             }
 
             // Make sure it is "proper" JSON so that MarkLogic is happy
-            return new JSONObject().put("search", search).toString()
+            return factory.objectNode().set("search", search).toString()
                     .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
         } else {
             StringBuilder search = new StringBuilder();

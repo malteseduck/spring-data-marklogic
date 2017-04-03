@@ -67,7 +67,7 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
 
     public Map<Object, QueryTypeConverter> getConvertersToRegister() {
 
-        Map converters = new HashMap<>();
+        Map<Object, QueryTypeConverter> converters = new HashMap<>();
 
         // TODO: Can we just register the class and not worry if it is an array?
         converters.put(Instant.class, ObjectToStringValueConverter.INSTANCE);
@@ -176,8 +176,9 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, QueryConversionService service) {
-            Map<String, Object> props = m.convertValue(source, Map.class);
+            Map<String, Object> props = (Map<String, Object>) m.convertValue(source, Map.class);
             return MapToContainerQueryConverter.INSTANCE.convert(index, props, options, service);
         }
     }
@@ -191,6 +192,7 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, QueryConversionService service) {
             DocumentFormat format = index instanceof StructuredQueryBuilder.JSONProperty ? DocumentFormat.JSON : XML;
             return qb.containerQuery((StructuredQueryBuilder.ContainerIndex) index, convert((Map<String, Object>) source, format, service));
