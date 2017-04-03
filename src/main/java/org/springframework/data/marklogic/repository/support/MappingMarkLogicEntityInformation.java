@@ -19,7 +19,7 @@ public class MappingMarkLogicEntityInformation <T, ID extends Serializable> exte
     public MappingMarkLogicEntityInformation(MarkLogicPersistentEntity<T> entityMetadata, Class<ID> idType) {
         super(entityMetadata);
         this.entityMetadata = entityMetadata;
-        this.fallbackIdType =  idType != null ? idType : (Class<ID>) String.class;
+        this.fallbackIdType =  idType;
     }
 
 
@@ -38,7 +38,6 @@ public class MappingMarkLogicEntityInformation <T, ID extends Serializable> exte
         if (this.entityMetadata.hasIdProperty()) {
             return super.getIdType();
         }
-
-        return fallbackIdType != null ? fallbackIdType : (Class<ID>) String.class;
+        throw new IllegalArgumentException("Entity must be annotated with @Id");
     }
 }

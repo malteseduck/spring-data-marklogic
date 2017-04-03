@@ -49,12 +49,8 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
     protected StructuredQueryDefinition createQuery(ParameterAccessor accessor) {
         Class<?> type = getQueryMethod().getEntityInformation().getJavaType();
         String queryString = parameterBinder.bind(this.query, accessor, new BindingContext(getQueryMethod().getParameters(), queryParameterBindings));
-
-        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(
-                (RawQueryByExampleDefinition) operations.executeWithClient((client, transaction) ->
-                    client.newQueryManager().newRawQueryByExampleDefinition(new StringHandle(queryString).withFormat(Format.JSON)))
-        );
-
+        RawQueryByExampleDefinition definition = operations.executeWithClient((client, transaction) -> client.newQueryManager().newRawQueryByExampleDefinition(new StringHandle(queryString).withFormat(Format.JSON)));
+        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(definition);
         return operations.sortQuery(accessor.getSort(), query, type);
     }
 

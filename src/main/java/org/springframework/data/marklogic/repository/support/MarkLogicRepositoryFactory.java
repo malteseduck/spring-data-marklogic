@@ -22,8 +22,8 @@ import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.marklogic.repository.query.MarkLogicEntityInformation;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryMethod;
-import org.springframework.data.marklogic.repository.query.StringMarkLogicQuery;
 import org.springframework.data.marklogic.repository.query.PartTreeMarkLogicQuery;
+import org.springframework.data.marklogic.repository.query.StringMarkLogicQuery;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
