@@ -114,6 +114,16 @@ public class BasicQueryIT {
     }
 
     @Test
+    public void testFindOne() {
+        Person person = template.findOne(
+                qb.value("name", "Bobby"),
+                Person.class
+        );
+
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
     public void testQuerySorted() {
         List<Person> people = template.search(
             template.sortQuery(new Sort("name"), null),

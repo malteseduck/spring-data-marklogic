@@ -361,6 +361,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public <T> T findOne(StructuredQueryDefinition query, Class<T> entityClass) {
+        List<T> results = search(query, 0, 1, entityClass).getContent();
+        return results.get(0);
+    }
+
+    @Override
     public <T> List<T> search(Class<T> entityClass) {
         // TODO: Is this dangerous?
         return search(null, 0, Integer.MAX_VALUE, entityClass).getContent();
