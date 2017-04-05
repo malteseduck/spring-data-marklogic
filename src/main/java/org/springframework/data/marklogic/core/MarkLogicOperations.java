@@ -64,7 +64,7 @@ public interface MarkLogicOperations {
 
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
-    <T> T findOne(StructuredQueryDefinition query, Class<T> entityClass);
+    <T> T searchOne(StructuredQueryDefinition query, Class<T> entityClass);
 
     // Using Spring Page so we don't lose the paging information from the database - only if they "care" about pages (specifying start/stop, etc)
     // Also this is done so there doesn't have to be another conversion "down the line" to get it into a Spring Page.

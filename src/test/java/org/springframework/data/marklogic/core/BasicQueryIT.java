@@ -114,8 +114,8 @@ public class BasicQueryIT {
     }
 
     @Test
-    public void testFindOne() {
-        Person person = template.findOne(
+    public void testSearchOne() {
+        Person person = template.searchOne(
                 qb.value("name", "Bobby"),
                 Person.class
         );
