@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.*;
@@ -33,11 +34,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     private static final Logger LOG = LoggerFactory.getLogger(MappingMarkLogicConverter.class);
 
+    private static final ConversionService converter = new DefaultConversionService();
+
     public static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
     public static SimpleDateFormat simpleDateFormat8601 = new SimpleDateFormat(ISO_8601_FORMAT);
     static { simpleDateFormat8601.setTimeZone(TimeZone.getTimeZone("UTC")); }
 
-    private MappingContext mappingContext;
+    private MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
     private ObjectMapper objectMapper;
     private ObjectMapper xmlMapper;
 
@@ -114,7 +117,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             try {
                 // TODO: Better way to do this?
                 Method setter = idProperty.getSetter();
-                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat()));
+                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat(), entity.getBaseUri(), idProperty.getType()));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Unable to set value of @Id from " + idProperty.getName());
             }
@@ -130,13 +133,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .flatMap(id -> {
                     if (entityClass != null) {
                         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
-                        return Stream.of(idToUri(id, entity.getDocumentFormat()));
+                        return Stream.of(idToUri(id, entity.getDocumentFormat(), entity.getBaseUri()));
                     } else {
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
                         return Stream.of(
-                                idToUri(id, JSON),
-                                idToUri(id, XML)
+                                idToUri(id, JSON, "/"),
+                                idToUri(id, XML, "/")
                         );
                     }
                 })
@@ -155,13 +158,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         return getDocumentUris(ids, null);
     }
 
-    private Object uriToId(String uri, DocumentFormat format) {
-        // TODO: For other types other than String what do we do?
-        return uri.substring(1, uri.indexOf("." + format.toString().toLowerCase()));
+    private Object uriToId(String uri, DocumentFormat format, String baseUri, Class<?> idType) {
+        String id = uri.substring(baseUri.length(), uri.indexOf("." + format.toString().toLowerCase()));
+        return converter.convert(id, idType);
     }
 
-    private String idToUri(Object id, DocumentFormat format) {
-        return "/" + String.valueOf(id) + "." + format.toString().toLowerCase();
+    private String idToUri(Object id, DocumentFormat format, String baseUri) {
+        return baseUri + String.valueOf(id) + "." + format.toString().toLowerCase();
     }
 
     @Override
