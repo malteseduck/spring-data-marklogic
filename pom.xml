@@ -18,6 +18,7 @@
     </parent>
 
     <properties>
+        <bundlor.enabled>false</bundlor.enabled>
         <marklogic>3.0.7</marklogic>
         <springdata.commons>1.13.0.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
@@ -173,4 +174,5 @@
             <url>https://code.ldschurch.org/nexus/content/repositories/lds-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
 </project>
