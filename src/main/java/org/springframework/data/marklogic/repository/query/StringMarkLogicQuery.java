@@ -5,6 +5,9 @@ import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
+import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
+import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import org.springframework.data.marklogic.repository.Query;
 import org.springframework.data.marklogic.repository.query.ExpressionEvaluatingParameterBinder.BindingContext;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.ParameterAccessor;
@@ -22,7 +25,9 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
     private final MarkLogicOperations operations;
     private final EvaluationContextProvider contextProvider;
     private final SpelExpressionParser parser;
+    private final MarkLogicMappingContext context;
     private final String query;
+    private final Query annotation;
 
     private static final ParameterBindingParser BINDING_PARSER = ParameterBindingParser.INSTANCE;
 
@@ -36,6 +41,8 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
     public StringMarkLogicQuery(String query, MarkLogicQueryMethod method, MarkLogicOperations operations, SpelExpressionParser parser, EvaluationContextProvider contextProvider) {
         super(method, operations);
+        this.context = (MarkLogicMappingContext) method.getMappingContext();
+        this.annotation = method.getQueryAnnotation();
         this.operations = operations;
         this.parser = parser;
         this.contextProvider = contextProvider;
@@ -47,10 +54,15 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
     @Override
     protected StructuredQueryDefinition createQuery(ParameterAccessor accessor) {
-        Class<?> type = getQueryMethod().getEntityInformation().getJavaType();
+        final Class<?> type = getQueryMethod().getEntityInformation().getJavaType();
+        final MarkLogicPersistentEntity<?> entity = context.getPersistentEntity(type);
+
         String queryString = parameterBinder.bind(this.query, accessor, new BindingContext(getQueryMethod().getParameters(), queryParameterBindings));
         RawQueryByExampleDefinition definition = operations.executeWithClient((client, transaction) -> client.newQueryManager().newRawQueryByExampleDefinition(new StringHandle(queryString).withFormat(Format.JSON)));
-        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(definition);
+
+        Format formatToUse = annotation.format() == Format.UNKNOWN ? entity.getDocumentFormat() : annotation.format();
+        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(definition, formatToUse);
+
         return operations.sortQuery(accessor.getSort(), query, type);
     }
 

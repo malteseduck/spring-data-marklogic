@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.repository;
 
+import com.marklogic.client.io.Format;
 import org.springframework.data.annotation.QueryAnnotation;
 
 import java.lang.annotation.*;
@@ -17,6 +18,13 @@ public @interface Query {
      * @return
      */
     String value() default "";
+
+    /**
+     * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need
+     * a StructuredQueryDefinition using the query builder in order to match both formats
+     * @return
+     */
+    Format format() default Format.UNKNOWN;
 
     /**
      * Defines the properties that should be returned for the given query. Note that only these properties will make it into the

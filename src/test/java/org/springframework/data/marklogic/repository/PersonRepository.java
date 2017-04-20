@@ -125,6 +125,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
+    @Query("{ name: ?0 }")
+    List<Person> qbeFindByNameList(String name);
+
     @Query("{ gender: ?0 }")
     Page<Person> qbeFindByGenderWithPageable(String gender, Pageable pageable);
 

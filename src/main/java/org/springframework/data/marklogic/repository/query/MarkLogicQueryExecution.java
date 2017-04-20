@@ -63,15 +63,10 @@ interface MarkLogicQueryExecution {
             this.operations = operations;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.springframework.data.mongodb.repository.query.AbstractMongoQuery.Execution#execute(org.springframework.data.mongodb.core.query.Query, java.lang.Class, java.lang.String)
-         */
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
             Page<?> page = operations.search(query, 0, 1, type);
-//            return page.hasNext() ? null : page.iterator().next();
-            return page.iterator().next();
+            return page.hasContent() ? page.iterator().next() : null;
         }
     }
 
@@ -84,10 +79,6 @@ interface MarkLogicQueryExecution {
             this.operations = operations;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.springframework.data.mongodb.repository.query.AbstractMongoQuery.Execution#execute(org.springframework.data.mongodb.core.query.Query, java.lang.Class, java.lang.String)
-         */
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
             return operations.count(query, type);

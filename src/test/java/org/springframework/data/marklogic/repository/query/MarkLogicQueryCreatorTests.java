@@ -22,13 +22,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
-import org.springframework.data.marklogic.core.Person;
-import org.springframework.data.marklogic.core.Pet;
+import org.springframework.data.marklogic.core.*;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
+import org.springframework.data.marklogic.repository.PersonXmlRepository;
 
 import java.util.List;
 
@@ -420,6 +418,35 @@ public class MarkLogicQueryCreatorTests {
                                 new Sort("age"),
                                 qb.value(qb.jsonProperty("gender"), "female"),
                                 Person.class
+                        ).serialize()
+                );
+    }
+
+    @Test
+    public void testSimpleXmlQuery() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonXmlRepository.class, "findByName", String.class),
+                "Bubba"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.value(qb.element("name"), "Bubba").serialize()
+                );
+    }
+
+    @Test
+    public void testFindXmlByWithOrdering() throws Exception {
+
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonXmlRepository.class, "findByGenderOrderByAge", String.class),
+                "female"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        operations.sortQuery(
+                                new Sort("age"),
+                                qb.value(qb.element("gender"), "female"),
+                                PersonXml.class
                         ).serialize()
                 );
     }

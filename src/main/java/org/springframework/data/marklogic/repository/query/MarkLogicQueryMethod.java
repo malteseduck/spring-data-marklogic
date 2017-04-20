@@ -15,10 +15,10 @@
  */
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.io.Format;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.marklogic.core.mapping.DocumentFormat;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.marklogic.repository.Query;
@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
 public class MarkLogicQueryMethod extends QueryMethod {
 
     private final Method method;
-    private final DocumentFormat format;
+    private final Format format;
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
     public MarkLogicQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
@@ -49,7 +49,7 @@ public class MarkLogicQueryMethod extends QueryMethod {
         this.format = mappingContext.getPersistentEntity(getEntityInformation().getJavaType()).getDocumentFormat();
     }
 
-    public DocumentFormat getFormat() {
+    public Format getFormat() {
         return format;
     }
 
@@ -79,5 +79,9 @@ public class MarkLogicQueryMethod extends QueryMethod {
 
     TypeInformation<?> getReturnType() {
         return ClassTypeInformation.fromReturnTypeOf(method);
+    }
+
+    public MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> getMappingContext() {
+        return mappingContext;
     }
 }

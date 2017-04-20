@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.core.mapping;
 
+import com.marklogic.client.io.Format;
 import org.springframework.data.mapping.PersistentEntity;
 
 public interface MarkLogicPersistentEntity<T> extends PersistentEntity<T, MarkLogicPersistentProperty> {
@@ -22,5 +23,5 @@ public interface MarkLogicPersistentEntity<T> extends PersistentEntity<T, MarkLo
     /**
      * Determines the serialization format for the entity, i.e. JSON, XML, or binary formats
      */
-    DocumentFormat getDocumentFormat();
+    Format getDocumentFormat();
 }

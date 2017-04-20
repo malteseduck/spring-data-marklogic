@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.PersonXml;
 import org.springframework.data.marklogic.core.Pet;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
@@ -35,11 +36,16 @@ public class PersonRepositoryIT {
     private PersonRepository repository;
 
     @Autowired
+    private PersonXmlRepository xmlRepository;
+
+    @Autowired
     MarkLogicOperations operations;
 
     private Person bobby, george, jane, jenny, andrea, henry, freddy;
+    private PersonXml jimmy;
 
     List<Person> all;
+    List<PersonXml> allXml;
 
     @Before
     public void init() {
@@ -58,6 +64,10 @@ public class PersonRepositoryIT {
 
         freddy = new Person("Freddy", 27, "male", "policeman", "", Instant.parse("2016-08-01T00:00:00Z"), asList("gaming"));
         operations.write(freddy, "OtherPeople");
+
+        jimmy = new PersonXml("Jimmy", 15, "male", "student", "Lives next door", Instant.parse("2016-12-01T00:00:00Z"));
+
+        allXml = xmlRepository.save(asList(jimmy));
     }
 
     @After
@@ -67,6 +77,7 @@ public class PersonRepositoryIT {
 
     private void cleanDb() {
         repository.deleteAll();
+        xmlRepository.deleteAll();
         operations.deleteAll("OtherPeople");
     }
 
@@ -297,6 +308,12 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindListByNameQBE() throws Exception {
+        List<Person> person = repository.qbeFindByNameList("Bobby");
+        assertThat(person).containsExactly(bobby);
+    }
+
+    @Test
     public void testFindBobby() throws Exception {
         Person person = repository.qbeFindBobby();
         assertThat(person).isEqualTo(bobby);
@@ -330,5 +347,17 @@ public class PersonRepositoryIT {
                 new PageRequest(0, 20, Sort.Direction.ASC, "name")
         );
         assertThat(people).containsExactly(bobby, george, henry);
+    }
+
+    @Test
+    public void testFindXmlByNameQBE() throws Exception {
+        List<PersonXml> people = xmlRepository.qbeFindByName("Jimmy");
+        assertThat(people).containsExactly(jimmy);
+    }
+
+    @Test
+    public void testFindXmlByNameQBEWithoutSpecifyingFormat() throws Exception {
+        List<PersonXml> people = xmlRepository.qbeFindByNameWithoutSpecifyingFormat("Jimmy");
+        assertThat(people).containsExactly(jimmy);
     }
 }

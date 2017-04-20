@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonDatabindHandle;
 import com.marklogic.client.query.QueryDefinition;
 import com.marklogic.client.query.StructuredQueryBuilder;
@@ -27,8 +28,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
-import static org.springframework.data.marklogic.core.mapping.DocumentFormat.JSON;
-import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
 
 public class MappingMarkLogicConverter implements MarkLogicConverter, InitializingBean {
 
@@ -94,7 +93,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             contentHandle.setMapper(objectMapper);
         }
 
-        doc.setFormat(entity.getDocumentFormat().toFormat());
+        doc.setFormat(entity.getDocumentFormat());
         doc.setContent(contentHandle);
     }
 
@@ -138,8 +137,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                         // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
                         // is if they have both JSON/XML for the same id - might get "odd" results?
                         return Stream.of(
-                                idToUri(id, JSON, "/"),
-                                idToUri(id, XML, "/")
+                                idToUri(id, Format.JSON, "/"),
+                                idToUri(id, Format.XML, "/")
                         );
                     }
                 })
@@ -150,7 +149,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     @Override
     public boolean mapAsXml(MarkLogicPersistentEntity entity) {
-        return entity != null && entity.getDocumentFormat() == XML && xmlMapper != null;
+        return entity != null && entity.getDocumentFormat() == Format.XML && xmlMapper != null;
     }
 
     @Override
@@ -158,12 +157,12 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         return getDocumentUris(ids, null);
     }
 
-    private Object uriToId(String uri, DocumentFormat format, String baseUri, Class<?> idType) {
+    private Object uriToId(String uri, Format format, String baseUri, Class<?> idType) {
         String id = uri.substring(baseUri.length(), uri.indexOf("." + format.toString().toLowerCase()));
         return converter.convert(id, idType);
     }
 
-    private String idToUri(Object id, DocumentFormat format, String baseUri) {
+    private String idToUri(Object id, Format format, String baseUri) {
         return baseUri + String.valueOf(id) + "." + format.toString().toLowerCase();
     }
 

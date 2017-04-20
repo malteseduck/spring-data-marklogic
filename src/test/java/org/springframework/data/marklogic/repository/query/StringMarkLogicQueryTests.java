@@ -27,6 +27,7 @@ import org.springframework.data.marklogic.core.Pet;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
+import org.springframework.data.marklogic.repository.PersonXmlRepository;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,6 +113,17 @@ public class StringMarkLogicQueryTests {
 		);
 		assertThat(query.serialize())
 				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
+	}
+
+
+	@Test
+	public void testConvertsToProperXML() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonXmlRepository.class, "qbeFindByName", String.class),
+				"Bubba"
+		);
+		assertThat(query.serialize())
+				.isEqualTo("<search xmlns=\"http://marklogic.com/appservices/search\"><q:qbe xmlns:q=\"http://marklogic.com/appservices/querybyexample\"><q:query xmlns=\"\"><name>Bubba</name></q:query></q:qbe></search>");
 	}
 
 //

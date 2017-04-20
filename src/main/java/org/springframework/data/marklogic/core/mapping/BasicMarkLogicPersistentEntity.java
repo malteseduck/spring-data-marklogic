@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.core.mapping;
 
+import com.marklogic.client.io.Format;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -14,7 +15,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
         MarkLogicPersistentEntity<T>, ApplicationContextAware {
 
     private TypePersistenceStrategy typePersistenceStrategy;
-    private DocumentFormat documentFormat;
+    private Format documentFormat;
     private String baseUri;
 
     public BasicMarkLogicPersistentEntity(TypeInformation<T> information) {
@@ -26,13 +27,13 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
 
         Document document = this.findAnnotation(Document.class);
         TypePersistenceStrategy defaultTypeStrategy = TypePersistenceStrategy.COLLECTION;
-        DocumentFormat defaultFormat = DocumentFormat.JSON;
+        Format defaultFormat = Format.JSON;
         String defaultUri = "/";
 
         if (document != null) {
             this.baseUri = normalize(coalesce(document.uri(), document.value(), defaultUri));
-            this.documentFormat = document.format() != null ? document.format() : defaultFormat;
-            this.typePersistenceStrategy = document.typeStrategy() != null ? document.typeStrategy() : defaultTypeStrategy;
+            this.documentFormat = document.format().toFormat();
+            this.typePersistenceStrategy = document.typeStrategy();
         } else {
             this.baseUri = defaultUri;
             this.typePersistenceStrategy = defaultTypeStrategy;
@@ -55,7 +56,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     }
 
     @Override
-    public DocumentFormat getDocumentFormat() {
+    public Format getDocumentFormat() {
         return this.documentFormat;
     }
 

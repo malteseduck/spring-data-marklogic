@@ -1,22 +1,18 @@
 package org.springframework.data.marklogic.repository.query;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeCreator;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.impl.AbstractQueryDefinition;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import org.json.JSONObject;
+import org.json.XML;
+import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.util.StringUtils;
 
 /**
  * Allow us to keep a running build of query/options so we can set them throughout the different processing levels.  The
@@ -30,13 +26,11 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     private StructuredQueryDefinition structuredQuery;
     private RawQueryByExampleDefinition qbe;
+    private Format qbeFormat;
     private List<String> options;
     private String qtext;
     private String sparql;
     private StructuredQueryBuilder qb;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private JsonNodeCreator factory = JsonNodeFactory.instance;
-
 
     public CombinedQueryDefinitionBuilder() {
         super();
@@ -50,8 +44,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe) {
+        this(qbe, Format.JSON);
+    }
+
+    public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe, Format format) {
         this();
-        qbe.withHandle(new StringHandle(qbe.toString()).withFormat(Format.JSON));
+        qbe.withHandle(new StringHandle(qbe.toString()).withFormat(format));
+        this.qbeFormat = format;
         this.qbe = qbe;
     }
 
@@ -62,61 +61,58 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     @Override
     public String serialize() {
-        // TODO: Switch to use multi-part so we can keep options as XML?
-        // TODO: Use Jackson library
-        if (isQbe()) {
-            ObjectNode search = factory.objectNode();
+        if (isQbe() && qbeFormat == Format.JSON) {
+
+            JSONObject search = new JSONObject();
 
             if (!options.isEmpty()) {
-                ObjectNode optionsJson = factory.objectNode();
+                JSONObject optionsJson = new JSONObject();
                 options.stream()
-                    .map(option -> {
-                        try {
-                            return objectMapper.readTree(option);
-                        } catch (IOException ex) {
-                            throw new IllegalArgumentException(option);
-                        }
-                    })
-                    .forEach(option -> {
-                        // Fix path indexes - they don't convert "nicely" like many of the other indexes
-                        String index = (String) option.at("/sort-order/path-index").asText();
-                        if (!StringUtils.isEmpty(index)) {
-                            optionsJson
-                                    .set(unique("sort-order"), factory.objectNode()
-                                            .put("direction", option.at("/sort-order/direction").asText())
-                                            .set("path-index", factory.objectNode()
-                                                    .put("text", index)
-                                            )
-                                    );
-                        } else {
-                            option.fieldNames().forEachRemaining(key -> optionsJson.set(unique(key), option.get(key)));
-                        }
-                    });
+                        .map(XML::toJSONObject)
+                        .forEach(option -> {
+                            // Fix path indexes - they don't convert "nicely" like many of the other indexes
+                            String index = (String) option.query("/sort-order/path-index");
+                            if (!StringUtils.isEmpty(index)) {
+                                optionsJson
+                                        .put(unique("sort-order"), new JSONObject()
+                                                .put("direction", option.query("/sort-order/direction"))
+                                                .put("path-index", new JSONObject()
+                                                        .put("text", index)
+                                                )
+                                        );
+                            } else {
+                                option.keys().forEachRemaining(key -> optionsJson.put(unique(key), option.get(key)));
+                            }
+                        });
 
-                search.set("options", optionsJson);
+                search.put("options", optionsJson);
             } else {
                 // We need an empty options node or the REST API is unhappy, which makes us unhappy
-                search.set("options", factory.objectNode());
+                search.put("options", new JSONObject());
             }
 
             if (qbe != null) {
-                try {
-                    search.set("$query", objectMapper.readTree(qbe.toString()));
-                } catch (IOException ex) {
-                    throw new IllegalArgumentException(qbe.toString());
-                }
+                search.put("$query", new JSONObject(qbe.toString()));
             }
 
             // Make sure it is "proper" JSON so that MarkLogic is happy
-            return factory.objectNode().set("search", search).toString()
+            return new JSONObject().put("search", search).toString()
                     .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
+
         } else {
             StringBuilder search = new StringBuilder();
 
             search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
 
-            // TODO: Can we put the structured query in "additional-query" if the "main" query is a QBE?
-            if (structuredQuery != null && !isQbe()) {
+            if (isQbe() && qbeFormat == Format.XML) {
+                // TODO: Can we put the structured query in "additional-query" if the "main" query is a QBE?
+                // TODO: Support "true" XML QBE instead of converting the JSON to XML?
+                search.append("<q:qbe xmlns:q=\"http://marklogic.com/appservices/querybyexample\">");
+                JSONObject json = new JSONObject(qbe.toString());
+                // TODO: Somehow support namespaces?
+                search.append(XML.toString(json, "q:query").replace("<q:query", "<q:query xmlns=\"\""));
+                search.append("</q:qbe>");
+            } else if (structuredQuery != null) {
                 search.append(structuredQuery.serialize());
             }
 
@@ -153,7 +149,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             qbe.setDirectory(getDirectory());
             qbe.setResponseTransform(getResponseTransform());
             qbe.setOptionsName(getOptionsName());
-            qbe.setHandle(new StringHandle(serialize()).withFormat(Format.JSON));
+            qbe.setHandle(new StringHandle(serialize()).withFormat(qbeFormat));
         }
         return qbe;
     }
