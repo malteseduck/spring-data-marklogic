@@ -1,10 +1,21 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.io.Format;
+import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.io.ValuesHandle;
+import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import com.marklogic.client.query.ValuesDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.util.Assert;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 interface MarkLogicQueryExecution {
 
@@ -19,7 +30,7 @@ interface MarkLogicQueryExecution {
         private final Pageable pageable;
 
         PagedExecution(MarkLogicOperations operations, Pageable pageable) {
-            Assert.notNull(operations, "MongoOperations must not be null!");
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
             Assert.notNull(pageable, "Need a Pageable in order to page");
             this.operations = operations;
             this.pageable = pageable;
@@ -59,7 +70,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         SingleEntityExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations, "MongoOperations must not be null!");
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
             this.operations = operations;
         }
 
@@ -75,7 +86,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         CountExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations, "MongoOperations must not be null!");
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
             this.operations = operations;
         }
 
@@ -90,7 +101,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         ExistsExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations, "MongoOperations must not be null!");
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
             this.operations = operations;
         }
 
@@ -101,6 +112,46 @@ interface MarkLogicQueryExecution {
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
             return operations.exists(query, type);
+        }
+    }
+
+    final class DeleteExecution implements MarkLogicQueryExecution {
+
+        private final MarkLogicOperations operations;
+
+        DeleteExecution(MarkLogicOperations operations) {
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
+            this.operations = operations;
+        }
+
+        @Override
+        public Object execute(StructuredQueryDefinition query, Class<?> type) {
+            return operations.executeWithClient((client, transaction) -> {
+                QueryManager qryMgr = client.newQueryManager();
+                CombinedQueryDefinition combined = new CombinedQueryDefinitionBuilder(query)
+                        .withOptions(asList(
+                                "<values name='uris'><uri/></values>"
+                        ));
+
+                combined = (CombinedQueryDefinition) operations.getConverter().wrapQuery(combined, type);
+                ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");
+                valDef.setQueryDefinition(
+                        qryMgr.newRawCombinedQueryDefinition(new StringHandle(combined.serialize()).withFormat(Format.XML))
+                );
+
+                ValuesHandle results = qryMgr.values(valDef, new ValuesHandle(), transaction);
+
+                // Convert the facets to just a list of the ids so we can filter them down
+                List<String> uris = Arrays.stream(results.getValues())
+                        .map(value -> value.get("xs:string", String.class))
+                        .collect(Collectors.toList());
+
+                if (!uris.isEmpty()) {
+                    client.newDocumentManager().delete(transaction, uris.toArray(new String[0]));
+                }
+
+                return null;
+            });
         }
     }
 

@@ -1,18 +1,16 @@
 package org.springframework.data.marklogic.repository.query.convert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.marklogic.client.io.Format;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryBuilder.TextIndex;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.data.marklogic.core.mapping.DocumentFormat;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 import java.time.*;
 import java.util.*;
-
-import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
 
 public class DefaultMarkLogicQueryConversionService implements QueryConversionService {
 
@@ -194,16 +192,16 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         @Override
         @SuppressWarnings("unchecked")
         public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, QueryConversionService service) {
-            DocumentFormat format = index instanceof StructuredQueryBuilder.JSONProperty ? DocumentFormat.JSON : XML;
+            Format format = index instanceof StructuredQueryBuilder.JSONProperty ? Format.JSON : Format.XML;
             return qb.containerQuery((StructuredQueryBuilder.ContainerIndex) index, convert((Map<String, Object>) source, format, service));
         }
 
-        protected StructuredQueryDefinition convert(Map<String, Object> props, DocumentFormat format, QueryConversionService service) {
+        protected StructuredQueryDefinition convert(Map<String, Object> props, Format format, QueryConversionService service) {
             if (!props.isEmpty() && service != null) {
                 return qb.and(
                         props.entrySet().stream()
                                 .map(entry -> {
-                                    TextIndex index = format == XML
+                                    TextIndex index = format == Format.XML
                                             ? qb.element(entry.getKey())
                                             : qb.jsonProperty(entry.getKey());
                                     return service.convert(index, entry.getValue(), null);

@@ -15,6 +15,7 @@
  */
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.io.Format;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryBuilder.ContainerIndex;
 import com.marklogic.client.query.StructuredQueryBuilder.TextIndex;
@@ -39,7 +40,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
-import static org.springframework.data.marklogic.core.mapping.DocumentFormat.XML;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
 
@@ -169,7 +169,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
     }
 
     private TextIndex getTextIndex(String name) {
-        return XML.equals(method.getFormat()) ? qb.element(name) : qb.jsonProperty(name);
+        return Format.XML.equals(method.getFormat()) ? qb.element(name) : qb.jsonProperty(name);
     }
 
     private String[] formatWords(Object values, String format) {

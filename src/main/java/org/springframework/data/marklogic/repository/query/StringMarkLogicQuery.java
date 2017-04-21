@@ -4,6 +4,7 @@ import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import org.json.JSONObject;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
@@ -76,6 +77,11 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         return false;
     }
 
+    @Override
+    protected boolean isDeleteQuery() {
+        return false;
+    }
+
 
     // TODO: Copied from spring-data-mongo - what can be chopped?
     private enum ParameterBindingParser {
@@ -106,7 +112,7 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
             String transformedInput = transformQueryAndCollectExpressionParametersIntoBindings(input, bindings);
             String parseableInput = makeParameterReferencesParseable(transformedInput);
 
-            collectParameterReferencesIntoBindings(bindings, parseableInput);
+            collectParameterReferencesIntoBindings(bindings, new JSONObject(parseableInput));
 
             return transformedInput;
         }
@@ -181,14 +187,16 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
                 while (valueMatcher.find()) {
 
                     int paramIndex = Integer.parseInt(valueMatcher.group(PARAMETER_INDEX_GROUP));
-
-					/*
-					 * The pattern is used as a direct parameter replacement, e.g. 'field': ?1,
-					 * therefore we treat it as not quoted to remain backwards compatible.
-					 */
                     boolean quoted = !string.equals(PARAMETER_PREFIX + paramIndex);
 
                     bindings.add(new ParameterBinding(paramIndex, quoted));
+                }
+            } else if (value instanceof JSONObject) {
+                JSONObject ob = (JSONObject) value;
+
+                for (String field : ob.keySet()) {
+                    collectParameterReferencesIntoBindings(bindings, field);
+                    collectParameterReferencesIntoBindings(bindings, ob.get(field));
                 }
             }
         }

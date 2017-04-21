@@ -115,6 +115,15 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testDeleteByIdCorrectly() throws Exception {
+        repository.deleteById(george.getId());
+
+        List<Person> people = repository.findAll();
+        assertThat(people).hasSize(all.size() - 1);
+        assertThat(people).doesNotContain(george);
+    }
+
+    @Test
     public void testDeletesPersonByIdCorrectly() {
         repository.delete(bobby.getId());
 

@@ -38,7 +38,9 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
     }
 
     private MarkLogicQueryExecution getExecution(ParameterAccessor accessor) {
-        if (isExistsQuery()) {
+        if (isDeleteQuery()) {
+            return new DeleteExecution(operations);
+        } else if (isExistsQuery()) {
             return new ExistsExecution(operations);
         } else if (isCountQuery()) {
             return new CountExecution(operations);
@@ -56,4 +58,5 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
     protected abstract boolean isCountQuery();
     protected abstract boolean isExistsQuery();
+    protected abstract boolean isDeleteQuery();
 }

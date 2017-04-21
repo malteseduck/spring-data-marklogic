@@ -414,11 +414,7 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        operations.sortQuery(
-                                new Sort("age"),
-                                qb.value(qb.jsonProperty("gender"), "female"),
-                                Person.class
-                        ).serialize()
+                        qb.value(qb.jsonProperty("id"), "23").serialize()
                 );
     }
 

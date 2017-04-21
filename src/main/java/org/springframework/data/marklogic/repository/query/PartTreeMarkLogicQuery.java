@@ -72,4 +72,9 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
         return tree.isExistsProjection();
     }
 
+    @Override
+    protected boolean isDeleteQuery() {
+        return tree.isDelete();
+    }
+
 }

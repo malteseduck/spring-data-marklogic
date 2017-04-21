@@ -17,6 +17,7 @@ package org.springframework.data.marklogic.repository.query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONObject;
 import org.springframework.data.marklogic.repository.query.StringMarkLogicQuery.ParameterBinding;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.ParameterAccessor;
@@ -156,7 +157,7 @@ class ExpressionEvaluatingParameterBinder {
 				return (String) value;
 			}
 
-			return QuotedString.unquote((String) value);
+			return QuotedString.unquote(JSONObject.quote((String) value));
 		}
 
 		try {
@@ -214,27 +215,30 @@ class ExpressionEvaluatingParameterBinder {
 	 */
 	private Placeholder extractPlaceholder(int parameterIndex, Matcher matcher) {
 
-		if (matcher.groupCount() > 1) {
+		String rawPlaceholder = matcher.group(parameterIndex * 3 + 1);
+		String suffix = matcher.group(parameterIndex * 3 + 2);
 
-			String rawPlaceholder = matcher.group(parameterIndex * 2 + 1);
-			String suffix = matcher.group(parameterIndex * 2 + 2);
+		if (!StringUtils.hasText(rawPlaceholder)) {
 
-			if (!StringUtils.hasText(rawPlaceholder)) {
-
-				rawPlaceholder = matcher.group();
-				suffix = "" + rawPlaceholder.charAt(rawPlaceholder.length() - 1);
-				if (QuotedString.endsWithQuote(rawPlaceholder)) {
-					rawPlaceholder = QuotedString.unquoteSuffix(rawPlaceholder);
+			rawPlaceholder = matcher.group();
+			if (rawPlaceholder.matches(".*\\d$")) {
+				suffix = "";
+			} else {
+				int index = rawPlaceholder.replaceAll("[^\\?0-9]*$", "").length() - 1;
+				if (index > 0 && rawPlaceholder.length() > index) {
+					suffix = rawPlaceholder.substring(index + 1);
 				}
 			}
-
-			if (StringUtils.hasText(suffix)) {
-				boolean quoted = QuotedString.endsWithQuote(suffix);
-				return new Placeholder(parameterIndex, rawPlaceholder, quoted, quoted ? QuotedString.unquoteSuffix(suffix) : suffix);
+			if (QuotedString.endsWithQuote(rawPlaceholder)) {
+				rawPlaceholder = rawPlaceholder.substring(0, rawPlaceholder.length() - (StringUtils.hasText(suffix) ? suffix.length() : 1));
 			}
 		}
 
-		return new Placeholder(parameterIndex, matcher.group(), false, null);
+		if (StringUtils.hasText(suffix)) {
+			boolean quoted = QuotedString.endsWithQuote(suffix);
+			return new Placeholder(parameterIndex, rawPlaceholder, quoted, quoted ? QuotedString.unquoteSuffix(suffix) : suffix);
+		}
+		return new Placeholder(parameterIndex, rawPlaceholder, false, null);
 	}
 
 	/**
@@ -353,17 +357,13 @@ class ExpressionEvaluatingParameterBinder {
 			Placeholder that = (Placeholder) o;
 
 			if (parameterIndex != that.parameterIndex) return false;
-			if (quoted != that.quoted) return false;
-			if (parameter != null ? !parameter.equals(that.parameter) : that.parameter != null) return false;
-			return suffix != null ? suffix.equals(that.suffix) : that.suffix == null;
+			return parameter != null ? parameter.equals(that.parameter) : that.parameter == null;
 		}
 
 		@Override
 		public int hashCode() {
 			int result = parameterIndex;
 			result = 31 * result + (parameter != null ? parameter.hashCode() : 0);
-			result = 31 * result + (quoted ? 1 : 0);
-			result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
 			return result;
 		}
 	}
