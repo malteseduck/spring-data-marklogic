@@ -254,17 +254,13 @@ public class MarkLogicQueryCreatorTests {
 
     @Test
     public void testOnlyGenerateLikeExpressionsForStringsIfAllIgnoreCase() throws Exception {
+        expectation.expect(IllegalArgumentException.class);
+        expectation.expectMessage("must be of type String");
+
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByNameAndAgeAllIgnoreCase", String.class, int.class),
                 "bobby", 23
         ).createQuery();
-        assertThat(query.serialize())
-                .isEqualTo(
-                        qb.and(
-                                qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "bobby"),
-                                qb.value(qb.jsonProperty("age"), 23)
-                        ).serialize()
-                );
     }
 
     @Test
@@ -307,6 +303,24 @@ public class MarkLogicQueryCreatorTests {
     }
 
     @Test
+    public void testQueryOnDeepLeafProperty() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByPetsImmunizationsType", String.class),
+                "shot"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.containerQuery(
+                                qb.jsonProperty("pets"),
+                                qb.containerQuery(
+                                        qb.jsonProperty("immunizations"),
+                                        qb.value(qb.jsonProperty("type"), "shot")
+                                )
+                        ).serialize()
+                );
+    }
+
+    @Test
     public void testIgnoreCaseOnLeafProperty() throws Exception {
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByPetsNameIgnoreCase", String.class),
@@ -343,7 +357,8 @@ public class MarkLogicQueryCreatorTests {
                 .isEqualTo(
                         qb.containerQuery(qb.jsonProperty("pets"), qb.and(
                                 qb.value(qb.jsonProperty("name"), "Fluffy"),
-                                qb.value(qb.jsonProperty("type"), "lion")
+                                qb.value(qb.jsonProperty("type"), "lion"),
+                                qb.value(qb.jsonProperty("immunizations"), new String[]{null})
                         )).serialize()
                 );
     }
@@ -372,20 +387,10 @@ public class MarkLogicQueryCreatorTests {
                         qb.containerQuery(qb.jsonProperty("pets"), qb.and(
                                 qb.value(qb.jsonProperty("name"), "Fluffy"),
                                 qb.value(qb.jsonProperty("type"), "lion"),
+                                qb.value(qb.jsonProperty("immunizations"), new String[]{ null }),
                                 qb.value(qb.jsonProperty("age"), 10)
                         )).serialize()
                 );
-    }
-
-    @Test
-    public void testThrowsExceptionWhenArgumentNotMatchingDeclaration() throws Exception {
-        expectation.expect(IllegalArgumentException.class);
-        expectation.expectMessage("Expected parameter type of " + Pet.class);
-
-        StructuredQueryDefinition query = creator(
-                queryMethod(PersonRepository.class, "findByPets", Pet.class),
-                "Fluffy"
-        ).createQuery();
     }
 
     @Test

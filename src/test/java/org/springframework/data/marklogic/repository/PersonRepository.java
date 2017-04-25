@@ -97,6 +97,8 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByPetsName(String name);
 
+    List<Person> findByPetsImmunizationsType(String type);
+
     List<Person> findByPetsNameIgnoreCase(String name);
 
     // ====== Range queries ======

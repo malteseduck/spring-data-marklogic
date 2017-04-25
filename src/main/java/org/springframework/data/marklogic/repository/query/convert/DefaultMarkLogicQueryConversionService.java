@@ -88,11 +88,13 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
     }
 
     protected TypeDescriptor getTypeFromSource(Object source, TypeDescriptor sourceType) {
-        if (source instanceof Collection || source.getClass().isArray()) {
-            if (source instanceof Collection && !((Collection) source).isEmpty()) {
-                sourceType = TypeDescriptor.forObject(((Collection) source).iterator().next());
-            } else if (source.getClass().isArray() && ((Object[]) source).length > 0) {
-                sourceType = TypeDescriptor.forObject(((Object[]) source)[0]);
+        if (source != null) {
+            if (source instanceof Collection || source.getClass().isArray()) {
+                if (source instanceof Collection && !((Collection) source).isEmpty()) {
+                    sourceType = TypeDescriptor.forObject(((Collection) source).iterator().next());
+                } else if (source.getClass().isArray() && ((Object[]) source).length > 0) {
+                    sourceType = TypeDescriptor.forObject(((Object[]) source)[0]);
+                }
             }
         }
 

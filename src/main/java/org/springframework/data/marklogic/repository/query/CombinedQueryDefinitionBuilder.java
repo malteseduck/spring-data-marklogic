@@ -1,5 +1,10 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.impl.AbstractQueryDefinition;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -10,6 +15,7 @@ import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,11 +37,20 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private String qtext;
     private String sparql;
     private StructuredQueryBuilder qb;
+    private ObjectMapper objectMapper = new ObjectMapper();
+    private JsonNodeCreator factory = JsonNodeFactory.instance;
+
 
     public CombinedQueryDefinitionBuilder() {
         super();
         this.qb = new StructuredQueryBuilder();
         this.options = new ArrayList<>();
+
+        // To allow "javascript objects" for the query language
+        objectMapper
+                .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
+                .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+
     }
 
     public CombinedQueryDefinitionBuilder(StructuredQueryDefinition structuredQuery) {
@@ -63,40 +78,52 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public String serialize() {
         if (isQbe() && qbeFormat == Format.JSON) {
 
-            JSONObject search = new JSONObject();
+            ObjectNode search = factory.objectNode();
+
+            if (qbe != null) {
+                try {
+                    search.set("$query", objectMapper.readTree(qbe.toString()));
+                } catch (IOException ex) {
+                    throw new IllegalArgumentException(qbe.toString());
+                }
+            }
 
             if (!options.isEmpty()) {
-                JSONObject optionsJson = new JSONObject();
+                ObjectNode optionsJson = factory.objectNode();
                 options.stream()
                         .map(XML::toJSONObject)
-                        .forEach(option -> {
+                        .map(JSONObject::toString)
+                        .map(option -> {
+                            try {
+                                return objectMapper.readTree(option);
+                            } catch (IOException ex) {
+                                throw new IllegalArgumentException(option);
+                            }
+                        })
+                        .forEachOrdered(option -> {
                             // Fix path indexes - they don't convert "nicely" like many of the other indexes
-                            String index = (String) option.query("/sort-order/path-index");
+                            String index = (String) option.at("/sort-order/path-index").asText();
                             if (!StringUtils.isEmpty(index)) {
                                 optionsJson
-                                        .put(unique("sort-order"), new JSONObject()
-                                                .put("direction", option.query("/sort-order/direction"))
-                                                .put("path-index", new JSONObject()
+                                        .set(unique("sort-order"), factory.objectNode()
+                                                .put("direction", option.at("/sort-order/direction").asText())
+                                                .set("path-index", factory.objectNode()
                                                         .put("text", index)
                                                 )
                                         );
                             } else {
-                                option.keys().forEachRemaining(key -> optionsJson.put(unique(key), option.get(key)));
+                                option.fieldNames().forEachRemaining(key -> optionsJson.set(unique(key), option.get(key)));
                             }
                         });
 
-                search.put("options", optionsJson);
+                search.set("options", optionsJson);
             } else {
                 // We need an empty options node or the REST API is unhappy, which makes us unhappy
-                search.put("options", new JSONObject());
-            }
-
-            if (qbe != null) {
-                search.put("$query", new JSONObject(qbe.toString()));
+                search.set("options", factory.objectNode());
             }
 
             // Make sure it is "proper" JSON so that MarkLogic is happy
-            return new JSONObject().put("search", search).toString()
+            return factory.objectNode().set("search", search).toString()
                     .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
 
         } else {
@@ -180,6 +207,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         return this;
     }
 
+    // TODO: Support passing JSON options like this: "{ 'sort-order': { direction : 'ascending', 'path-index': { text: '/name' } } }"?
     @Override
     public CombinedQueryDefinition withOptions(List<String> options) {
         this.options.addAll(options);

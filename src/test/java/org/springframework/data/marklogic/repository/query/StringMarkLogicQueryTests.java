@@ -59,7 +59,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
 	}
 
 	@Test
@@ -70,7 +70,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female' }, 'options': { 'sort-order': { 'direction' : 'ascending', 'path-index': { 'text': '/name' } } } } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { gender: 'female' }, options: { 'sort-order': { direction : 'ascending', 'path-index': { text: '/name' } } } } }"));
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female' }, 'options': { 'sort-order': { 'direction': 'ascending', 'element': { 'ns': '', 'name': 'description' } } } } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { gender: 'female' }, options: { 'sort-order': { direction: 'ascending', element: { ns: '', name: 'description' } } } } }"));
 	}
 
 	@Test
@@ -92,7 +92,7 @@ public class StringMarkLogicQueryTests {
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'gender': 'female'}, 'options': { 'sort-order': { 'direction': 'ascending', 'path-index': { 'text': '/name' } }, 'sort-order%': { 'direction': 'descending', 'path-index': { 'text': '/age' } } } } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { gender: 'female'}, options: { 'sort-order': { direction: 'ascending', 'path-index': { text: '/name' } }, 'sort-order%': { direction: 'descending', path-index: { text: '/age' } } } } }"));
 	}
 
 	@Test
@@ -102,7 +102,7 @@ public class StringMarkLogicQueryTests {
 				new Pet("Fluffy", "cat")
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'pets': { 'name': 'Fluffy', 'type': 'cat' } }, 'options': {} } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { pets: { name: 'Fluffy', type: 'cat', immunizations: null } }, options: {} } }"));
 	}
 
 	@Test
@@ -112,7 +112,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
 	}
 
 
@@ -133,7 +133,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ 'search': { '$query': { 'name': 'Bubba' }, 'options': {} } }"));
+				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
 
 	}
 

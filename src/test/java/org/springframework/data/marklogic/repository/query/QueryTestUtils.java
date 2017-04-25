@@ -1,10 +1,11 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.StructuredQueryDefinition;
-import org.json.JSONObject;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
@@ -18,6 +19,7 @@ import org.springframework.data.repository.query.DefaultEvaluationContextProvide
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 import static org.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
@@ -25,6 +27,10 @@ import static org.springframework.data.marklogic.repository.query.StubParameterA
 public class QueryTestUtils {
 
     static SpelExpressionParser PARSER = new SpelExpressionParser();
+
+    private static ObjectMapper objectMapper = new ObjectMapper()
+            .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
+            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
     private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23, "nobody", "nothing", DatabaseClientFactory.Authentication.DIGEST);
 
@@ -38,8 +44,8 @@ public class QueryTestUtils {
         ).serialize();
     }
 
-    public static String jsonQuery(String qbe) {
-        return new JSONObject(qbe).toString().replace("%", "");
+    public static String jsonQuery(String qbe) throws IOException {
+        return objectMapper.readTree(qbe).toString().replace("%", "");
     }
 
     public static MarkLogicQueryMethod queryMethod(Class<?> repository, String name, Class<?>... parameters) throws Exception {

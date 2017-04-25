@@ -10,10 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.Person;
-import org.springframework.data.marklogic.core.PersonXml;
-import org.springframework.data.marklogic.core.Pet;
+import org.springframework.data.marklogic.core.*;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -51,7 +48,9 @@ public class PersonRepositoryIT {
     public void init() {
         cleanDb();
 
-        andrea = new Person("Andrea", 17, "female", "food prep", "There isn't much to say", Instant.parse("2016-04-01T00:00:00Z"), asList("sewing", "karate"), asList(new Pet("Fluffy", "cat")));
+        Pet fluffy = new Pet("Fluffy", "cat");
+        fluffy.setImmunizations(asList(new Immunization("flu", "shot")));
+        andrea = new Person("Andrea", 17, "female", "food prep", "There isn't much to say", Instant.parse("2016-04-01T00:00:00Z"), asList("sewing", "karate"), asList(fluffy));
         bobby = new Person("Bobby", 23, "male", "dentist", "", Instant.parse("2016-01-01T00:00:00Z"), asList("running", "origami"), asList(new Pet("Bowwow", "dog")));
         george = new Person("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-02-01T00:00:00Z"), asList("fishing", "hunting", "sewing"), asList(new Pet("Hazelnut", "snake"), new Pet("Snoopy", "dog")));
         henry = new Person("Henry", 32, "male", "construction", "He built my house", Instant.parse("2016-05-01T00:00:00Z"), asList("carpentry", "gardening"));
@@ -311,6 +310,12 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindByPetImmunizationsType() throws Exception {
+        List<Person> people = repository.findByPetsImmunizationsType("shot");
+        assertThat(people).containsExactly(andrea);
+    }
+
+    @Test
     public void testFindByNameQBE() throws Exception {
         Person person = repository.qbeFindByName("Bobby");
         assertThat(person).isEqualTo(bobby);
@@ -336,8 +341,8 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindByPetQBE() throws Exception {
-        List<Person> people = repository.qbeFindByPet(new Pet("Fluffy", "cat"));
-        assertThat(people).containsExactly(andrea);
+        List<Person> people = repository.qbeFindByPet(new Pet("Snoopy", "dog"));
+        assertThat(people).containsExactly(george);
     }
 
     @Test

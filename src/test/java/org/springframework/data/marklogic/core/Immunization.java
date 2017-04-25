@@ -1,15 +1,13 @@
 package org.springframework.data.marklogic.core;
 
-import java.util.List;
+public class Immunization {
+    String name = "";
+    String type = "";
 
-public class Pet {
-    String name;
-    String type;
-    List<Immunization> immunizations;
+    public Immunization() {
+    }
 
-    public Pet() {}
-
-    public Pet(String name, String type) {
+    public Immunization(String name, String type) {
         this.name = name;
         this.type = type;
     }
@@ -30,23 +28,15 @@ public class Pet {
         this.type = type;
     }
 
-    public List<Immunization> getImmunizations() {
-        return immunizations;
-    }
-
-    public void setImmunizations(List<Immunization> immunizations) {
-        this.immunizations = immunizations;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Pet pet = (Pet) o;
+        Immunization that = (Immunization) o;
 
-        if (name != null ? !name.equals(pet.name) : pet.name != null) return false;
-        return type != null ? type.equals(pet.type) : pet.type == null;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        return type != null ? type.equals(that.type) : that.type == null;
     }
 
     @Override
@@ -56,3 +46,5 @@ public class Pet {
         return result;
     }
 }
+
+
