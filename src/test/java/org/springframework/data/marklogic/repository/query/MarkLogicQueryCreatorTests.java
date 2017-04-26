@@ -159,6 +159,21 @@ public class MarkLogicQueryCreatorTests {
     }
 
     @Test
+    public void testBetweenRangeQuery() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByAgeBetween", int.class, int.class),
+                20, 30
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.and(
+                            qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 20),
+                            qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 30)
+                        ).serialize()
+                );
+    }
+
+    @Test
     public void testPropertyExists() throws Exception {
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByAgeExists")

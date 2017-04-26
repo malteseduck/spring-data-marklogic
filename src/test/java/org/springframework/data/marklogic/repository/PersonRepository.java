@@ -169,6 +169,5 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     Slice<Person> findTop1ByNameOrderByName(String name, Pageable page);
 
     // ====== Streaming queries ======
-
     Stream<Person> readAllByAgeNotNull();
 }

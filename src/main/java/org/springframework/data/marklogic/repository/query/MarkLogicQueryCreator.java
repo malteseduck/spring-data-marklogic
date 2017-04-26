@@ -148,7 +148,10 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
             case LESS_THAN_EQUAL:
                 return createRangeCriteria(property, LE, parameters.next());
             case BETWEEN:
-                throw new IllegalArgumentException("Unsupported keyword!");
+                return qb.and(
+                        createRangeCriteria(property, GE, parameters.next()),
+                        createRangeCriteria(property, LE, parameters.next())
+                );
             case IS_NOT_NULL:
                 return qb.not(createValueCriteria(property, null, ignoreCase));
             case IS_NULL:
@@ -221,7 +224,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
 
     private StructuredQueryDefinition createValueCriteria(MarkLogicPersistentProperty property, Object values, boolean ignoreCase) {
         if (QueryType.RANGE == method.getQueryType()) return createRangeCriteria(property, EQ, values);
-        
+
         TextIndex index = getTextIndex(property.getName());
 
         List<String> options = new ArrayList<>();
