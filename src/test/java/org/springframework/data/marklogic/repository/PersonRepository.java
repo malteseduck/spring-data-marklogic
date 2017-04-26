@@ -21,6 +21,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
 import org.springframework.data.marklogic.core.Pet;
+import org.springframework.data.marklogic.repository.query.QueryType;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -104,13 +105,14 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     // ====== Range queries ======
     List<Person> findByAgeBetween(int from, int to);
 
-    List<Person> findByBirthtimeLessThan(Instant date);
-
     List<Person> findByBirthtimeGreaterThan(Instant date);
 
     List<Person> findByAgeLessThanEqual(int age);
 
     List<Person> findByAgeGreaterThanEqual(int age);
+
+    @Query(type = QueryType.RANGE)
+    List<Person> findByGender(String gender);
 
     // ====== Exists/count checks ======
     long countByName(String name);
@@ -118,7 +120,6 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     boolean existsByName(String name);
 
     // ====== Delete checks ======
-    // TODO: Implement delete-by-query logic?  Require uri lexicon?
     void deleteById(String id);
 
     void deleteByName(String name);

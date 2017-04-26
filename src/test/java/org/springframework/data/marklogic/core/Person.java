@@ -20,6 +20,7 @@ public class Person {
     private String occupation;
     @Indexed(type = IndexType.ELEMENT)
     private String description;
+    @Indexed(type = IndexType.ELEMENT)
     private Instant birthtime;
     private List<Integer> rankings;
     private List<String> hobbies;

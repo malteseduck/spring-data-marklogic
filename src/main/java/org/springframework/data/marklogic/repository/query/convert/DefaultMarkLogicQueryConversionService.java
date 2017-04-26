@@ -1,11 +1,13 @@
 package org.springframework.data.marklogic.repository.query.convert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.marklogic.client.io.Format;
 import com.marklogic.client.query.StructuredQueryBuilder;
+import com.marklogic.client.query.StructuredQueryBuilder.ContainerIndex;
+import com.marklogic.client.query.StructuredQueryBuilder.RangeIndex;
 import com.marklogic.client.query.StructuredQueryBuilder.TextIndex;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.data.marklogic.repository.query.QueryType;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -37,13 +39,13 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
 
     @Override
     @SuppressWarnings("unchecked")
-    public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
+    public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
         return convert(index, source, options, TypeDescriptor.forObject(source));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, TypeDescriptor sourceType) {
+    public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options, TypeDescriptor sourceType) {
         if (sourceType == null) {
             Assert.isTrue(source == null, "Source must be [null] if source type == [null]");
             return convertNullSource(index, options);
@@ -57,6 +59,9 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
 
         QueryTypeConverter converter = getConverter(sourceType);
         if (converter != null) {
+            if (!converter.supports(index)) {
+                throw new IllegalArgumentException("Type of [" + sourceType + "] is not supported by [" + converter.getClass().getName() + "]");
+            }
             return converter.convert(index, source, options, this);
         }
 
@@ -105,7 +110,7 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         }
     }
 
-    protected StructuredQueryDefinition convertNullSource(TextIndex index, List<String> options) {
+    protected StructuredQueryDefinition convertNullSource(PropertyIndex index, List<String> options) {
         return ObjectToStringValueConverter.INSTANCE.convert(index, null, options);
     }
 
@@ -131,8 +136,15 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
-            return numberValueQuery(index, options, source);
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
+            return index.getType() == QueryType.RANGE
+                    ? rangeQuery(index, options, source)
+                    : numberValueQuery(index, options, source);
+        }
+
+        @Override
+        public boolean supports(PropertyIndex index) {
+            return index.get() instanceof TextIndex || index.get() instanceof RangeIndex;
         }
     }
 
@@ -140,8 +152,15 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
-            return booleanValueQuery(index, options, source);
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
+            return index.getType() == QueryType.RANGE
+                    ? rangeQuery(index, options, source)
+                    : booleanValueQuery(index, options, source);
+        }
+
+        @Override
+        public boolean supports(PropertyIndex index) {
+            return index.getType() == QueryType.VALUE || index.getType() == QueryType.RANGE;
         }
     }
 
@@ -149,12 +168,19 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
             Instant instant;
             if (source instanceof Calendar) instant = ((Calendar)source).toInstant();
             else if (source instanceof Date) instant = ((Date)source).toInstant();
             else instant = Instant.parse(source.toString());
-            return stringValueQuery(index, options, instant);
+            return index.getType() == QueryType.RANGE
+                    ? rangeQuery(index, options, instant)
+                    : stringValueQuery(index, options, instant);
+        }
+
+        @Override
+        public boolean supports(PropertyIndex index) {
+            return index.getType() == QueryType.VALUE || index.getType() == QueryType.RANGE;
         }
     }
 
@@ -162,8 +188,15 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
-            return stringValueQuery(index, options, source);
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
+            return index.getType() == QueryType.RANGE
+                    ? rangeQuery(index, options, source)
+                    : stringValueQuery(index, options, source);
+        }
+
+        @Override
+        public boolean supports(PropertyIndex index) {
+            return index.getType() == QueryType.VALUE || index.getType() == QueryType.RANGE;
         }
     }
 
@@ -171,13 +204,13 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
             return convert(index, source, options, null);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, QueryConversionService service) {
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options, QueryConversionService service) {
             Map<String, Object> props = (Map<String, Object>) m.convertValue(source, Map.class);
             return MapToContainerQueryConverter.INSTANCE.convert(index, props, options, service);
         }
@@ -187,27 +220,21 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         INSTANCE;
 
         @Override
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options) {
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options) {
             return convert(index, source, options, null);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public StructuredQueryDefinition convert(TextIndex index, Object source, List<String> options, QueryConversionService service) {
-            Format format = index instanceof StructuredQueryBuilder.JSONProperty ? Format.JSON : Format.XML;
-            return qb.containerQuery((StructuredQueryBuilder.ContainerIndex) index, convert((Map<String, Object>) source, format, service));
+        public StructuredQueryDefinition convert(PropertyIndex index, Object source, List<String> options, QueryConversionService service) {
+            return qb.containerQuery((ContainerIndex) index.get(), convert(index, (Map<String, Object>) source, service));
         }
 
-        protected StructuredQueryDefinition convert(Map<String, Object> props, Format format, QueryConversionService service) {
+        protected StructuredQueryDefinition convert(PropertyIndex index, Map<String, Object> props, QueryConversionService service) {
             if (!props.isEmpty() && service != null) {
                 return qb.and(
                         props.entrySet().stream()
-                                .map(entry -> {
-                                    TextIndex index = format == Format.XML
-                                            ? qb.element(entry.getKey())
-                                            : qb.jsonProperty(entry.getKey());
-                                    return service.convert(index, entry.getValue(), null);
-                                })
+                                .map(entry -> service.convert(index.child(entry.getKey()), entry.getValue(), null))
                                 .toArray(StructuredQueryDefinition[]::new)
                 );
             } else {
@@ -216,38 +243,40 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         }
     }
 
-    private static StructuredQueryDefinition booleanValueQuery(TextIndex index, List<String> options, Object values) {
-        // TODO: Support scope and weight?
+    private static StructuredQueryDefinition booleanValueQuery(PropertyIndex index, List<String> options, Object values) {
         if (options != null && !options.isEmpty())
-            return qb.value(index, null, options.toArray(new String[0]), 1.0, as(values, boolean.class));
+            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, as(values, boolean.class));
         else
-            return qb.value(index, as(values, boolean.class));
+            return qb.value((TextIndex) index.get(), as(values, boolean.class));
 
     }
 
-    private static StructuredQueryDefinition numberValueQuery(TextIndex index, List<String> options, Object values) {
-        // TODO: Support scope and weight?
+    private static StructuredQueryDefinition numberValueQuery(PropertyIndex index, List<String> options, Object values) {
         if (options != null && !options.isEmpty())
-            return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
+            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
         else
-            return qb.value(index, asArray(values, Number[].class));
+            return qb.value((TextIndex) index.get(), asArray(values, Number[].class));
 
     }
 
-    private static StructuredQueryDefinition stringValueQuery(TextIndex index, List<String> options, Object values) {
-        // TODO: Support scope and weight?
+    private static StructuredQueryDefinition stringValueQuery(PropertyIndex index, List<String> options, Object values) {
         if (options != null && !options.isEmpty())
-            return qb.value(index, null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
+            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
         else
-            return qb.value(index, asArray(values, String[].class));
+            return qb.value((TextIndex) index.get(), asArray(values, String[].class));
     }
 
-    // TODO: Rework the type conversion so it works a little more cleanly
+    private static StructuredQueryDefinition rangeQuery(PropertyIndex index, List<String> options, Object values) {
+        if (options != null && !options.isEmpty())
+            return qb.range((RangeIndex) index.get(), index.getRangeIndexType(), options.toArray(new String[0]), index.getOperator(), asArray(values, Object[].class));
+        else
+            return qb.range((RangeIndex) index.get(), index.getRangeIndexType(), index.getOperator(), asArray(values, Object[].class));
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T as(Object value, Class<T> type) {
         if (value instanceof Collection ||
-                value != null && value.getClass().isArray() ||
-                !ClassUtils.isAssignable(type, value.getClass())) {
+                value != null && (value.getClass().isArray() || !ClassUtils.isAssignable(type, value.getClass()))) {
             throw new IllegalArgumentException(
                     String.format("Expected parameter type of %s but got %s!", type, value.getClass()));
         }

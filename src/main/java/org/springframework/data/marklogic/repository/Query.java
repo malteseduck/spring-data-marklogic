@@ -2,6 +2,7 @@ package org.springframework.data.marklogic.repository;
 
 import com.marklogic.client.io.Format;
 import org.springframework.data.annotation.QueryAnnotation;
+import org.springframework.data.marklogic.repository.query.QueryType;
 
 import java.lang.annotation.*;
 
@@ -20,6 +21,15 @@ public @interface Query {
     String value() default "";
 
     /**
+     * Sometimes it is better to force the use of a range index for equality checks (to point to specific properties instead of
+     * any property in a hierarchy).  This allows the ability to do so.  Changing to the RANGE type would require a range index
+     * created, and possible the @Indexed attribute with the path set on the property in the POJO class.
+     *
+     * @return
+     */
+    QueryType type() default QueryType.VALUE;
+
+    /**
      * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need
      * a StructuredQueryDefinition using the query builder in order to match both formats
      * @return
@@ -33,4 +43,13 @@ public @interface Query {
      * @return
      */
     String extract() default "";
+
+    /**
+     * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some
+     * kind, or MarkLogic could add additional options, this is not limited by an enumeration but the query will fail with
+     * incorrect options.
+     *
+     * @return
+     */
+    String[] options() default {};
 }

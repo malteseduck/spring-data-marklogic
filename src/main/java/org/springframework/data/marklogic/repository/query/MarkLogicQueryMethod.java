@@ -36,6 +36,7 @@ public class MarkLogicQueryMethod extends QueryMethod {
 
     private final Method method;
     private final Format format;
+    private Query queryAnnotation;
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
     public MarkLogicQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
@@ -62,19 +63,33 @@ public class MarkLogicQueryMethod extends QueryMethod {
         return StringUtils.hasText(query) ? query : null;
     }
 
+    String[] getQueryOptions() {
+        return getQueryAnnotation() != null
+                ? getQueryAnnotation().options()
+                : new String[0];
+    }
+
+    QueryType getQueryType() {
+        return getQueryAnnotation() != null
+                ? getQueryAnnotation().type()
+                : null;
+    }
+
     /**
      * Returns the extracted properties to be used for the query.
      *
      * @return
      */
     String getExtractSpecification() {
-
         String value = (String) AnnotationUtils.getValue(getQueryAnnotation(), "extract");
         return StringUtils.hasText(value) ? value : null;
     }
 
     Query getQueryAnnotation() {
-        return AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
+        if (queryAnnotation == null) {
+            queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
+        }
+        return queryAnnotation;
     }
 
     TypeInformation<?> getReturnType() {

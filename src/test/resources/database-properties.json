@@ -16,6 +16,13 @@
       "invalid-values": "reject"
     },
     {
+      "scalar-type": "string",
+      "path-expression": "/gender",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
       "scalar-type": "dateTime",
       "path-expression": "/birthtime",
       "collation": null,
@@ -37,6 +44,14 @@
       "namespace-uri": null,
       "localname": "age",
       "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
+      "scalar-type": "dateTime",
+      "namespace-uri": null,
+      "localname": "birthtime",
+      "collation": null,
       "range-value-positions": false,
       "invalid-values": "reject"
     }

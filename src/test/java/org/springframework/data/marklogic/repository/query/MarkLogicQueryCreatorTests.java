@@ -28,6 +28,7 @@ import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
 import org.springframework.data.marklogic.repository.PersonXmlRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 import static com.marklogic.client.query.StructuredQueryBuilder.Operator;
@@ -116,7 +117,7 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.jsonProperty("age"), "xs:integer", (String[]) null, Operator.LE, 23).serialize()
+                        qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 23).serialize()
                 );
     }
 
@@ -128,7 +129,32 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.jsonProperty("age"), "xs:integer", (String[]) null, Operator.GE, 23).serialize()
+                        qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 23).serialize()
+                );
+    }
+
+    @Test
+    public void testGreaterThanQueryWithSpecifiedIndexType() throws Exception {
+        Instant from = Instant.now();
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByBirthtimeGreaterThan", Instant.class),
+                from
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.range(qb.jsonProperty("birthtime"), "xs:dateTime", (String[]) null, Operator.GT, from).serialize()
+                );
+    }
+
+    @Test
+    public void testForceRangeQuery() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByGender", String.class),
+                "Bubba"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        qb.range(qb.pathIndex("/gender"), "xs:string", (String[]) null, Operator.EQ, "Bubba").serialize()
                 );
     }
 
