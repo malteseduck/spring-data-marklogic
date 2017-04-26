@@ -315,6 +315,34 @@ public class PersonRepositoryIT {
         assertThat(people).containsExactly(andrea);
     }
 
+    // Range Queries
+
+    @Test
+    public void testFindByAgeBetween() {
+        List<Person> people = repository.findByAgeBetween(20, 40);
+        assertThat(people).containsExactlyInAnyOrder(bobby, henry);
+    }
+
+    @Test
+    public void testFindByAgeGreaterThanEqual() {
+        List<Person> people = repository.findByAgeGreaterThanEqual(50);
+        assertThat(people).containsExactly(jane);
+    }
+
+    @Test
+    public void testFindByBirthtimeGreaterThan() {
+        List<Person> people = repository.findByBirthtimeGreaterThan(Instant.parse("2016-05-02T00:00:00Z"));
+        assertThat(people).containsExactly(jenny);
+    }
+
+    @Test
+    public void testFindByGenderUsingForcedRangeQuery() {
+        List<Person> people = repository.findByGender("female");
+        assertThat(people).containsExactlyInAnyOrder(andrea, jane, jenny);
+    }
+
+    // Query By Example
+
     @Test
     public void testFindByNameQBE() throws Exception {
         Person person = repository.qbeFindByName("Bobby");
