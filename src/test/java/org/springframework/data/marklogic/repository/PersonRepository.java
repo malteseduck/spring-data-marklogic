@@ -17,7 +17,6 @@ package org.springframework.data.marklogic.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
 import org.springframework.data.marklogic.core.Pet;
@@ -103,6 +102,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> findByPetsNameIgnoreCase(String name);
 
     // ====== Range queries ======
+
     List<Person> findByAgeBetween(int from, int to);
 
     List<Person> findByBirthtimeGreaterThan(Instant date);
@@ -115,16 +115,19 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> findByGender(String gender);
 
     // ====== Exists/count checks ======
+
     long countByName(String name);
 
     boolean existsByName(String name);
 
     // ====== Delete checks ======
+
     void deleteById(String id);
 
     void deleteByName(String name);
 
     // ====== Annotated queries (QBE) ======
+
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
@@ -159,15 +162,14 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> qbeFindByStringWithWildcardChar(String arg0, String arg1);
 
     // ====== Limiting queries ======
-    // TODO: Implement limiting query logic
+
     Person findFirstByName(String name);
 
-    List<Person> findTop3ByNameOrderByName(String name);
+    List<Person> findTop2ByOrderByName();
 
-    Page<Person> findFirst2ByNameOrderByName(String name, Pageable page);
-
-    Slice<Person> findTop1ByNameOrderByName(String name, Pageable page);
+    Page<Person> findFirst2ByOrderByName(Pageable page);
 
     // ====== Streaming queries ======
+
     Stream<Person> readAllByAgeNotNull();
 }

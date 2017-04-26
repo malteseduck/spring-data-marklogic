@@ -15,8 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-
 interface MarkLogicQueryExecution {
 
     // TODO: Is this approach overly complicated for one-line calls to the operations?
@@ -42,7 +40,11 @@ interface MarkLogicQueryExecution {
          */
         @Override
         public Object execute(final StructuredQueryDefinition query, final Class<?> type) {
-            return operations.search(query, pageable.getOffset(), pageable.getPageSize(), type);
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
+                return operations.search(query, 0, ((CombinedQueryDefinition)query).getLimit(), type);
+            } else {
+                return operations.search(query, pageable.getOffset(), pageable.getPageSize(), type);
+            }
         }
     }
 
@@ -61,7 +63,11 @@ interface MarkLogicQueryExecution {
          */
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
-            return operations.search(query, type);
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
+                return operations.search(query, 0, ((CombinedQueryDefinition)query).getLimit(), type).getContent();
+            } else {
+                return operations.search(query, type);
+            }
         }
     }
 
@@ -129,9 +135,7 @@ interface MarkLogicQueryExecution {
             return operations.executeWithClient((client, transaction) -> {
                 QueryManager qryMgr = client.newQueryManager();
                 CombinedQueryDefinition combined = new CombinedQueryDefinitionBuilder(query)
-                        .withOptions(asList(
-                                "<values name='uris'><uri/></values>"
-                        ));
+                        .withOptions("<values name='uris'><uri/></values>");
 
                 combined = (CombinedQueryDefinition) operations.getConverter().wrapQuery(combined, type);
                 ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");

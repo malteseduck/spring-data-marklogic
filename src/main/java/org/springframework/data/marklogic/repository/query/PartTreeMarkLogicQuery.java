@@ -30,8 +30,11 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
         StructuredQueryDefinition query = creator.createQuery();
 
         if (tree.isLimiting()) {
-            // TODO: Use a combined query to specify paging?
-//            query.limit(tree.getMaxResults());
+            if (query instanceof CombinedQueryDefinition) {
+                ((CombinedQueryDefinition) query).withLimit(tree.getMaxResults());
+            } else {
+                query = new CombinedQueryDefinitionBuilder(query).withLimit(tree.getMaxResults());
+            }
         }
 
         return query;

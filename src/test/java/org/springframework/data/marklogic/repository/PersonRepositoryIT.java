@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.*;
@@ -315,7 +316,7 @@ public class PersonRepositoryIT {
         assertThat(people).containsExactly(andrea);
     }
 
-    // Range Queries
+    // ===== Range Queries
 
     @Test
     public void testFindByAgeBetween() {
@@ -341,7 +342,27 @@ public class PersonRepositoryIT {
         assertThat(people).containsExactlyInAnyOrder(andrea, jane, jenny);
     }
 
-    // Query By Example
+    // ===== Limiting Queries
+
+    @Test
+    public void testFindFirstByName() {
+        Person person = repository.findFirstByName("Bobby");
+        assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
+    public void testFindTop2ByOrderByName() {
+        List<Person> people = repository.findTop2ByOrderByName();
+        assertThat(people).containsExactly(andrea, bobby);
+    }
+
+    @Test
+    public void testFindFirst2OrderByName() {
+        Page<Person> people = repository.findFirst2ByOrderByName(new PageRequest(0, 10, Sort.Direction.ASC, "name"));
+        assertThat(people).containsExactly(andrea, bobby);
+    }
+
+    // ===== Query By Example
 
     @Test
     public void testFindByNameQBE() throws Exception {

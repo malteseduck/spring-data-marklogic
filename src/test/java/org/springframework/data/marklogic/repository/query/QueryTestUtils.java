@@ -59,6 +59,11 @@ public class QueryTestUtils {
         return new StringMarkLogicQuery(method, new MarkLogicTemplate(client(), new MappingMarkLogicConverter(context)), PARSER, DefaultEvaluationContextProvider.INSTANCE).createQuery(getAccessor(parameters));
     }
 
+    public static PartTreeMarkLogicQuery tree(MarkLogicQueryMethod method) {
+        MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
+        return new PartTreeMarkLogicQuery(method, new MarkLogicTemplate(client(), new MappingMarkLogicConverter(context)));
+    }
+
     public static MarkLogicQueryCreator creator(MarkLogicQueryMethod method, Object... parameters) {
         MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
         PartTree tree = new PartTree(method.getName(), method.getEntityInformation().getJavaType());

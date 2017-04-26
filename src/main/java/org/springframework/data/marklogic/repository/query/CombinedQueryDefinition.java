@@ -23,6 +23,12 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     CombinedQueryDefinition withOptions(List<String> options);
 
+    CombinedQueryDefinition withLimit(int limit);
+
+    boolean isLimiting();
+
+    int getLimit();
+
     CombinedQueryDefinition term(String qtext);
 
     CombinedQueryDefinition sparql(String sparql);

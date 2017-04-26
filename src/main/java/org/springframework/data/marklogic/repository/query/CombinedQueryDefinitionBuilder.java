@@ -36,6 +36,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private List<String> options;
     private String qtext;
     private String sparql;
+    private int limit = -1;
     private StructuredQueryBuilder qb;
     private ObjectMapper objectMapper = new ObjectMapper();
     private JsonNodeCreator factory = JsonNodeFactory.instance;
@@ -76,6 +77,10 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     @Override
     public String serialize() {
+        List<String> optionsToSerialize = options;
+
+        if (limit >= 0) optionsToSerialize.add(String.format("<page-length>%s</page-length>", limit));
+
         if (isQbe() && qbeFormat == Format.JSON) {
 
             ObjectNode search = factory.objectNode();
@@ -88,9 +93,9 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 }
             }
 
-            if (!options.isEmpty()) {
+            if (!optionsToSerialize.isEmpty()) {
                 ObjectNode optionsJson = factory.objectNode();
-                options.stream()
+                optionsToSerialize.stream()
                         .map(XML::toJSONObject)
                         .map(JSONObject::toString)
                         .map(option -> {
@@ -143,9 +148,9 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 search.append(structuredQuery.serialize());
             }
 
-            if (!options.isEmpty())
+            if (!optionsToSerialize.isEmpty())
                 search.append("<options>")
-                        .append(options.stream().collect(Collectors.joining()))
+                        .append(optionsToSerialize.stream().collect(Collectors.joining()))
                         .append("</options>");
 
             if (!StringUtils.isEmpty(qtext))
@@ -212,6 +217,22 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public CombinedQueryDefinition withOptions(List<String> options) {
         this.options.addAll(options);
         return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition withLimit(int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    @Override
+    public boolean isLimiting() {
+        return limit >= 0;
+    }
+
+    @Override
+    public int getLimit() {
+        return limit;
     }
 
     @Override

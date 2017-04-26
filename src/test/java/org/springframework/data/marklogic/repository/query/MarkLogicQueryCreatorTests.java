@@ -35,6 +35,7 @@ import static com.marklogic.client.query.StructuredQueryBuilder.Operator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.*;
+import static org.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
 
 public class MarkLogicQueryCreatorTests {
 
@@ -490,6 +491,38 @@ public class MarkLogicQueryCreatorTests {
                                 qb.value(qb.element("gender"), "female"),
                                 PersonXml.class
                         ).serialize()
+                );
+    }
+
+    @Test
+    public void testQueryLimiting() throws Exception {
+
+        StructuredQueryDefinition query = tree(
+                queryMethod(PersonRepository.class, "findFirstByName", String.class)
+        ).createQuery(getAccessor("Bobby"));
+        assertThat(query.serialize())
+                .isEqualTo(
+                        new CombinedQueryDefinitionBuilder(
+                                qb.value(qb.jsonProperty("name"), "Bobby")
+                        ).withLimit(1).serialize()
+                );
+    }
+
+    @Test
+    public void testLimitingWithOrderBy() throws Exception {
+
+        StructuredQueryDefinition query = tree(
+                queryMethod(PersonRepository.class, "findTop2ByOrderByName")
+        ).createQuery(getAccessor());
+        assertThat(query.serialize())
+                .isEqualTo(
+                        ((CombinedQueryDefinition)
+                                operations.sortQuery(
+                                        new Sort("name"),
+                                        null,
+                                        Person.class
+                                )
+                        ).withLimit(2).serialize()
                 );
     }
 }
