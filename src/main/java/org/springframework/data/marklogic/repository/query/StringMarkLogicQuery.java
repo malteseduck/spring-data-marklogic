@@ -17,6 +17,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,7 +65,9 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         Format formatToUse = annotation.format() == Format.UNKNOWN ? entity.getDocumentFormat() : annotation.format();
         CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(definition, formatToUse);
 
-        return operations.sortQuery(accessor.getSort(), query, type);
+        query = (CombinedQueryDefinition) operations.sortQuery(accessor.getSort(), query, type);
+
+        return query.withExtracts(Arrays.asList(annotation.extract()));
     }
 
     @Override

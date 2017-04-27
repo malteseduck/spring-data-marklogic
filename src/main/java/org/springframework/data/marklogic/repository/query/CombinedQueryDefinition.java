@@ -23,6 +23,10 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     CombinedQueryDefinition withOptions(List<String> options);
 
+    CombinedQueryDefinition withExtracts(List<String> extracts);
+
+    CombinedQueryDefinition withExtracts(List<String> extracts, SelectedMode mode);
+
     CombinedQueryDefinition withLimit(int limit);
 
     boolean isLimiting();

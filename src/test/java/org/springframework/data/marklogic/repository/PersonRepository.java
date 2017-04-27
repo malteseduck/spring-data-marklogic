@@ -41,6 +41,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     List<Person> findByNameEndsWith(String postfix);
 
+    @Query(extract = {"/name", "/age"})
+    List<Person> findByOccupation(String occupation);
+
     List<Person> findByOccupationOrderByNameAsc(String occupation);
 
     List<Person> findByGenderLike(String gender);
@@ -131,6 +134,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
+    @Query(value = "{ name: ?0 }", extract = {"/name", "/age"})
+    Person qbeFindByNameExtractingNameAndAge(String name);
+
     @Query("{ name: ?0 }")
     List<Person> qbeFindByNameList(String name);
 
@@ -154,6 +160,18 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     @Query("{id:?#{ [0] ? { $exists: {} } : [1] }}")
     List<Person> qbeFindByQueryWithExpressionAndNestedObject(boolean param0, String param1);
+
+    @Query("{ " +
+            "   gender: 'male', " +
+            "   description: { $exists: {} }, " +
+            "   $and: [ " +
+            "       { birthtime: { $ge: '2016-02-01T00:00:00Z' } }, " +
+            "       { birthtime: { $le: '2016-02-28T00:00:00Z' } }" +
+            "   ], " +
+            "   $word: ?0," +
+            "   $filtered: false" +
+            "}")
+    List<Person> qbeFindByComplicated(String term);
 
     @Query(value = "{ $or: [{ age: ?0 }, {'age': '?0'}] }")
     boolean qbeFindByAgeQuotedAndUnquoted(int age);

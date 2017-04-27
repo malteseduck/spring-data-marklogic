@@ -34,18 +34,21 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private RawQueryByExampleDefinition qbe;
     private Format qbeFormat;
     private List<String> options;
+    private List<String> extracts;
     private String qtext;
     private String sparql;
     private int limit = -1;
     private StructuredQueryBuilder qb;
     private ObjectMapper objectMapper = new ObjectMapper();
     private JsonNodeCreator factory = JsonNodeFactory.instance;
+    private SelectedMode selected;
 
 
     public CombinedQueryDefinitionBuilder() {
         super();
         this.qb = new StructuredQueryBuilder();
         this.options = new ArrayList<>();
+        this.extracts = new ArrayList<>();
 
         // To allow "javascript objects" for the query language
         objectMapper
@@ -80,6 +83,16 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         List<String> optionsToSerialize = options;
 
         if (limit >= 0) optionsToSerialize.add(String.format("<page-length>%s</page-length>", limit));
+
+        if (extracts.size() > 0) {
+            StringBuilder extract = new StringBuilder();
+            extract.append(String.format("<extract-document-data selected='%s'>", selected));
+
+            extracts.forEach(path -> extract.append(String.format("<extract-path>%s</extract-path>", path)));
+
+            extract.append("</extract-document-data>");
+            optionsToSerialize.add(extract.toString());
+        }
 
         if (isQbe() && qbeFormat == Format.JSON) {
 
@@ -216,6 +229,18 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public CombinedQueryDefinition withOptions(List<String> options) {
         this.options.addAll(options);
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition withExtracts(List<String> extracts) {
+        return withExtracts(extracts, SelectedMode.HIERARCHICAL);
+    }
+
+    @Override
+    public CombinedQueryDefinition withExtracts(List<String> extracts, SelectedMode mode) {
+        this.extracts = extracts;
+        this.selected = mode;
         return this;
     }
 

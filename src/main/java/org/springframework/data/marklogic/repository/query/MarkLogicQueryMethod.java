@@ -72,7 +72,7 @@ public class MarkLogicQueryMethod extends QueryMethod {
     QueryType getQueryType() {
         return getQueryAnnotation() != null
                 ? getQueryAnnotation().type()
-                : null;
+                : QueryType.VALUE;
     }
 
     /**
@@ -80,9 +80,13 @@ public class MarkLogicQueryMethod extends QueryMethod {
      *
      * @return
      */
-    String getExtractSpecification() {
-        String value = (String) AnnotationUtils.getValue(getQueryAnnotation(), "extract");
-        return StringUtils.hasText(value) ? value : null;
+    String[] getExtracts() {
+        String[] extracts = (String[]) AnnotationUtils.getValue(getQueryAnnotation(), "extract");
+        return extracts != null && extracts.length > 0 ? extracts : new String[0];
+    }
+
+    SelectedMode getSelected() {
+        return getQueryAnnotation() != null ? getQueryAnnotation().selected() : SelectedMode.HIERARCHICAL;
     }
 
     Query getQueryAnnotation() {

@@ -316,6 +316,20 @@ public class PersonRepositoryIT {
         assertThat(people).containsExactly(andrea);
     }
 
+    @Test
+    public void testFindByOccupationUsingExtract() {
+        List<Person> people = repository.findByOccupation("engineer");
+
+        assertThat(people).hasSize(1);
+
+        Person person = people.get(0);
+        assertThat(person.getName()).isEqualTo(george.getName());
+        assertThat(person.getAge()).isEqualTo(george.getAge());
+        assertThat(person.getDescription()).isNullOrEmpty();
+        assertThat(person.getHobbies()).isNullOrEmpty();
+        assertThat(person.getBirthtime()).isNull();
+    }
+
     // ===== Range Queries
 
     @Test
@@ -371,6 +385,16 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindByNameExtractingQBE() throws Exception {
+        Person person = repository.qbeFindByNameExtractingNameAndAge("Bobby");
+        assertThat(person.getName()).isEqualTo(bobby.getName());
+        assertThat(person.getAge()).isEqualTo(bobby.getAge());
+        assertThat(person.getDescription()).isNullOrEmpty();
+        assertThat(person.getHobbies()).isNullOrEmpty();
+        assertThat(person.getBirthtime()).isNull();
+    }
+
+    @Test
     public void testFindListByNameQBE() throws Exception {
         List<Person> person = repository.qbeFindByNameList("Bobby");
         assertThat(person).containsExactly(bobby);
@@ -403,6 +427,13 @@ public class PersonRepositoryIT {
         assertThat(people).containsExactly(andrea, jane);
     }
 
+
+    @Test
+    public void testFindByComplicatedQBE() throws Exception {
+        List<Person> people = repository.qbeFindByComplicated("fish");
+        assertThat(people).containsExactly(george);
+    }
+
     @Test
     public void testFindByGenderQBEHonorsCollections() throws Exception {
         Page<Person> people = repository.qbeFindByGenderWithPageable(
@@ -411,6 +442,8 @@ public class PersonRepositoryIT {
         );
         assertThat(people).containsExactly(bobby, george, henry);
     }
+
+    // ===== XML Query By Example
 
     @Test
     public void testFindXmlByNameQBE() throws Exception {

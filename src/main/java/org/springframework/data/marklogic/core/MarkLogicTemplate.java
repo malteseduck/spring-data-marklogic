@@ -36,6 +36,7 @@ import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
+import org.springframework.data.marklogic.repository.query.SelectedMode;
 import org.springframework.data.marklogic.repository.query.convert.DefaultMarkLogicQueryConversionService;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import org.springframework.http.HttpEntity;
@@ -244,6 +245,36 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             return ((CombinedQueryDefinition) query).term(term);
         else
             return new CombinedQueryDefinitionBuilder(query).term(term);
+    }
+
+    @Override
+    public StructuredQueryDefinition limitingQuery(int limit, StructuredQueryDefinition query) {
+        CombinedQueryDefinition queryDefinition;
+
+        if (query instanceof CombinedQueryDefinition)
+            queryDefinition = (CombinedQueryDefinition) query;
+        else
+            queryDefinition = new CombinedQueryDefinitionBuilder(query);
+
+        return queryDefinition.withLimit(limit);
+    }
+
+    @Override
+    public StructuredQueryDefinition extractQuery(List<String> paths, SelectedMode mode, StructuredQueryDefinition query) {
+        if (paths != null && paths.size() > 0) {
+            SelectedMode modeToUse = mode != null ? mode : SelectedMode.HIERARCHICAL;
+
+            CombinedQueryDefinition queryDefinition;
+
+            if (query instanceof CombinedQueryDefinition)
+                queryDefinition = (CombinedQueryDefinition) query;
+            else
+                queryDefinition = new CombinedQueryDefinitionBuilder(query);
+
+            return queryDefinition.withExtracts(paths, modeToUse);
+        } else {
+            return query;
+        }
     }
 
     @Override

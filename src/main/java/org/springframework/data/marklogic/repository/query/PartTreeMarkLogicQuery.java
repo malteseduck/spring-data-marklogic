@@ -30,39 +30,10 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
         StructuredQueryDefinition query = creator.createQuery();
 
         if (tree.isLimiting()) {
-            if (query instanceof CombinedQueryDefinition) {
-                ((CombinedQueryDefinition) query).withLimit(tree.getMaxResults());
-            } else {
-                query = new CombinedQueryDefinitionBuilder(query).withLimit(tree.getMaxResults());
-            }
+            query = operations.limitingQuery(tree.getMaxResults(), query);
         }
 
         return query;
-
-//        TextCriteria textCriteria = accessor.getFullText();
-//        if (textCriteria != null) {
-//            query.addCriteria(textCriteria);
-//        }
-
-//        String fieldSpec = this.getQueryMethod().getFieldSpecification();
-//
-//        if (!StringUtils.hasText(fieldSpec)) {
-//
-//            ReturnedType returnedType = processor.withDynamicProjection(accessor).getReturnedType();
-//
-//            if (returnedType.isProjecting()) {
-//
-//                Field fields = query.fields();
-//
-//                for (String field : returnedType.getInputProperties()) {
-//                    fields.include(field);
-//                }
-//            }
-//
-//            return query;
-//        }
-
-
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.repository;
 import com.marklogic.client.io.Format;
 import org.springframework.data.annotation.QueryAnnotation;
 import org.springframework.data.marklogic.repository.query.QueryType;
+import org.springframework.data.marklogic.repository.query.SelectedMode;
 
 import java.lang.annotation.*;
 
@@ -42,7 +43,15 @@ public @interface Query {
      *
      * @return
      */
-    String extract() default "";
+    String[] extract() default {};
+
+    /**
+     * Used in conjunction with the extract paths.  This determines how the extracted nodes are returned.  By default this
+     * returns specified nodes in their original hierarchy, but you can also specify to just return the extracted nodes, or to
+     * exclude the specified nodes.
+     * @return
+     */
+    SelectedMode selected() default SelectedMode.HIERARCHICAL;
 
     /**
      * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some

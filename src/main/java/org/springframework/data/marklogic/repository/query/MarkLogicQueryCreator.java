@@ -102,8 +102,9 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
      */
     @Override
     protected StructuredQueryDefinition complete(StructuredQueryDefinition criteria, Sort sort) {
-        // TODO: Always create a CombinedQueryDefinition so we can merge in more options?  Need a "modified" implementation that allows modifying an existing combined
         StructuredQueryDefinition query = operations.sortQuery(sort, criteria, method.getEntityInformation().getJavaType());
+
+        query = operations.extractQuery(Arrays.asList(method.getExtracts()), method.getSelected(), query);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Created query " + query);

@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
+import org.springframework.data.marklogic.repository.query.SelectedMode;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 
 import java.io.IOException;
@@ -24,6 +25,10 @@ public interface MarkLogicOperations {
     <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass);
 
     StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query);
+
+    StructuredQueryDefinition limitingQuery(int limit, StructuredQueryDefinition query);
+
+    StructuredQueryDefinition extractQuery(List<String> paths, SelectedMode mode, StructuredQueryDefinition query);
 
     // Database configuration - requires the "admin" role in the user account
     void configure(Resource configuration) throws IOException;
