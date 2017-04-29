@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.*;
-import org.springframework.data.marklogic.core.mapping.DocumentStream;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -466,7 +465,7 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindByNameReturningDocumentStream() {
-        DocumentStream<PersonToStream> people = streamRepository.findAllByName("Bobby");
+        InputStream people = streamRepository.findAllByName("Bobby");
         assertThat(people).hasSameContentAs(stream(bobby));
     }
 
@@ -478,19 +477,19 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindAllByOrderByNameReturningDocumentStream() {
-        DocumentStream<PersonToStream> people = streamRepository.findAllByOrderByName();
+        InputStream people = streamRepository.findAllByOrderByName();
         assertThat(people).hasSameContentAs(stream(andrea, bobby, george, henry, jane, jenny));
     }
 
     @Test
     public void testFindAllByOrderByPetsNameReturningDocumentStream() {
-        DocumentStream<PersonToStream> people = streamRepository.findAllByOrderByPetsNameAscNameAsc();
+        InputStream people = streamRepository.findAllByOrderByPetsNameAscNameAsc();
         assertThat(people).hasSameContentAs(stream(bobby, andrea, george, jenny, henry, jane));
     }
 
     @Test
     public void testFindAllByGenderReturningDocumentStream() {
-        DocumentStream<PersonToStream> people = streamRepository.findAllByGenderOrderByName("female");
+        InputStream people = streamRepository.findAllByGenderOrderByName("female");
         assertThat(people).hasSameContentAs(stream(andrea, jane, jenny));
     }
 }

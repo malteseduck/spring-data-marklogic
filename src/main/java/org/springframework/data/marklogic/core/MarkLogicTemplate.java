@@ -54,6 +54,7 @@ import org.springframework.web.util.UriTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -467,7 +468,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                             .map(record -> record.getContentAs(InputStream.class))
                             .collect(Collectors.toList()));
 
-            return new DocumentStream<T>(results);
+            return new SequenceInputStream(results);
         });
     }
 

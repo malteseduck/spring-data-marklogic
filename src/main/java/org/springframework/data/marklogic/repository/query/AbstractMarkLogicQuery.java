@@ -3,10 +3,7 @@ package org.springframework.data.marklogic.repository.query;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;
-import org.springframework.data.repository.query.ParameterAccessor;
-import org.springframework.data.repository.query.ParametersParameterAccessor;
-import org.springframework.data.repository.query.QueryMethod;
-import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.*;
 import org.springframework.util.Assert;
 
 public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
@@ -28,8 +25,10 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         StructuredQueryDefinition query = createQuery(accessor);
 
         // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
+        // TODO: Do we need a "special" type like DocumentStream<T> to better signify return type once convert exists?
         // TODO: What is required to support projections?
-        return getExecution(accessor).execute(query, method.getEntityInformation().getJavaType());
+        ResultProcessor processor = method.getResultProcessor();
+        return getExecution(accessor).execute(query, processor.getReturnedType().getDomainType());
     }
 
     @Override
