@@ -30,12 +30,14 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 
 public class MarkLogicQueryMethod extends QueryMethod {
 
     private final Method method;
     private final Format format;
+    private final Class domainClass;
     private Query queryAnnotation;
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
@@ -47,7 +49,12 @@ public class MarkLogicQueryMethod extends QueryMethod {
 
         this.method = method;
         this.mappingContext = mappingContext;
-        this.format = mappingContext.getPersistentEntity(getEntityInformation().getJavaType()).getDocumentFormat();
+        this.domainClass = getEntityInformation().getJavaType();
+        this.format = mappingContext.getPersistentEntity(domainClass).getDocumentFormat();
+    }
+
+    public boolean isStreamingQuery() {
+        return InputStream.class.isAssignableFrom(method.getReturnType());
     }
 
     public Format getFormat() {

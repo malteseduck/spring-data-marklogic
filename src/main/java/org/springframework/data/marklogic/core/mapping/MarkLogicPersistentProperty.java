@@ -15,7 +15,7 @@ public interface MarkLogicPersistentProperty extends PersistentProperty<MarkLogi
 
     /**
      * Returns whether the property is explicitly marked as an identifier property of the owning {@link PersistentEntity}.
-     * A property is an explicit id property if it is annotated withOptions @see {@link Id}.
+     * A property is an explicit id property if it is annotated options @see {@link Id}.
      *
      * @return
      */

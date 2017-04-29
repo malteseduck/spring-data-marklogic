@@ -3,7 +3,10 @@ package org.springframework.data.marklogic.core;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.Transaction;
-import com.marklogic.client.document.*;
+import com.marklogic.client.document.DocumentPage;
+import com.marklogic.client.document.DocumentRecord;
+import com.marklogic.client.document.DocumentUriTemplate;
+import com.marklogic.client.document.DocumentWriteSet;
 import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.impl.RESTServices;
@@ -32,7 +35,6 @@ import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.*;
-import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
@@ -51,11 +53,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplate;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -189,15 +195,11 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass) {
         if (sort != null && sort.iterator().hasNext()) {
-            CombinedQueryDefinition queryDefinition;
-
-            if (query instanceof CombinedQueryDefinition)
-                queryDefinition = (CombinedQueryDefinition) query;
-            else
-                queryDefinition = new CombinedQueryDefinitionBuilder(query);
+            CombinedQueryDefinition combined = CombinedQueryDefinitionBuilder.combine(query);
 
             final MarkLogicPersistentEntity entity = entityClass != null ? converter.getMappingContext().getPersistentEntity(entityClass) : null;
 
+            // TODO: Move this to the combined query builder?
             sort.forEach(order -> {
                 StringBuilder options = new StringBuilder();
                 String propertyName = order.getProperty();
@@ -222,10 +224,10 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                 }
                 options.append("</sort-order>");
 
-                queryDefinition.withOptions(options.toString());
+                combined.options(options.toString());
             });
 
-            return queryDefinition;
+            return combined;
         } else {
             return query;
         }
@@ -241,22 +243,16 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query) {
-        if (query instanceof CombinedQueryDefinition)
-            return ((CombinedQueryDefinition) query).term(term);
-        else
-            return new CombinedQueryDefinitionBuilder(query).term(term);
+        return CombinedQueryDefinitionBuilder
+                .combine(query)
+                .term(term);
     }
 
     @Override
     public StructuredQueryDefinition limitingQuery(int limit, StructuredQueryDefinition query) {
-        CombinedQueryDefinition queryDefinition;
-
-        if (query instanceof CombinedQueryDefinition)
-            queryDefinition = (CombinedQueryDefinition) query;
-        else
-            queryDefinition = new CombinedQueryDefinitionBuilder(query);
-
-        return queryDefinition.withLimit(limit);
+        return CombinedQueryDefinitionBuilder
+                .combine(query)
+                .limit(limit);
     }
 
     @Override
@@ -264,14 +260,9 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         if (paths != null && paths.size() > 0) {
             SelectedMode modeToUse = mode != null ? mode : SelectedMode.HIERARCHICAL;
 
-            CombinedQueryDefinition queryDefinition;
-
-            if (query instanceof CombinedQueryDefinition)
-                queryDefinition = (CombinedQueryDefinition) query;
-            else
-                queryDefinition = new CombinedQueryDefinitionBuilder(query);
-
-            return queryDefinition.withExtracts(paths, modeToUse);
+            return CombinedQueryDefinitionBuilder
+                    .combine(query)
+                    .extracts(paths, modeToUse);
         } else {
             return query;
         }
@@ -371,7 +362,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
             if ( page == null || page.hasNext() == false ) {
-                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " withOptions ids: " + ids);
+                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " options ids: " + ids);
             }
 
             return toEntityList(entityClass, page);
@@ -434,6 +425,49 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             List<T> results = toEntityList(entityClass, docPage);
             return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
+        });
+    }
+
+    @Override
+    public InputStream stream(StructuredQueryDefinition query) {
+        return stream(query,0, Integer.MAX_VALUE, null);
+    }
+
+    @Override
+    public <T> InputStream stream(StructuredQueryDefinition query, Class<T> entityClass) {
+        return stream(query,0, Integer.MAX_VALUE, entityClass);
+    }
+
+    @Override
+    public InputStream stream(StructuredQueryDefinition query, int start) {
+        return stream(query,start, Integer.MAX_VALUE, null);
+    }
+
+    @Override
+    public <T> InputStream stream(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+        return stream(query, start, Integer.MAX_VALUE, entityClass);
+    }
+
+    @Override
+    public InputStream stream(StructuredQueryDefinition query, int start, int length) {
+        return stream(query,start, length, null);
+    }
+
+    @Override
+    public <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
+        return execute((manager, transaction) -> {
+            if (length >= 0) manager.setPageLength(length);
+
+            QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
+
+            DocumentPage page = manager.search(finalQuery, start + 1, transaction);
+
+            Enumeration<? extends InputStream> results = Collections.enumeration(
+                    StreamSupport.stream(page.spliterator(), true)
+                            .map(record -> record.getContentAs(InputStream.class))
+                            .collect(Collectors.toList()));
+
+            return new DocumentStream<T>(results);
         });
     }
 

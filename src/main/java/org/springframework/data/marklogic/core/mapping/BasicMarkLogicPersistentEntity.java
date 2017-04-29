@@ -9,7 +9,7 @@ import org.springframework.data.util.TypeInformation;
 
 import java.util.Comparator;
 
-import static org.springframework.util.StringUtils.hasText;
+import static org.springframework.data.marklogic.core.Util.coalesce;
 
 public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, MarkLogicPersistentProperty> implements
         MarkLogicPersistentEntity<T>, ApplicationContextAware {
@@ -17,6 +17,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     private TypePersistenceStrategy typePersistenceStrategy;
     private Format documentFormat;
     private String baseUri;
+    private String typeName;
 
     public BasicMarkLogicPersistentEntity(TypeInformation<T> information) {
         this(information, null);
@@ -27,6 +28,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
 
         Document document = this.findAnnotation(Document.class);
         TypePersistenceStrategy defaultTypeStrategy = TypePersistenceStrategy.COLLECTION;
+        String defaultTypeName = information.getType().getSimpleName();
         Format defaultFormat = Format.JSON;
         String defaultUri = "/";
 
@@ -34,10 +36,13 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
             this.baseUri = normalize(coalesce(document.uri(), document.value(), defaultUri));
             this.documentFormat = document.format().toFormat();
             this.typePersistenceStrategy = document.typeStrategy();
+            // TODO: if configuration says use full name instead of simple name, let that be the default
+            this.typeName = coalesce(document.type(), defaultTypeName);
         } else {
             this.baseUri = defaultUri;
             this.typePersistenceStrategy = defaultTypeStrategy;
             this.documentFormat = defaultFormat;
+            this.typeName = defaultTypeName;
         }
     }
 
@@ -65,6 +70,11 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
 
     }
 
+    @Override
+    public String getTypeName() {
+        return typeName;
+    }
+
     private String normalize(String uri) {
         String result = uri;
         if (!result.startsWith("/")) {
@@ -74,14 +84,5 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
             result = result + "/";
         }
         return result;
-    }
-
-    private String coalesce(String... candidates) {
-        for (String value : candidates) {
-            if (hasText(value)) {
-                return value;
-            }
-        }
-        throw new IllegalArgumentException("No valid candidate arguments");
     }
 }

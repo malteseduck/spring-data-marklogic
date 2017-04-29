@@ -8,19 +8,21 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.*;
+import org.springframework.data.marklogic.core.mapping.DocumentStream;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextHierarchy({
@@ -35,6 +37,9 @@ public class PersonRepositoryIT {
 
     @Autowired
     private PersonXmlRepository xmlRepository;
+
+    @Autowired
+    PersonStreamRepository streamRepository;
 
     @Autowired
     MarkLogicOperations operations;
@@ -455,5 +460,37 @@ public class PersonRepositoryIT {
     public void testFindXmlByNameQBEWithoutSpecifyingFormat() throws Exception {
         List<PersonXml> people = xmlRepository.qbeFindByNameWithoutSpecifyingFormat("Jimmy");
         assertThat(people).containsExactly(jimmy);
+    }
+
+    // ===== Various forms of streaming
+
+    @Test
+    public void testFindByNameReturningDocumentStream() {
+        DocumentStream<PersonToStream> people = streamRepository.findAllByName("Bobby");
+        assertThat(people).hasSameContentAs(stream(bobby));
+    }
+
+    @Test
+    public void testFindByNameReturningInputStream() {
+        InputStream people = streamRepository.findAllByNameUsingGeneric("Bobby");
+        assertThat(people).hasSameContentAs(stream(bobby));
+    }
+
+    @Test
+    public void testFindAllByOrderByNameReturningDocumentStream() {
+        DocumentStream<PersonToStream> people = streamRepository.findAllByOrderByName();
+        assertThat(people).hasSameContentAs(stream(andrea, bobby, george, henry, jane, jenny));
+    }
+
+    @Test
+    public void testFindAllByOrderByPetsNameReturningDocumentStream() {
+        DocumentStream<PersonToStream> people = streamRepository.findAllByOrderByPetsNameAscNameAsc();
+        assertThat(people).hasSameContentAs(stream(bobby, andrea, george, jenny, henry, jane));
+    }
+
+    @Test
+    public void testFindAllByGenderReturningDocumentStream() {
+        DocumentStream<PersonToStream> people = streamRepository.findAllByGenderOrderByName("female");
+        assertThat(people).hasSameContentAs(stream(andrea, jane, jenny));
     }
 }

@@ -30,6 +30,14 @@ public @interface Document
 	DocumentFormat format() default DocumentFormat.JSON;
 
 	/**
+	 * The name to use for the type of document which will be persisted into the database.  This overrides the default
+	 * of using the class simple name (or full class name, depending on configuration).
+	 *
+	 * @return
+	 */
+	String type() default "";
+
+	/**
 	 *
 	 * @return
 	 */

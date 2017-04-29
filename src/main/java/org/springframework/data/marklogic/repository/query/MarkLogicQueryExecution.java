@@ -87,6 +87,31 @@ interface MarkLogicQueryExecution {
         }
     }
 
+    final class StreamingExecution implements MarkLogicQueryExecution {
+
+        private final MarkLogicOperations operations;
+        private final Pageable pageable;
+
+        StreamingExecution(MarkLogicOperations operations, Pageable pageable) {
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
+            this.operations = operations;
+            this.pageable = pageable;
+        }
+
+        @Override
+        public Object execute(StructuredQueryDefinition query, Class<?> type) {
+            if (pageable != null) {
+                if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
+                    return operations.stream(query, 0, ((CombinedQueryDefinition) query).getLimit(), type);
+                } else {
+                    return operations.stream(query, pageable.getOffset(), pageable.getPageSize(), type);
+                }
+            } else {
+                return operations.stream(query, type);
+            }
+        }
+    }
+
     final class CountExecution implements MarkLogicQueryExecution {
 
         private final MarkLogicOperations operations;
@@ -135,7 +160,7 @@ interface MarkLogicQueryExecution {
             return operations.executeWithClient((client, transaction) -> {
                 QueryManager qryMgr = client.newQueryManager();
                 CombinedQueryDefinition combined = new CombinedQueryDefinitionBuilder(query)
-                        .withOptions("<values name='uris'><uri/></values>");
+                        .options("<values name='uris'><uri/></values>");
 
                 combined = (CombinedQueryDefinition) operations.getConverter().wrapQuery(combined, type);
                 ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");

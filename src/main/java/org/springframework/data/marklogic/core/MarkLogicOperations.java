@@ -12,6 +12,7 @@ import org.springframework.data.marklogic.repository.query.SelectedMode;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public interface MarkLogicOperations {
@@ -81,6 +82,19 @@ public interface MarkLogicOperations {
     <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass);
 
     <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
+
+    // Handle as input streams
+    InputStream stream(StructuredQueryDefinition query);
+
+    <T> InputStream stream(StructuredQueryDefinition query, Class<T> entityClass);
+
+    InputStream stream(StructuredQueryDefinition query, int start);
+
+    <T> InputStream stream(StructuredQueryDefinition query, int start, Class<T> entityClass);
+
+    InputStream stream(StructuredQueryDefinition query, int start, int length);
+
+    <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
 
     // Document existence
 

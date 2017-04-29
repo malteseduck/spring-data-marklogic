@@ -1,7 +1,11 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.io.StringHandle;
@@ -19,9 +23,17 @@ import org.springframework.data.repository.query.DefaultEvaluationContextProvide
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.stream.Collectors;
 
+import static org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter.simpleDateFormat8601;
 import static org.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
 
 public class QueryTestUtils {
@@ -30,17 +42,59 @@ public class QueryTestUtils {
 
     private static ObjectMapper objectMapper = new ObjectMapper()
             .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
+            .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+            .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .setDateFormat(simpleDateFormat8601)
+            .registerModule(new JavaTimeModule())
+            // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
+            .disableDefaultTyping();
 
     private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23, "nobody", "nothing", DatabaseClientFactory.Authentication.DIGEST);
+
+    public static String stringify(Object json) {
+        try {
+            return objectMapper.writeValueAsString(json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static InputStream stream(Object... json) {
+        Enumeration<? extends InputStream> results = Collections.enumeration(
+                Arrays.stream(json)
+                        .map(record -> {
+                            InputStream stream = null;
+                            try {
+                                stream = new ByteArrayInputStream(
+                                        // Do the string replace because the streams that come back from the server are more liberal with spaces than Jackson is
+                                        new String(objectMapper.writeValueAsBytes(record))
+                                                .replace(",", ", ")
+                                                .replace(",  ", ", ")
+                                                .getBytes()
+                                );
+                            } catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+                            return stream;
+                        })
+                        .collect(Collectors.toList()));
+
+        return new SequenceInputStream(results);
+    }
 
     public static DatabaseClient client() {
         return client;
     }
 
     public static String rawQuery(String qbe) {
-        return new CombinedQueryDefinitionBuilder(
-                client().newQueryManager().newRawQueryByExampleDefinition(new StringHandle(qbe))
+        return CombinedQueryDefinitionBuilder
+                .combine()
+                .byExample(client().newQueryManager().newRawQueryByExampleDefinition(new StringHandle(qbe))
         ).serialize();
     }
 

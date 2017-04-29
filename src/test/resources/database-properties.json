@@ -9,6 +9,13 @@
       "invalid-values": "reject"
     },
     {
+      "scalar-type": "string",
+      "path-expression": "/pets/name",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
       "scalar-type": "int",
       "path-expression": "/age",
       "collation": null,

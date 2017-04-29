@@ -24,4 +24,9 @@ public interface MarkLogicPersistentEntity<T> extends PersistentEntity<T, MarkLo
      * Determines the serialization format for the entity, i.e. JSON, XML, or binary formats
      */
     Format getDocumentFormat();
+
+    /**
+     * Gets the name of the type to use when interacting with the database
+     */
+    String getTypeName();
 }

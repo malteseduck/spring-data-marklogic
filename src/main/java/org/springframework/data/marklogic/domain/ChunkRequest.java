@@ -6,7 +6,7 @@ import org.springframework.data.domain.Sort;
 import java.io.Serializable;
 
 /**
- * A request for a chunk of data withOptions an offset and limit instead of page numbers and page sizes.
+ * A request for a chunk of data options an offset and limit instead of page numbers and page sizes.
  */
 public class ChunkRequest implements Pageable, Serializable {
 

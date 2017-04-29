@@ -27,7 +27,7 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
         StructuredQueryDefinition query = createQuery(accessor);
 
-        // TODO: Need results processing of any kind?
+        // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
         // TODO: What is required to support projections?
         return getExecution(accessor).execute(query, method.getEntityInformation().getJavaType());
     }
@@ -44,6 +44,8 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
             return new ExistsExecution(operations);
         } else if (isCountQuery()) {
             return new CountExecution(operations);
+        } else if (method.isStreamingQuery()) {
+            return new StreamingExecution(operations, accessor.getPageable());
         } else if (method.isSliceQuery() || method.isPageQuery()) {
             // TODO: Do we need to support slice differently?  A page is a slice...
             return new PagedExecution(operations, accessor.getPageable());

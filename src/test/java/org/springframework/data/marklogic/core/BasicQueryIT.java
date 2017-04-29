@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.pojo.PojoQueryBuilder;
 import org.junit.*;
@@ -14,11 +15,13 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextHierarchy({
@@ -87,7 +90,7 @@ public class BasicQueryIT {
     @Test
     public void testCountByQuery() throws Exception {
         assertThat(template.count(qb.value("gender", "male"))).as("without type").isEqualTo(2);
-        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("withOptions type").isEqualTo(2);
+        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("options type").isEqualTo(2);
     }
 
     @Test
@@ -144,6 +147,16 @@ public class BasicQueryIT {
         );
 
         assertThat(people).containsExactly(bobby, george);
+    }
+
+    @Test
+    public void testQueryByValueStreamed() throws JsonProcessingException {
+        InputStream people = template.stream(
+                qb.value("name", "Bobby"),
+                PersonToStream.class
+        );
+
+        assertThat(people).hasSameContentAs(stream(bobby));
     }
 
     @Test

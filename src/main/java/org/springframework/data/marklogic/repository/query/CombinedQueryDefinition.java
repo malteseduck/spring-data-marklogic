@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.io.Format;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
 
@@ -15,19 +16,21 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe);
 
+    CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe, Format format);
+
     CombinedQueryDefinition and(StructuredQueryDefinition query);
 
-    CombinedQueryDefinition withCollections(String... collections);
+    CombinedQueryDefinition collections(String... collections);
 
-    CombinedQueryDefinition withOptions(String options);
+    CombinedQueryDefinition options(String options);
 
-    CombinedQueryDefinition withOptions(List<String> options);
+    CombinedQueryDefinition options(List<String> options);
 
-    CombinedQueryDefinition withExtracts(List<String> extracts);
+    CombinedQueryDefinition extracts(List<String> extracts);
 
-    CombinedQueryDefinition withExtracts(List<String> extracts, SelectedMode mode);
+    CombinedQueryDefinition extracts(List<String> extracts, SelectedMode mode);
 
-    CombinedQueryDefinition withLimit(int limit);
+    CombinedQueryDefinition limit(int limit);
 
     boolean isLimiting();
 

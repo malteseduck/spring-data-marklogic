@@ -63,11 +63,13 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         RawQueryByExampleDefinition definition = operations.executeWithClient((client, transaction) -> client.newQueryManager().newRawQueryByExampleDefinition(new StringHandle(queryString).withFormat(Format.JSON)));
 
         Format formatToUse = annotation.format() == Format.UNKNOWN ? entity.getDocumentFormat() : annotation.format();
-        CombinedQueryDefinition query = new CombinedQueryDefinitionBuilder(definition, formatToUse);
 
-        query = (CombinedQueryDefinition) operations.sortQuery(accessor.getSort(), query, type);
+        CombinedQueryDefinition query = CombinedQueryDefinitionBuilder
+                .combine()
+                .byExample(definition, formatToUse)
+                .extracts(Arrays.asList(annotation.extract()));
 
-        return query.withExtracts(Arrays.asList(annotation.extract()));
+        return operations.sortQuery(accessor.getSort(), query, type);
     }
 
     @Override
@@ -233,7 +235,7 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         private final String expression;
 
         /**
-         * Creates a new {@link ParameterBinding} withOptions the given {@code parameterIndex} and {@code quoted} information.
+         * Creates a new {@link ParameterBinding} options the given {@code parameterIndex} and {@code quoted} information.
          *
          * @param parameterIndex
          * @param quoted whether or not the parameter is already quoted.

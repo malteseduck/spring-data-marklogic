@@ -74,7 +74,7 @@ public class TemplateCrudIT {
         assertThat(template.exists(bob.getId())).as("without type").isFalse();
 
         template.deleteAll(asList(george.getId()), Person.class);
-        assertThat(template.exists(george.getId())).as("withOptions type").isFalse();
+        assertThat(template.exists(george.getId())).as("options type").isFalse();
     }
 
     @Test

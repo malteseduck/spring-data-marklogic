@@ -21,4 +21,11 @@ public class PersonRepositoryIntegrationConfiguration {
         repository.setMarkLogicOperations(template);
         return repository;
     }
+
+    @Bean
+    MarkLogicRepositoryFactoryBean streamRepository(MarkLogicTemplate template) {
+        MarkLogicRepositoryFactoryBean repository = new MarkLogicRepositoryFactoryBean(PersonStreamRepository.class);
+        repository.setMarkLogicOperations(template);
+        return repository;
+    }
 }

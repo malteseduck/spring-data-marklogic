@@ -43,6 +43,10 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private JsonNodeCreator factory = JsonNodeFactory.instance;
     private SelectedMode selected;
 
+    public CombinedQueryDefinitionBuilder(StructuredQueryDefinition structuredQuery) {
+        this();
+        this.structuredQuery = structuredQuery;
+    }
 
     public CombinedQueryDefinitionBuilder() {
         super();
@@ -57,20 +61,16 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     }
 
-    public CombinedQueryDefinitionBuilder(StructuredQueryDefinition structuredQuery) {
-        this();
-        this.structuredQuery = structuredQuery;
+    public static CombinedQueryDefinition combine(StructuredQueryDefinition query) {
+        if (query instanceof CombinedQueryDefinitionBuilder) {
+            return (CombinedQueryDefinition) query;
+        } else {
+            return new CombinedQueryDefinitionBuilder(query);
+        }
     }
 
-    public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe) {
-        this(qbe, Format.JSON);
-    }
-
-    public CombinedQueryDefinitionBuilder(RawQueryByExampleDefinition qbe, Format format) {
-        this();
-        qbe.withHandle(new StringHandle(qbe.toString()).withFormat(format));
-        this.qbeFormat = format;
-        this.qbe = qbe;
+    public static CombinedQueryDefinition combine() {
+        return new CombinedQueryDefinitionBuilder();
     }
 
     // Allows us to generate a "random" name for a JSON property so we can support multiple options with the same name
@@ -201,7 +201,16 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     @Override
     public CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe) {
-        this.qbe = qbe;
+        return byExample(qbe, Format.JSON);
+    }
+
+    @Override
+    public CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe, Format format) {
+        if (qbe != null) {
+            qbe.withHandle(new StringHandle(qbe.toString()).withFormat(format));
+            this.qbeFormat = format;
+            this.qbe = qbe;
+        }
         return this;
     }
 
@@ -215,37 +224,37 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public CombinedQueryDefinition withCollections(String... collections) {
+    public CombinedQueryDefinition collections(String... collections) {
         return and(qb.collection(collections));
     }
 
     @Override
-    public CombinedQueryDefinition withOptions(String options) {
+    public CombinedQueryDefinition options(String options) {
         this.options.add(options);
         return this;
     }
 
     // TODO: Support passing JSON options like this: "{ 'sort-order': { direction : 'ascending', 'path-index': { text: '/name' } } }"?
     @Override
-    public CombinedQueryDefinition withOptions(List<String> options) {
+    public CombinedQueryDefinition options(List<String> options) {
         this.options.addAll(options);
         return this;
     }
 
     @Override
-    public CombinedQueryDefinition withExtracts(List<String> extracts) {
-        return withExtracts(extracts, SelectedMode.HIERARCHICAL);
+    public CombinedQueryDefinition extracts(List<String> extracts) {
+        return extracts(extracts, SelectedMode.HIERARCHICAL);
     }
 
     @Override
-    public CombinedQueryDefinition withExtracts(List<String> extracts, SelectedMode mode) {
+    public CombinedQueryDefinition extracts(List<String> extracts, SelectedMode mode) {
         this.extracts = extracts;
         this.selected = mode;
         return this;
     }
 
     @Override
-    public CombinedQueryDefinition withLimit(int limit) {
+    public CombinedQueryDefinition limit(int limit) {
         this.limit = limit;
         return this;
     }
@@ -270,5 +279,33 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public CombinedQueryDefinition sparql(String sparql) {
         this.sparql = sparql;
         return this;
+    }
+
+    public Format getQbeFormat() {
+        return qbeFormat;
+    }
+
+    public StructuredQueryDefinition getStructuredQuery() {
+        return structuredQuery;
+    }
+
+    public List<String> getOptions() {
+        return options;
+    }
+
+    public List<String> getExtracts() {
+        return extracts;
+    }
+
+    public String getQtext() {
+        return qtext;
+    }
+
+    public String getSparql() {
+        return sparql;
+    }
+
+    public SelectedMode getSelected() {
+        return selected;
     }
 }

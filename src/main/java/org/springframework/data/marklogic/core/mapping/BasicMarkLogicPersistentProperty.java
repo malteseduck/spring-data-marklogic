@@ -31,7 +31,7 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
 
         if (indexed != null) {
             if (!StringUtils.isEmpty(indexed.path())) {
-                this.path = indexed.path() + "/" + name;
+                this.path = indexed.path();
             } else if (indexed.type() == IndexType.PATH) {
                 path = "/" + name;
             } else {

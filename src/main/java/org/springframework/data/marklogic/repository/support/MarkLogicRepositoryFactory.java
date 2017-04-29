@@ -47,7 +47,7 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
     /**
-     * Creates a new {@link MarkLogicRepositoryFactory} withOptions the given {@link MarkLogicOperations}.
+     * Creates a new {@link MarkLogicRepositoryFactory} options the given {@link MarkLogicOperations}.
      *
      * @param operations must not be {@literal null}.
      */
@@ -96,14 +96,18 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
     public <T, ID extends Serializable> MarkLogicEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
         MarkLogicPersistentEntity<?> entity = mappingContext.getPersistentEntity(domainClass);
 
+        Class idType = Object.class;
+
         if (entity == null) {
             throw new MappingException(
                     String.format("Could not lookup mapping metadata for domain class %s!", domainClass.getName()));
         } else if (!entity.hasIdProperty()) {
-            throw new IllegalArgumentException("Your entity of type " + domainClass.getName() + " does not have a method or field annotated withOptions org.springframework.data.annotation.Id");
+            throw new IllegalArgumentException("Your entity of type " + domainClass.getName() + " does not have a method or field annotated options org.springframework.data.annotation.Id");
+        } else if (entity.hasIdProperty()) {
+            idType = entity.getIdProperty().getType();
         }
 
-        return new MappingMarkLogicEntityInformation(entity, entity.getIdProperty().getType());
+        return new MappingMarkLogicEntityInformation(entity, idType);
     }
 
     private static class MarkLogicQueryLookupStrategy implements QueryLookupStrategy {

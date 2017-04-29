@@ -81,7 +81,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
         if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
             if (doc.getMetadata() == null) doc.setMetadata(new DocumentMetadataHandle());
-            doc.setMetadata(doc.getMetadata().withCollections(getTypeName(entity)));
+            doc.setMetadata(doc.getMetadata().withCollections(entity.getTypeName()));
         } else {
             doc.setMetadata(new DocumentMetadataHandle());
         }
@@ -178,7 +178,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
                 List<String> collections = new ArrayList<>();
                 Collections.addAll(collections, query.getCollections());
-                collections.add(getTypeName(entity));
+                collections.add(entity.getTypeName());
                 query.setCollections(collections.toArray(new String[0]));
             }
         }
@@ -196,7 +196,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .setDateFormat(simpleDateFormat8601)
                 .registerModule(new JavaTimeModule())
-                // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem withOptions larger data sets
+                // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
                 .disableDefaultTyping();
 
         try {
@@ -218,10 +218,5 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
         }
 
-    }
-
-    public String getTypeName(MarkLogicPersistentEntity entity) {
-        // TODO: Add support for full class name for collection
-        return entity.getType().getSimpleName();
     }
 }

@@ -22,6 +22,4 @@ public interface MarkLogicConverter extends
     <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass);
 
     <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass);
-
-    String getTypeName(MarkLogicPersistentEntity entity);
 }

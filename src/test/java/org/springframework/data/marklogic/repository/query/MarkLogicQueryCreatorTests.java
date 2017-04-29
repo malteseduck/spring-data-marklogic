@@ -26,6 +26,7 @@ import org.springframework.data.marklogic.core.*;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
+import org.springframework.data.marklogic.repository.PersonStreamRepository;
 import org.springframework.data.marklogic.repository.PersonXmlRepository;
 
 import java.time.Instant;
@@ -453,6 +454,22 @@ public class MarkLogicQueryCreatorTests {
     }
 
     @Test
+    public void testFindByWithOrderingBySpecifiedPath() throws Exception {
+
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonStreamRepository.class, "findAllByOrderByPetsNameAscNameAsc")
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        CombinedQueryDefinitionBuilder
+                                .combine()
+                                .options("<sort-order direction='ascending'><path-index>/pets/name</path-index></sort-order>")
+                                .options("<sort-order direction='ascending'><element ns='' name='name'/></sort-order>")
+                                .serialize()
+                );
+    }
+
+    @Test
     public void testDeleteByField() throws Exception {
 
         StructuredQueryDefinition query = creator(
@@ -504,7 +521,7 @@ public class MarkLogicQueryCreatorTests {
                 .isEqualTo(
                         new CombinedQueryDefinitionBuilder(
                                 qb.value(qb.jsonProperty("name"), "Bobby")
-                        ).withLimit(1).serialize()
+                        ).limit(1).serialize()
                 );
     }
 
@@ -522,7 +539,7 @@ public class MarkLogicQueryCreatorTests {
                                         null,
                                         Person.class
                                 )
-                        ).withLimit(2).serialize()
+                        ).limit(2).serialize()
                 );
     }
 }
