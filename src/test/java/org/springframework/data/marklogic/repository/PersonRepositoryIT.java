@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.repository;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.streamXml;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextHierarchy({
@@ -491,5 +493,12 @@ public class PersonRepositoryIT {
     public void testFindAllByGenderReturningDocumentStream() {
         InputStream people = streamRepository.findAllByGenderOrderByName("female");
         assertThat(people).hasSameContentAs(stream(andrea, jane, jenny));
+    }
+
+    @Test
+    @Ignore("not yet fully implemented?")
+    public void testFindAllXmlReturningStream() {
+        InputStream people = xmlRepository.findAllByName("Jimmy");
+        assertThat(people).hasSameContentAs(streamXml(jimmy));
     }
 }

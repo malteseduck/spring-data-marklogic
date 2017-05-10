@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.repository;
 import com.marklogic.client.io.Format;
 import org.springframework.data.marklogic.core.PersonXml;
 
+import java.io.InputStream;
 import java.util.List;
 
 public interface PersonXmlRepository extends MarkLogicRepository<PersonXml, String> {
@@ -20,4 +21,6 @@ public interface PersonXmlRepository extends MarkLogicRepository<PersonXml, Stri
 
     @Query(value = "{ name: ?0 }")
     List<PersonXml> qbeFindByNameWithoutSpecifyingFormat(String name);
+
+    InputStream findAllByName(String name);
 }

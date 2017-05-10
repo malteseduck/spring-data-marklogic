@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
@@ -39,6 +40,15 @@ import static org.springframework.data.marklogic.repository.query.StubParameterA
 public class QueryTestUtils {
 
     static SpelExpressionParser PARSER = new SpelExpressionParser();
+
+    private static ObjectMapper xmlMapper = new XmlMapper()
+            .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+            .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .setDateFormat(simpleDateFormat8601)
+            .registerModule(new JavaTimeModule())
+            .disableDefaultTyping();
+
 
     private static ObjectMapper objectMapper = new ObjectMapper()
             .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
@@ -77,6 +87,23 @@ public class QueryTestUtils {
                                                 .replace(",  ", ", ")
                                                 .getBytes()
                                 );
+                            } catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+                            return stream;
+                        })
+                        .collect(Collectors.toList()));
+
+        return new SequenceInputStream(results);
+    }
+
+    public static InputStream streamXml(Object... xml) {
+        Enumeration<? extends InputStream> results = Collections.enumeration(
+                Arrays.stream(xml)
+                        .map(record -> {
+                            InputStream stream = null;
+                            try {
+                                stream = new ByteArrayInputStream(xmlMapper.writeValueAsBytes(record));
                             } catch (JsonProcessingException e) {
                                 e.printStackTrace();
                             }
