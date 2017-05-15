@@ -47,6 +47,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public CombinedQueryDefinitionBuilder(StructuredQueryDefinition structuredQuery) {
         this();
         this.structuredQuery = structuredQuery;
+        if (structuredQuery != null) {
+            setCollections(structuredQuery.getCollections());
+            setCriteria(structuredQuery.getCriteria());
+            setDirectory(structuredQuery.getDirectory());
+            setOptionsName(structuredQuery.getOptionsName());
+            setResponseTransform(structuredQuery.getResponseTransform());
+        }
     }
 
     public CombinedQueryDefinitionBuilder() {
