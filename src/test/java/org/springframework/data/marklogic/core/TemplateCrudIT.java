@@ -185,7 +185,7 @@ public class TemplateCrudIT {
 
     @Test
     public void testNoClassDeleteFailure() throws Exception {
-        Throwable thrown = catchThrowable(() -> template.deleteAll((Class) null));
+        Throwable thrown = catchThrowable(() -> template.deleteAll((Class<?>) null));
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
                 .hasMessage("Entity class is required to determine scope of deleteById");

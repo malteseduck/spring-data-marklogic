@@ -37,6 +37,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private List<String> extracts;
     private String qtext;
     private String sparql;
+    private String criteria;
     private int limit = -1;
     private StructuredQueryBuilder qb;
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -278,6 +279,25 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public CombinedQueryDefinition sparql(String sparql) {
         this.sparql = sparql;
+        return this;
+    }
+
+//    @Override
+    public String getCriteria()
+    {
+        return criteria;
+    }
+
+//    @Override
+    public void setCriteria(String criteria)
+    {
+        this.criteria = criteria;
+    }
+
+//    @Override
+    public CombinedQueryDefinition withCriteria(String criteria)
+    {
+        this.criteria = criteria;
         return this;
     }
 

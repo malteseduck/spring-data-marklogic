@@ -10,9 +10,12 @@
     <bean id="client" class="org.springframework.data.marklogic.core.MarkLogicClientFactoryBean">
         <property name="host" value="127.0.0.1"/>
         <property name="port" value="8000"/>
-        <property name="user" value="admin"/>
-        <property name="password" value="admin"/>
-        <property name="type" value="DIGEST"/>
+        <property name="securityContext">
+            <bean class="com.marklogic.client.DatabaseClientFactory$DigestAuthContext">
+                <constructor-arg value="admin"/>
+                <constructor-arg value="admin"/>
+            </bean>
+        </property>
     </bean>
 
     <bean id="markLogicTemplate" class="org.springframework.data.marklogic.core.MarkLogicTemplate">

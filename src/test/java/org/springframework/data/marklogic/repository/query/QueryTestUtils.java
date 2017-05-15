@@ -62,7 +62,8 @@ public class QueryTestUtils {
             // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
             .disableDefaultTyping();
 
-    private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23, "nobody", "nothing", DatabaseClientFactory.Authentication.DIGEST);
+    private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23,
+            new DatabaseClientFactory.DigestAuthContext("nobody", "nothing"));
 
     public static String stringify(Object json) {
         try {

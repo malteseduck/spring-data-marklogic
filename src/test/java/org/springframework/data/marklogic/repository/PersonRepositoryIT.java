@@ -176,7 +176,7 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindsPersonsByNameInNull() throws Exception {
-        List<Person> people = repository.findByNameIn(null);
+        List<Person> people = repository.findByNameIn((String[]) null);
         assertThat(people).isNullOrEmpty();
     }
 

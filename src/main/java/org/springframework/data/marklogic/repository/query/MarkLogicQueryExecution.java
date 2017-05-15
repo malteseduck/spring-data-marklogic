@@ -53,7 +53,7 @@ interface MarkLogicQueryExecution {
         private final MarkLogicOperations operations;
 
         EntityListExecution(MarkLogicOperations operations) {
-            Assert.notNull(operations);
+            Assert.notNull(operations, "MarkLogicOperations cannot be null");
             this.operations = operations;
         }
 

@@ -18,6 +18,8 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -44,6 +46,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -53,6 +56,7 @@ import org.springframework.web.util.UriTemplate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -66,6 +70,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContextAware {
+
+    private static final Logger log = LoggerFactory.getLogger(MarkLogicTemplate.class);
 
     private ApplicationContext applicationContext;
     private MarkLogicConverter converter;
@@ -108,17 +114,23 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     private CredentialsProvider provider() {
-        CredentialsProvider provider = new BasicCredentialsProvider();
-        UsernamePasswordCredentials credentials;
-        // TODO: Find a way to get this to work in the 4.0 version of the library, or if it is released use that one
-        try {
-            credentials = new UsernamePasswordCredentials(
-                    (String) client.getClass().getMethod("getUser").invoke(client),
-                    (String) client.getClass().getMethod("getPassword").invoke(client)
-            );
-            provider.setCredentials(new AuthScope(client.getHost(), AuthScope.ANY_PORT, AuthScope.ANY_REALM), credentials);
-        } catch (Exception e ) {
+        // Get the username/password from the database client's security context
+        DatabaseClientFactory.SecurityContext securityContext = client.getSecurityContext();
+        String username;
+        String password;
+        if (securityContext instanceof DatabaseClientFactory.BasicAuthContext) {
+            username = ((DatabaseClientFactory.BasicAuthContext) securityContext).getUser();
+            password = ((DatabaseClientFactory.BasicAuthContext) securityContext).getPassword();
+        } else if (securityContext instanceof DatabaseClientFactory.DigestAuthContext) {
+            username = ((DatabaseClientFactory.DigestAuthContext) securityContext).getUser();
+            password = ((DatabaseClientFactory.DigestAuthContext) securityContext).getPassword();
+        } else {
+            throw new IllegalArgumentException("Currently only BasicAuthContext and DigestAuthContext are supported");
         }
+
+        CredentialsProvider provider = new BasicCredentialsProvider();
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+        provider.setCredentials(new AuthScope(client.getHost(), AuthScope.ANY_PORT, AuthScope.ANY_REALM), credentials);
         return provider;
     }
 
@@ -274,9 +286,11 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // TODO: Make management port configurable? Or try using services to post?
+        // Need to use the management port for configuring the database
+        URI configUri = new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), 8002);
+
         restTemplate.exchange(
-                // Need to use the management port for configuring the database
-                new UriTemplate("http://{host}:{port}/manage/v2/databases/Documents/properties").expand(client.getHost(), 8002),
+                configUri,
                 HttpMethod.PUT,
                 new HttpEntity<>(json, headers),
                 Void.class

@@ -382,7 +382,7 @@ public class MarkLogicQueryCreatorTests {
     public void testNullValueOnContainsQuery() throws Exception {
         StructuredQueryDefinition query = creator(
                 queryMethod(PersonRepository.class, "findByHobbiesContains", List.class),
-                null
+                (Object) null
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(

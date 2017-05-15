@@ -11,18 +11,13 @@
     <name>Spring Data MarkLogic - Core</name>
     <description>MarkLogic support for Spring Data</description>
 
-    <parent>
-        <groupId>org.springframework.data.build</groupId>
-        <artifactId>spring-data-parent</artifactId>
-        <version>1.9.1.RELEASE</version>
-    </parent>
-
     <properties>
         <bundlor.enabled>false</bundlor.enabled>
-        <marklogic>3.0.7</marklogic>
+        <marklogic>4.0.1</marklogic>
         <springdata.commons>1.13.0.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
         <json>20160810</json>
+        <jackson>2.8.7</jackson>
 
         <!-- Testing versions -->
         <mockito>2.2.0</mockito>
@@ -31,7 +26,20 @@
         <failsafe>2.19.1</failsafe>
 
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.data.build</groupId>
+                <artifactId>spring-data-parent</artifactId>
+                <version>1.9.3.RELEASE</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
@@ -84,7 +92,7 @@
         <!-- MarkLogic -->
         <dependency>
             <groupId>com.marklogic</groupId>
-            <artifactId>java-client-api</artifactId>
+            <artifactId>marklogic-client-api</artifactId>
             <version>${marklogic}</version>
         </dependency>
 
@@ -128,23 +136,45 @@
             <version>${assertj}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testifyproject.mock</groupId>
+            <artifactId>mockito</artifactId>
+            <version>0.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-maven-plugin</artifactId>
-                <version>2.4.1</version>
-
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>biz.aQute.bnd</groupId>-->
+                <!--<artifactId>bnd-maven-plugin</artifactId>-->
+                <!--<version>2.4.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>bnd-process</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -161,17 +191,21 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>wagon-maven-plugin</artifactId>
+                <version>1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
         </plugins>
