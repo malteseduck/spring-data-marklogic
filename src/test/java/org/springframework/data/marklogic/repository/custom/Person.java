@@ -22,7 +22,6 @@ public abstract class Person {
     public static final String EMPLOYEE = "employee";
     public static final String CONTACT = "contact";
 
-
     @Id
     String id;
     String type;

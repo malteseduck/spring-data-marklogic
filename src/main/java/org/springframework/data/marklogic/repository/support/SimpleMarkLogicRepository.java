@@ -10,6 +10,7 @@ import org.springframework.data.marklogic.repository.query.MarkLogicEntityInform
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @SuppressWarnings("unchecked")
     public <S extends T> S save(S entity) {
         Assert.notNull(entity, "Entity must not be null");
+        Method calling = SimpleMarkLogicRepository.class.getEnclosingMethod();
         return (S) operations.write(entity);
     }
 

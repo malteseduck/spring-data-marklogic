@@ -33,8 +33,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
-import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
+import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
@@ -46,7 +46,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -305,17 +304,36 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public <T> T write(final T entity, String... collections) {
         // TODO: Safer...
-        return write(singletonList(entity), collections).get(0);
+        return write(entity, null, collections);
+    }
+
+    @Override
+    public <T> T write(T entity, ServerTransform transform) {
+        return write(entity, transform, (String[]) null);
+    }
+
+    @Override
+    public <T> T write(final T entity, ServerTransform transform, String... collections) {
+        return write(singletonList(entity), transform, collections).get(0);
     }
 
     @Override
     public <T> List<T> write(List<T> entities) {
-        return write(entities, (String[]) null);
+        return write(entities, null, (String[]) null);
     }
 
     @Override
     public <T> List<T> write(List<T> entities, String... collections) {
+        return write(entities, null, collections);
+    }
 
+    @Override
+    public <T> List<T> write(List<T> entities, ServerTransform transform) {
+        return write(entities, transform);
+    }
+
+    @Override
+    public <T> List<T> write(List<T> entities, ServerTransform transform, String... collections) {
         // TODO: Versioning?
         List<DocumentDescriptor> docs =
                 entities.stream()
@@ -345,17 +363,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                         writeSet.add((String) null, doc.getMetadata(), doc.getContent());
                     }
                 }
-                manager.write(writeSet, transaction);
+                manager.write(writeSet, transform, transaction);
             }
             return entities;
         });
     }
 
-    @Override
-    public DocumentRecord read(Object id) {
-        return null;
-    }
-
+//    @Override
+//    public DocumentRecord read(Object id) {
+//        return null;
+//    }
+//
     @Override
     public <T> T read(Object id, Class<T> entityClass) {
         return read(singletonList(id), entityClass).get(0);
@@ -375,7 +393,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
             if ( page == null || page.hasNext() == false ) {
-                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " options ids: " + ids);
+                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
             }
 
             return toEntityList(entityClass, page);

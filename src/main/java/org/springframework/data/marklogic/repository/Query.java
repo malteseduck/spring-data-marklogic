@@ -7,6 +7,12 @@ import org.springframework.data.marklogic.repository.query.SelectedMode;
 
 import java.lang.annotation.*;
 
+/**
+ * Declare QBE queries directly on repository methods. This allows cleaner queries for more complex cases. This also
+ * allows the "tweaking" of basic search parameters in a repository interface without having to use MarkLogicTemplate
+ * directly to set them.
+ *
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented

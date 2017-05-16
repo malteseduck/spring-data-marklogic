@@ -31,4 +31,11 @@ public class PersonRepositoryIntegrationConfiguration {
         repository.setMarkLogicOperations(template);
         return repository;
     }
+
+    @Bean
+    MarkLogicRepositoryFactoryBean transRepository(MarkLogicTemplate template) {
+        MarkLogicRepositoryFactoryBean<PersonTransformingRepository, Person, String> repository = new MarkLogicRepositoryFactoryBean<>(PersonTransformingRepository.class);
+        repository.setMarkLogicOperations(template);
+        return repository;
+    }
 }

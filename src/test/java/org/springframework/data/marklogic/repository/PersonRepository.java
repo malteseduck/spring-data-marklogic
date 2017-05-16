@@ -190,4 +190,5 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     // ====== Streaming queries ======
 
     Stream<Person> readAllByAgeNotNull();
+
 }

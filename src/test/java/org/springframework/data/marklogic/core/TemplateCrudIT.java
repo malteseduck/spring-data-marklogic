@@ -1,6 +1,7 @@
 package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.document.ServerTransform;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -9,9 +10,11 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.mapping.Document;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.Instant;
@@ -22,7 +25,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:integration.xml")
+@ContextHierarchy({
+        @ContextConfiguration("classpath:integration.xml"),
+        @ContextConfiguration(classes = DatabaseConfiguration.class)
+})
 public class TemplateCrudIT {
 
     private MarkLogicTemplate template;
@@ -123,6 +129,17 @@ public class TemplateCrudIT {
         Person saved = template.read(fred.getId(), Person.class);
         assertThat(saved).isNotNull();
         assertThat(saved.getId()).isEqualTo(fred.getId());
+    }
+
+    @Test
+    public void testWriteWithTransform() {
+        Person bob = new Person("bob");
+        template.write(bob, new ServerTransform("write-transform"));
+
+        Person found = template.read(bob.getId(), Person.class);
+
+        assertThat(found).isNotNull();
+        assertThat(found.getName()).isEqualTo("Override Master Write");
     }
 
     @Test

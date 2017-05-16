@@ -42,7 +42,6 @@ public class CustomRepositoryIT {
 
     private Person bobby, george, jane;
 
-
     @PostConstruct
     public void configure() throws IOException {
         operations.configure(configuration);
@@ -80,4 +79,5 @@ public class CustomRepositoryIT {
         assertThat(people.get(1)).isInstanceOf(Contact.class);
         assertThat(people.get(2)).isInstanceOf(Employee.class);
     }
+
 }

@@ -3,7 +3,6 @@ package org.springframework.data.marklogic.repository.custom;
 import com.marklogic.client.document.DocumentRecord;
 import com.marklogic.client.io.JacksonDatabindHandle;
 import com.marklogic.client.query.StructuredQueryBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 
@@ -12,9 +11,12 @@ import java.util.stream.Collectors;
 
 public class PersonRepositoryImpl implements PersonRepositoryCustom {
 
-    @Autowired
     private MarkLogicOperations operations;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
+
+    PersonRepositoryImpl(MarkLogicOperations operations) {
+        this.operations = operations;
+    }
 
     @Override
     public List<Person> findAllPersons() {

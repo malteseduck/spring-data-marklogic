@@ -2,6 +2,7 @@ package org.springframework.data.marklogic.core;
 
 import com.marklogic.client.document.DocumentPage;
 import com.marklogic.client.document.DocumentRecord;
+import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.pojo.PojoQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.core.io.Resource;
@@ -35,7 +36,7 @@ public interface MarkLogicOperations {
     void configure(Resource configuration) throws IOException;
 
     // Callback methods for accessing different low-level APIs available on the client
-    // TODO: Add additional callbacks for different managers and other stuff on the client?  Add one for access to the client?
+    // TODO: Add additional callbacks for different managers and other stuff on the client?
     <T> T execute(DocumentCallback<T> action);
 
     <T> T executeWithClient(ClientCallback<T> action);
@@ -48,13 +49,21 @@ public interface MarkLogicOperations {
 
     <T> T write(T entity, String... collections);
 
+    <T> T write(T entity, ServerTransform transform);
+
+    <T> T write(T entity, ServerTransform transform, String... collections);
+
     <T> List<T> write(List<T> entities);
 
     <T> List<T> write(List<T> entities, String... collections);
 
+    <T> List<T> write(List<T> entities, ServerTransform transform);
+
+    <T> List<T> write(List<T> entities, ServerTransform transform, String... collections);
+
     // If the entity class is not specified return the "raw" result so that the client can convert to whatever they need
 
-    DocumentRecord read(Object id);
+//    DocumentRecord read(Object id);
 
     List<DocumentRecord> read(List<?> ids);
 

@@ -1,10 +1,13 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
+import org.springframework.data.marklogic.repository.Transform;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;
 import org.springframework.data.repository.query.*;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
@@ -22,7 +25,7 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
     @Override
     public Object execute(Object[] values) {
         ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
-        StructuredQueryDefinition query = createQuery(accessor);
+        StructuredQueryDefinition query = transform(createQuery(accessor));
 
         // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
         // TODO: Do we need a "special" type like DocumentStream<T> to better signify return type once convert exists?
@@ -34,6 +37,20 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
     @Override
     public QueryMethod getQueryMethod() {
         return method;
+    }
+
+    /**
+     * Add a server transform to the created query, if one is specified.
+     *
+     * @param query
+     * @return
+     */
+    private StructuredQueryDefinition transform(StructuredQueryDefinition query) {
+        Transform transform = method.getTransform();
+        if (transform != null && StringUtils.hasText(transform.value())) {
+            query.setResponseTransform(new ServerTransform(transform.value()));
+        }
+        return query;
     }
 
     private MarkLogicQueryExecution getExecution(ParameterAccessor accessor) {

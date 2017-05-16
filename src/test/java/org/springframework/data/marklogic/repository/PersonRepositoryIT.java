@@ -40,10 +40,13 @@ public class PersonRepositoryIT {
     private PersonXmlRepository xmlRepository;
 
     @Autowired
-    PersonStreamRepository streamRepository;
+    private PersonStreamRepository streamRepository;
 
     @Autowired
-    MarkLogicOperations operations;
+    private PersonTransformingRepository transRepository;
+
+    @Autowired
+    private MarkLogicOperations operations;
 
     private Person bobby, george, jane, jenny, andrea, henry, freddy;
     private PersonXml jimmy;
@@ -500,5 +503,21 @@ public class PersonRepositoryIT {
     public void testFindAllXmlReturningStream() {
         InputStream people = xmlRepository.findAllByName("Jimmy");
         assertThat(people).hasSameContentAs(streamXml(jimmy));
+    }
+
+    // ====== Transforming Queries =====
+
+    @Test
+    public void testFindPersonAndTransform() {
+        Person person = transRepository.findByNameTransforming("Bobby");
+        assertThat(person).isNotNull();
+        assertThat(person.getName()).isEqualTo("Override Master Read");
+    }
+
+    @Test
+    public void testFindPersonWithStructuredQueryAndTransform() {
+        Person person = transRepository.findFirstByOccupation("construction");
+        assertThat(person).isNotNull();
+        assertThat(person.getName()).isEqualTo("Override Master Read");
     }
 }

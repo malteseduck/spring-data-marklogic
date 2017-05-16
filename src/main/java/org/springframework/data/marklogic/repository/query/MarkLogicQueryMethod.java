@@ -22,6 +22,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
 import org.springframework.data.marklogic.repository.Query;
+import org.springframework.data.marklogic.repository.Transform;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
@@ -39,6 +40,7 @@ public class MarkLogicQueryMethod extends QueryMethod {
     private final Format format;
     private final Class domainClass;
     private Query queryAnnotation;
+    private Transform transformAnnotation;
     private final MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
 
     public MarkLogicQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
@@ -101,6 +103,14 @@ public class MarkLogicQueryMethod extends QueryMethod {
             queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
         }
         return queryAnnotation;
+    }
+
+    Transform getTransform() {
+        if (transformAnnotation == null) {
+            transformAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Transform.class);
+        }
+
+        return transformAnnotation;
     }
 
     TypeInformation<?> getReturnType() {
