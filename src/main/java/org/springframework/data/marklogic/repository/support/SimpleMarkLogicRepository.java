@@ -33,6 +33,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
     @Override
     public List<T> findAll(Sort sort) {
+        Assert.notNull(sort, "The given Sort must not be null");
         return operations.search(
                 operations.sortQuery(sort, null, entityInformation.getJavaType()),
                 entityInformation.getJavaType()
@@ -41,6 +42,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
     @Override
     public Page<T> findAll(Pageable pageable) {
+        Assert.notNull(pageable, "The given Pageable must not be null");
         return operations.search(
                 operations.sortQuery(pageable.getSort(), null, entityInformation.getJavaType()),
                 pageable.getOffset(),

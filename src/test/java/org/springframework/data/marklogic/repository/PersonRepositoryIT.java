@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.*;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.streamXml;
 
@@ -213,6 +215,14 @@ public class PersonRepositoryIT {
         assertThat(page.isFirst()).isFalse();
         assertThat(page.isLast()).isFalse();
         assertThat(page).containsExactly(george, henry);
+    }
+
+    @Test
+    public void testHandlesNullPageable() throws Exception {
+        Throwable thrown = catchThrowable(() -> repository.findAll((Pageable) null));
+
+        assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("The given Pageable must not be null");
     }
 
     @Test
