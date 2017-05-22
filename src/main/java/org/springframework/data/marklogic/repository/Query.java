@@ -62,7 +62,8 @@ public @interface Query {
     /**
      * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some
      * kind, or MarkLogic could add additional options, this is not limited by an enumeration but the query will fail with
-     * incorrect options.
+     * incorrect options.  These options are applied to all the value/range/text queries that are created, so if fine-
+     * tuning is required at that level a custom Repository is required.
      *
      * @return
      */
