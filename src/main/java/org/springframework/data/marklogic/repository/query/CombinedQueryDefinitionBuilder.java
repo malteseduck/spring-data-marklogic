@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.impl.AbstractQueryDefinition;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
@@ -258,6 +259,18 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
+    public CombinedQueryDefinition directory(String directory) {
+        setDirectory(directory);
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition optionsName(String name) {
+        setOptionsName(name);
+        return this;
+    }
+
+    @Override
     public CombinedQueryDefinition options(String options) {
         this.options.add(options);
         return this;
@@ -285,6 +298,12 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public CombinedQueryDefinition limit(int limit) {
         this.limit = limit;
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition transform(ServerTransform transform) {
+        setResponseTransform(transform);
         return this;
     }
 

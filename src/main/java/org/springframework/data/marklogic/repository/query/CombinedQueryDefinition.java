@@ -1,5 +1,6 @@
 package org.springframework.data.marklogic.repository.query;
 
+import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.query.RawQueryByExampleDefinition;
 import com.marklogic.client.query.StructuredQueryDefinition;
@@ -22,6 +23,10 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     CombinedQueryDefinition collections(String... collections);
 
+    CombinedQueryDefinition directory(String directory);
+
+    CombinedQueryDefinition optionsName(String name);
+
     CombinedQueryDefinition options(String options);
 
     CombinedQueryDefinition options(List<String> options);
@@ -31,6 +36,8 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     CombinedQueryDefinition extracts(List<String> extracts, SelectedMode mode);
 
     CombinedQueryDefinition limit(int limit);
+
+    CombinedQueryDefinition transform(ServerTransform transform);
 
     boolean isLimiting();
 
