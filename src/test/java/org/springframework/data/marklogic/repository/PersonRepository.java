@@ -131,6 +131,12 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     // ====== Annotated queries (QBE) ======
 
+    @Query("{}")
+    List<Person> qbeFindAll();
+
+    @Query("{}")
+    Page<Person> qbeFindAllWithPageable(Pageable pageable);
+
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 

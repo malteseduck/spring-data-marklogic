@@ -398,6 +398,20 @@ public class PersonRepositoryIT {
     // ===== Query By Example
 
     @Test
+    public void testFindAllQBE() throws Exception {
+        List<Person> people = repository.qbeFindAll();
+        assertThat(people).containsAll(all);
+    }
+
+    @Test
+    public void testFindAllWithPageableQBE() throws Exception {
+        Page<Person> people = repository.qbeFindAllWithPageable(
+                new PageRequest(0, 1, Sort.Direction.ASC, "name")
+        );
+        assertThat(people).containsExactly(andrea);
+    }
+
+    @Test
     public void testFindByNameQBE() throws Exception {
         Person person = repository.qbeFindByName("Bobby");
         assertThat(person).isEqualTo(bobby);
@@ -445,7 +459,6 @@ public class PersonRepositoryIT {
         );
         assertThat(people).containsExactly(andrea, jane);
     }
-
 
     @Test
     public void testFindByComplicatedQBE() throws Exception {
