@@ -38,21 +38,34 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private String qtext;
     private String sparql;
     private String criteria;
+    private SelectedMode selected;
     private int limit = -1;
     private StructuredQueryBuilder qb;
     private ObjectMapper objectMapper = new ObjectMapper();
     private JsonNodeCreator factory = JsonNodeFactory.instance;
-    private SelectedMode selected;
 
-    public CombinedQueryDefinitionBuilder(StructuredQueryDefinition structuredQuery) {
+    public CombinedQueryDefinitionBuilder(StructuredQueryDefinition query) {
         this();
-        this.structuredQuery = structuredQuery;
-        if (structuredQuery != null) {
-            setCollections(structuredQuery.getCollections());
-            setCriteria(structuredQuery.getCriteria());
-            setDirectory(structuredQuery.getDirectory());
-            setOptionsName(structuredQuery.getOptionsName());
-            setResponseTransform(structuredQuery.getResponseTransform());
+        if (query instanceof CombinedQueryDefinitionBuilder) {
+            CombinedQueryDefinitionBuilder builder = (CombinedQueryDefinitionBuilder) query;
+            this.structuredQuery = builder.getStructuredQuery();
+            this.qbe = builder.getQbe();
+            this.extracts = builder.getExtracts();
+            this.qtext = builder.getQtext();
+            this.options = builder.getOptions();
+            this.qbeFormat = builder.getQbeFormat();
+            this.criteria = builder.getCriteria();
+            this.limit = builder.getLimit();
+            this.selected = builder.getSelected();
+        } else {
+            this.structuredQuery = query;
+        }
+        if (this.structuredQuery != null) {
+            setCollections(query.getCollections());
+            setCriteria(query.getCriteria());
+            setDirectory(query.getDirectory());
+            setOptionsName(query.getOptionsName());
+            setResponseTransform(query.getResponseTransform());
         }
     }
 
@@ -70,11 +83,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     public static CombinedQueryDefinition combine(StructuredQueryDefinition query) {
-        if (query instanceof CombinedQueryDefinitionBuilder) {
-            return (CombinedQueryDefinition) query;
-        } else {
-            return new CombinedQueryDefinitionBuilder(query);
-        }
+        return new CombinedQueryDefinitionBuilder(query);
     }
 
     public static CombinedQueryDefinition combine() {
@@ -152,7 +161,10 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             return factory.objectNode().set("search", search).toString()
                     .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
 
-        } else {
+        } else if (isQbe() || structuredQuery != null ||
+                !optionsToSerialize.isEmpty() ||
+                StringUtils.hasText(qtext) ||
+                StringUtils.hasText(sparql)) {
             StringBuilder search = new StringBuilder();
 
             search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
@@ -187,6 +199,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             search.append("</search>");
             return search.toString();
         }
+        return "";
     }
 
     @Override
@@ -195,7 +208,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public RawQueryByExampleDefinition getQbe() {
+    public RawQueryByExampleDefinition getRawQbe() {
         if (qbe != null) {
             // Copy all the configuration from the combined query object so we don't loose any information as we pass back just the raw query object
             qbe.setCollections(getCollections());
@@ -205,6 +218,14 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             qbe.setHandle(new StringHandle(serialize()).withFormat(qbeFormat));
         }
         return qbe;
+    }
+
+    public RawQueryByExampleDefinition getQbe() {
+        return qbe;
+    }
+
+    public void setQbe(RawQueryByExampleDefinition qbe) {
+        this.qbe = qbe;
     }
 
     @Override

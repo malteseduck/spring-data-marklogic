@@ -67,4 +67,12 @@ public @interface Query {
      * @return
      */
     String[] options() default {};
+
+    /**
+     * The name of a transform to use when returning/saving documents (depends on the type of operations that is annotated).
+     * This transform must have been previously configured through the REST API otherwise the operation will fail.
+     *
+     * @return
+     */
+    String transform() default "";
 }

@@ -183,7 +183,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
             }
         }
         if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe())
-            return ((CombinedQueryDefinition) query).getQbe();
+            return ((CombinedQueryDefinition) query).getRawQbe();
         else
             return query;
     }

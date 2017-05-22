@@ -45,6 +45,5 @@ public class DatabaseConfiguration {
 
         String theWriteTransform = new String(Files.readAllBytes(Paths.get(writeTransform.getURI())));
         transMgr.writeJavascriptTransform("write-transform", new StringHandle(theWriteTransform));
-
     }
 }

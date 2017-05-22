@@ -12,7 +12,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
 
     boolean isQbe();
 
-    RawQueryByExampleDefinition getQbe();
+    RawQueryByExampleDefinition getRawQbe();
 
     CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe);
 

@@ -525,6 +525,27 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindAllOverriddenWithTransform() {
+        Page<Person> results = transRepository.findAllBy(new PageRequest(0, 1));
+        assertThat(results).isNotEmpty();
+
+        Person person = results.iterator().next();
+        assertThat(person.getName()).isEqualTo("Override Master Read");
+    }
+
+    @Ignore("Maybe not possible?")
+    @Test
+    public void testDefaultImplementationFind() {
+        Page<Person> results = transRepository.findAllBy(new PageRequest(0, 1));
+
+        assertThat(results).isNotEmpty();
+
+        Person person = results.iterator().next();
+
+        assertThat(person.getName()).isEqualTo("Override Master Read");
+    }
+
+    @Test
     public void testFindPersonWithStructuredQueryAndTransform() {
         Person person = transRepository.findFirstByOccupation("construction");
         assertThat(person).isNotNull();

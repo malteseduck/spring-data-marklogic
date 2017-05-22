@@ -159,7 +159,8 @@ interface MarkLogicQueryExecution {
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
             return operations.executeWithClient((client, transaction) -> {
                 QueryManager qryMgr = client.newQueryManager();
-                CombinedQueryDefinition combined = new CombinedQueryDefinitionBuilder(query)
+                CombinedQueryDefinition combined = CombinedQueryDefinitionBuilder
+                        .combine(query)
                         .options("<values name='uris'><uri/></values>");
 
                 combined = (CombinedQueryDefinition) operations.getConverter().wrapQuery(combined, type);

@@ -3,7 +3,7 @@ package org.springframework.data.marklogic.repository.query;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.repository.Transform;
+import org.springframework.data.marklogic.repository.Query;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;
 import org.springframework.data.repository.query.*;
 import org.springframework.util.Assert;
@@ -25,7 +25,8 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
     @Override
     public Object execute(Object[] values) {
         ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
-        StructuredQueryDefinition query = transform(createQuery(accessor));
+        StructuredQueryDefinition query = transform(
+                CombinedQueryDefinitionBuilder.combine(createQuery(accessor)));
 
         // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
         // TODO: Do we need a "special" type like DocumentStream<T> to better signify return type once convert exists?
@@ -46,9 +47,9 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
      * @return
      */
     private StructuredQueryDefinition transform(StructuredQueryDefinition query) {
-        Transform transform = method.getTransform();
-        if (transform != null && StringUtils.hasText(transform.value())) {
-            query.setResponseTransform(new ServerTransform(transform.value()));
+        Query queryAnnotation = method.getQueryAnnotation();
+        if (queryAnnotation != null && StringUtils.hasText(queryAnnotation.transform())) {
+            query.setResponseTransform(new ServerTransform(queryAnnotation.transform()));
         }
         return query;
     }
