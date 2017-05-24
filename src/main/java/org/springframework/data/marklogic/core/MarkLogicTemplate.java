@@ -380,8 +380,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public List<DocumentRecord> read(List<?> ids) {
-        return null;
+    public List<DocumentRecord> read(List<?> uris) {
+        return execute((manager, transaction) -> {
+            manager.setPageLength(uris.size());
+            DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
+
+            if ( page == null || page.hasNext() == false ) {
+                throw new DataRetrievalFailureException("Could not find documents of with uris: " + uris);
+            }
+
+            return toRecordList(page);
+        });
     }
 
     @Override
@@ -626,6 +635,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         final List<T> results = new ArrayList<>();
         page.iterator().forEachRemaining(item -> {
             results.add(converter.read(entityClass, new DocumentDescriptor(item)));
+        });
+        return results;
+    }
+
+    private List<DocumentRecord> toRecordList(DocumentPage page) {
+        final List<DocumentRecord> results = new ArrayList<>();
+        page.iterator().forEachRemaining(item -> {
+            results.add(item);
         });
         return results;
     }

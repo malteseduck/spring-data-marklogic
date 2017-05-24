@@ -65,7 +65,8 @@ public interface MarkLogicOperations {
 
 //    DocumentRecord read(Object id);
 
-    List<DocumentRecord> read(List<?> ids);
+    // Read from the database using the full URI instead of the ID from the entity
+    List<DocumentRecord> read(List<?> uris);
 
     List<DocumentRecord> search(StructuredQueryDefinition query);
 
