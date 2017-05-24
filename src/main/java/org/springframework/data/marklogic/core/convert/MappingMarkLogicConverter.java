@@ -19,12 +19,16 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.marklogic.core.mapping.*;
+import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
+import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
+import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +40,8 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     private static final Logger LOG = LoggerFactory.getLogger(MappingMarkLogicConverter.class);
 
     private static final ConversionService converter = new DefaultConversionService();
+
+    private static final Pattern formats = Pattern.compile("\\.(json|xml)");
 
     public static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
     public static SimpleDateFormat simpleDateFormat8601 = new SimpleDateFormat(ISO_8601_FORMAT);
@@ -128,6 +134,11 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     }
 
     @Override
+    public List<String> getDocumentUris(List<?> ids) {
+        return getDocumentUris(ids, null);
+    }
+
+    @Override
     public <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass) {
 
         final List<String> uris = ids.stream()
@@ -154,13 +165,10 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
         return entity != null && entity.getDocumentFormat() == Format.XML && xmlMapper != null;
     }
 
-    @Override
-    public List<String> getDocumentUris(List<? extends Object> ids) {
-        return getDocumentUris(ids, null);
-    }
-
     private Object uriToId(String uri, Format format, String baseUri, Class<?> idType) {
-        String id = uri.substring(baseUri.length(), uri.indexOf("." + format.toString().toLowerCase()));
+        String id = formats
+                .matcher(uri.substring(baseUri.length()))
+                .replaceAll("");
         return converter.convert(id, idType);
     }
 
