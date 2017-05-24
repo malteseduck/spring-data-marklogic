@@ -49,6 +49,13 @@ public interface MarkLogicOperations {
 
     <T> T write(T entity, String... collections);
 
+    /**
+     * Write the specified entity to the database.  Use the specified transform before persisting it.
+     * @param entity
+     * @param transform
+     * @param <T>
+     * @return
+     */
     <T> T write(T entity, ServerTransform transform);
 
     <T> T write(T entity, ServerTransform transform, String... collections);
@@ -65,9 +72,18 @@ public interface MarkLogicOperations {
 
 //    DocumentRecord read(Object id);
 
-    // Read from the database using the full URI instead of the ID from the entity
+    /**
+     * Reads a list of documents from the database by their URIs instead of ids
+     * @param uris
+     * @return
+     */
     List<DocumentRecord> read(List<?> uris);
 
+    /**
+     * Search for a list of documents with the specified structured query
+     * @param query
+     * @return
+     */
     List<DocumentRecord> search(StructuredQueryDefinition query);
 
     // If an entity class is specified then the template can convert all the entities before returning them
@@ -108,7 +124,14 @@ public interface MarkLogicOperations {
 
     // Document existence
 
-    boolean exists(Object id);
+    /**
+     * Check existence by using the full URI under which the document is stored
+     * @param uri
+     * @return
+     */
+    boolean exists(Object uri);
+
+    <T> boolean exists(Object id, Class<T> entityClass);
 
     <T> boolean exists(StructuredQueryDefinition query, Class<T> entityClass);
 

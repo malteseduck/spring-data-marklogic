@@ -329,7 +329,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> write(List<T> entities, ServerTransform transform) {
-        return write(entities, transform);
+        return write(entities, transform, null);
     }
 
     @Override
@@ -512,8 +512,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public boolean exists(Object id) {
-        final List<String> uris = converter.getDocumentUris(singletonList(id));
+    public boolean exists(Object uri) {
+        return execute((manager, transaction) -> singletonList(String.valueOf(uri))
+                .stream()
+                .anyMatch(item -> manager.exists(item, transaction) != null));
+    }
+
+    @Override
+    public <T> boolean exists(Object id, Class<T> entityClass) {
+        final List<String> uris = converter.getDocumentUris(singletonList(id), entityClass);
         return execute((manager, transaction) -> uris.stream().anyMatch(uri -> manager.exists(uri, transaction) != null));
     }
 

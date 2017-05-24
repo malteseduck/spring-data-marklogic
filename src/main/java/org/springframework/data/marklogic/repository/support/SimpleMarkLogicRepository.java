@@ -74,7 +74,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public boolean exists(ID id) {
         Assert.notNull(id, "The given id must not be null");
-        return operations.exists(id);
+        return operations.exists(id, entityInformation.getJavaType());
     }
 
     @Override

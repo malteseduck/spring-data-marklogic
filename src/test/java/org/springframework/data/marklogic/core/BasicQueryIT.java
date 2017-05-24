@@ -73,7 +73,13 @@ public class BasicQueryIT {
 
     @Test
     public void testExistsById() throws Exception {
-        assertThat(template.exists(bobby.getId())).as("does exist").isTrue();
+        assertThat(template.exists(bobby.getId(), Person.class)).as("does exist").isTrue();
+        assertThat(template.exists("invalidid")).as("doesn't exist").isFalse();
+    }
+
+    @Test
+    public void testExistsByUri() throws Exception {
+        assertThat(template.exists("/Person/" + bobby.getId() + ".json")).as("does exist").isTrue();
         assertThat(template.exists("invalidid")).as("doesn't exist").isFalse();
     }
 

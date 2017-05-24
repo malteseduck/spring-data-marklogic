@@ -18,6 +18,9 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     private Format documentFormat;
     private String baseUri;
     private String typeName;
+    private String dbSerializer;
+    private String dbDeserializer;
+    private Format dbFormat;
 
     public BasicMarkLogicPersistentEntity(TypeInformation<T> information) {
         this(information, null);
@@ -30,7 +33,10 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
         TypePersistenceStrategy defaultTypeStrategy = TypePersistenceStrategy.COLLECTION;
         String defaultTypeName = information.getType().getSimpleName();
         Format defaultFormat = Format.JSON;
-        String defaultUri = "/";
+        String defaultUri = normalize(defaultTypeName);
+        String defaultDbSerializer = null;
+        String defautlDbDeserializer = null;
+        Format defaultDbFormat = Format.JSON;
 
         if (document != null) {
             this.baseUri = normalize(coalesce(document.uri(), document.value(), defaultUri));
@@ -38,11 +44,17 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
             this.typePersistenceStrategy = document.typeStrategy();
             // TODO: if configuration says use full name instead of simple name, let that be the default
             this.typeName = coalesce(document.type(), defaultTypeName);
+            this.dbSerializer = document.dbSerializer();
+            this.dbDeserializer = document.dbDeserializer();
+            this.dbFormat = document.dbFormat().toFormat();
         } else {
             this.baseUri = defaultUri;
             this.typePersistenceStrategy = defaultTypeStrategy;
             this.documentFormat = defaultFormat;
             this.typeName = defaultTypeName;
+            this.dbSerializer = defaultDbSerializer;
+            this.dbDeserializer = defautlDbDeserializer;
+            this.dbFormat = defaultDbFormat;
         }
     }
 
@@ -73,6 +85,21 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     @Override
     public String getTypeName() {
         return typeName;
+    }
+
+    @Override
+    public String getDbSerializer() {
+        return dbSerializer;
+    }
+
+    @Override
+    public String getDbDeserializer() {
+        return dbDeserializer;
+    }
+
+    @Override
+    public Format getDbFormat() {
+        return dbFormat;
     }
 
     private String normalize(String uri) {
