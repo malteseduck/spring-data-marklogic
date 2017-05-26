@@ -202,12 +202,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
         if (entity == null)
             throw new InvalidDataAccessApiUsageException(String.format("Cannot determine entity type from %s", entityClass.getName()));
-
-        // TODO: Actually support this configuration.  Can be used here, in the mapper configuration, and in sorting index query stuff
-//        if (entity.getObjectWrapping() == ObjectWrapping.FULL_CLASS)
-//            return new PojoQueryBuilderImpl<T>(entityClass, true);
-//        else
-            return new PojoQueryBuilderImpl<>(entityClass, false);
+        return new PojoQueryBuilderImpl<>(entityClass, false);
     }
 
     @Override
@@ -318,9 +313,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                     if (doc.getUri() != null) {
                         writeSet.add(doc.getUri(), doc.getMetadata(), doc.getContent());
                     } else {
-                        // TODO: How to use uri template with a write set?  Is there a way?
                         DocumentUriTemplate template = manager.newDocumentUriTemplate(doc.getFormat().toString());
-//                        com.marklogic.client.document.DocumentDescriptor desc = manager.create(template, doc.getMetadata(), doc.getContent());
                         writeSet.add((String) null, doc.getMetadata(), doc.getContent());
                     }
                 }
@@ -330,11 +323,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         });
     }
 
-//    @Override
-//    public DocumentRecord read(Object id) {
-//        return null;
-//    }
-//
     @Override
     public <T> T read(Object id, Class<T> entityClass) {
         return read(singletonList(id), entityClass).get(0);

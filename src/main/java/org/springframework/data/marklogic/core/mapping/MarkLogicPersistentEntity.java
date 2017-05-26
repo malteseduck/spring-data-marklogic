@@ -29,10 +29,4 @@ public interface MarkLogicPersistentEntity<T> extends PersistentEntity<T, MarkLo
      * Gets the name of the type to use when interacting with the database
      */
     String getTypeName();
-
-    String getDbSerializer();
-
-    String getDbDeserializer();
-
-    Format getDbFormat();
 }

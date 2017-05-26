@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonDatabindHandle;
@@ -36,7 +35,6 @@ import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
-import static org.springframework.util.StringUtils.hasText;
 
 public class JacksonMarkLogicConverter implements MarkLogicConverter, InitializingBean {
 
@@ -188,36 +186,6 @@ public class JacksonMarkLogicConverter implements MarkLogicConverter, Initializi
         } else {
             return combined;
         }
-    }
-
-    @Override
-    public <T> ServerTransform getSerializer(Class<T> entityClass) {
-        ServerTransform serializer = null;
-
-        if (entityClass != null) {
-            MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
-
-            if (entity != null && hasText(entity.getDbSerializer())) {
-                serializer = new ServerTransform(entity.getDbSerializer());
-            }
-        }
-
-        return serializer;
-    }
-
-    @Override
-    public <T> ServerTransform getDeserializer(Class<T> entityClass) {
-        ServerTransform serializer = null;
-
-        if (entityClass != null) {
-            MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
-
-            if (entity != null && hasText(entity.getDbDeserializer())) {
-                serializer = new ServerTransform(entity.getDbDeserializer());
-            }
-        }
-
-        return serializer;
     }
 
     @Override
