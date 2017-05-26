@@ -1,19 +1,10 @@
 package org.springframework.data.marklogic.repository.query;
 
-import com.marklogic.client.io.Format;
-import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.io.ValuesHandle;
-import com.marklogic.client.query.QueryManager;
 import com.marklogic.client.query.StructuredQueryDefinition;
-import com.marklogic.client.query.ValuesDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.util.Assert;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 interface MarkLogicQueryExecution {
 
@@ -157,31 +148,8 @@ interface MarkLogicQueryExecution {
 
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
-            return operations.executeWithClient((client, transaction) -> {
-                QueryManager qryMgr = client.newQueryManager();
-                CombinedQueryDefinition combined = CombinedQueryDefinitionBuilder
-                        .combine(query)
-                        .options("<values name='uris'><uri/></values>");
-
-                combined = (CombinedQueryDefinition) operations.getConverter().wrapQuery(combined, type);
-                ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");
-                valDef.setQueryDefinition(
-                        qryMgr.newRawCombinedQueryDefinition(new StringHandle(combined.serialize()).withFormat(Format.XML))
-                );
-
-                ValuesHandle results = qryMgr.values(valDef, new ValuesHandle(), transaction);
-
-                // Convert the facets to just a list of the ids so we can filter them down
-                List<String> uris = Arrays.stream(results.getValues())
-                        .map(value -> value.get("xs:string", String.class))
-                        .collect(Collectors.toList());
-
-                if (!uris.isEmpty()) {
-                    client.newDocumentManager().delete(transaction, uris.toArray(new String[0]));
-                }
-
-                return null;
-            });
+            operations.delete(query, type);
+            return null;
         }
     }
 

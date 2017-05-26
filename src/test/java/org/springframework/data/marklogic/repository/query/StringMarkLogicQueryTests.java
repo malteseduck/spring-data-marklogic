@@ -24,7 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
 import org.springframework.data.marklogic.core.Pet;
-import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
 import org.springframework.data.marklogic.repository.PersonXmlRepository;
@@ -49,7 +49,7 @@ public class StringMarkLogicQueryTests {
 
 	@Before
 	public void setUp() {
-		operations = new MarkLogicTemplate(client(), new MappingMarkLogicConverter(new MarkLogicMappingContext()));
+		operations = new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(new MarkLogicMappingContext()));
 	}
 
 	@Test

@@ -25,8 +25,7 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
     @Override
     public Object execute(Object[] values) {
         ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
-        StructuredQueryDefinition query = transform(
-                CombinedQueryDefinitionBuilder.combine(createQuery(accessor)));
+        StructuredQueryDefinition query = transform(createQuery(accessor));
 
         // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
         // TODO: Do we need a "special" type like DocumentStream<T> to better signify return type once convert exists?

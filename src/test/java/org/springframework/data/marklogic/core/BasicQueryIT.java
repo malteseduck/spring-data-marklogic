@@ -62,7 +62,7 @@ public class BasicQueryIT {
     }
 
     private void cleanDb() {
-        template.deleteAll(Person.class);
+        template.dropCollection(Person.class);
     }
 
     @Test

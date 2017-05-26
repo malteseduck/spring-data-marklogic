@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
+
 public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
     private final MarkLogicOperations operations;
@@ -64,12 +66,11 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
         Format formatToUse = annotation.format() == Format.UNKNOWN ? entity.getDocumentFormat() : annotation.format();
 
-        CombinedQueryDefinition query = CombinedQueryDefinitionBuilder
-                .combine()
+        return combine()
+                .type(type)
                 .byExample(definition, formatToUse)
-                .extracts(Arrays.asList(annotation.extract()));
-
-        return operations.sortQuery(accessor.getSort(), query, type);
+                .extracts(Arrays.asList(annotation.extract()))
+                .sort(accessor.getSort());
     }
 
     @Override

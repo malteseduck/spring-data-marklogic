@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.parser.PartTree;
 
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
+
 public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
 
     private final PartTree tree;
@@ -30,7 +32,8 @@ public class PartTreeMarkLogicQuery extends AbstractMarkLogicQuery {
         StructuredQueryDefinition query = creator.createQuery();
 
         if (tree.isLimiting()) {
-            query = operations.limitingQuery(tree.getMaxResults(), query);
+            query = combine(query)
+                    .limit(tree.getMaxResults());
         }
 
         return query;

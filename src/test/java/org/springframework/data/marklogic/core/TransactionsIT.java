@@ -38,7 +38,7 @@ public class TransactionsIT {
     }
 
     private static void cleanDb() {
-        template.deleteAll(Person.class);
+        template.dropCollection(Person.class);
     }
 
     // Not the best way, but the simplest, just to test to make sure the @Transactional is working like expected

@@ -17,6 +17,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("classpath:integration.xml")
@@ -42,7 +43,7 @@ public class CombinedQueryIT {
     }
 
     private void cleanDb() {
-        template.deleteAll(Person.class);
+        template.dropCollection(Person.class);
     }
 
     @Test
@@ -52,7 +53,7 @@ public class CombinedQueryIT {
 
         template.write(asList(bob, george));
 
-        List<Person> people = template.search(CombinedQueryDefinitionBuilder.combine(), Person.class);
+        List<Person> people = template.search(combine(), Person.class);
         assertThat(people).containsExactlyInAnyOrder(bob, george);
     }
 
@@ -64,9 +65,7 @@ public class CombinedQueryIT {
         template.write(asList(bob, george));
 
         List<Person> people = template.search(
-                CombinedQueryDefinitionBuilder.combine(
-                        qb.value(qb.jsonProperty("name"), "Bob")
-                ),
+                combine(qb.value(qb.jsonProperty("name"), "Bob")),
                 Person.class
         );
         assertThat(people).containsExactly(bob);

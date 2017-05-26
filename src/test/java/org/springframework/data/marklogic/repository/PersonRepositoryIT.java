@@ -89,7 +89,7 @@ public class PersonRepositoryIT {
     private void cleanDb() {
         repository.deleteAll();
         xmlRepository.deleteAll();
-        operations.deleteAll("OtherPeople");
+        operations.dropCollections("OtherPeople");
     }
 
     @Test

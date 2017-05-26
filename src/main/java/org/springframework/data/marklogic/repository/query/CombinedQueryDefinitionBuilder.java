@@ -14,12 +14,18 @@ import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.json.JSONObject;
 import org.json.XML;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.marklogic.core.mapping.*;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * Allow us to keep a running build of query/options so we can set them throughout the different processing levels.  The
@@ -29,10 +35,10 @@ import java.util.stream.Collectors;
  */
 public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition implements CombinedQueryDefinition {
 
-    // TODO: Support XML QBE?
-
     private StructuredQueryDefinition structuredQuery;
+    private MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
     private RawQueryByExampleDefinition qbe;
+    private Class entityClass;
     private Format qbeFormat;
     private List<String> options;
     private List<String> extracts;
@@ -45,7 +51,15 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private ObjectMapper objectMapper = new ObjectMapper();
     private JsonNodeCreator factory = JsonNodeFactory.instance;
 
-    public CombinedQueryDefinitionBuilder(StructuredQueryDefinition query) {
+    public static CombinedQueryDefinition combine() {
+        return new CombinedQueryDefinitionBuilder();
+    }
+
+    public static CombinedQueryDefinition combine(StructuredQueryDefinition query) {
+        return new CombinedQueryDefinitionBuilder(query);
+    }
+
+    private CombinedQueryDefinitionBuilder(StructuredQueryDefinition query) {
         this();
         if (query instanceof CombinedQueryDefinitionBuilder) {
             CombinedQueryDefinitionBuilder builder = (CombinedQueryDefinitionBuilder) query;
@@ -58,20 +72,24 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             this.criteria = builder.getCriteria();
             this.limit = builder.getLimit();
             this.selected = builder.getSelected();
+            this.entityClass = builder.getEntityClass();
+            this.mappingContext = builder.getMappingContext();
         } else {
             this.structuredQuery = query;
         }
-        if (this.structuredQuery != null) {
-            setCollections(query.getCollections());
+
+        if (query != null) {
+            collections(query.getCollections());
+            directory(query.getDirectory());
+            optionsName(query.getOptionsName());
+            transform(query.getResponseTransform());
             setCriteria(query.getCriteria());
-            setDirectory(query.getDirectory());
-            setOptionsName(query.getOptionsName());
-            setResponseTransform(query.getResponseTransform());
         }
     }
 
-    public CombinedQueryDefinitionBuilder() {
+    private CombinedQueryDefinitionBuilder() {
         super();
+        this.mappingContext = new MarkLogicMappingContext();
         this.qb = new StructuredQueryBuilder();
         this.options = new ArrayList<>();
         this.extracts = new ArrayList<>();
@@ -83,14 +101,6 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     }
 
-    public static CombinedQueryDefinition combine(StructuredQueryDefinition query) {
-        return new CombinedQueryDefinitionBuilder(query);
-    }
-
-    public static CombinedQueryDefinition combine() {
-        return new CombinedQueryDefinitionBuilder();
-    }
-
     // Allows us to generate a "random" name for a JSON property so we can support multiple options with the same name
     private String unique(String name) {
         return name + "%" + Math.round(Math.random() * 1000);
@@ -100,13 +110,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     public String serialize() {
         List<String> optionsToSerialize = options;
 
-        if (limit >= 0) optionsToSerialize.add(String.format("<page-length>%s</page-length>", limit));
+        if (limit >= 0) optionsToSerialize.add(format("<page-length>%s</page-length>", limit));
 
         if (extracts.size() > 0) {
             StringBuilder extract = new StringBuilder();
-            extract.append(String.format("<extract-document-data selected='%s'>", selected));
+            extract.append(format("<extract-document-data selected='%s'>", selected));
 
-            extracts.forEach(path -> extract.append(String.format("<extract-path>%s</extract-path>", path)));
+            extracts.forEach(path -> extract.append(format("<extract-path>%s</extract-path>", path)));
 
             extract.append("</extract-document-data>");
             optionsToSerialize.add(extract.toString());
@@ -164,8 +174,8 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
         } else if (isQbe() || structuredQuery != null ||
                 !optionsToSerialize.isEmpty() ||
-                StringUtils.hasText(qtext) ||
-                StringUtils.hasText(sparql)) {
+                hasText(qtext) ||
+                hasText(sparql)) {
             StringBuilder search = new StringBuilder();
 
             search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
@@ -245,17 +255,12 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public CombinedQueryDefinition and(StructuredQueryDefinition query) {
-        if (structuredQuery != null)
-            structuredQuery = qb.and(structuredQuery, query);
-        else
-            structuredQuery = query;
-        return this;
-    }
-
-    @Override
     public CombinedQueryDefinition collections(String... collections) {
-        return and(qb.collection(collections));
+        // Preserve any current collections set on the query so this can be called multiple times without destroying anything
+        Set<String> current = new HashSet<>(asList(getCollections()));
+        Collections.addAll(current, collections);
+        setCollections(current.toArray(new String[0]));
+        return this;
     }
 
     @Override
@@ -270,17 +275,78 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         return this;
     }
 
+    // TODO: Support passing JSON options like this: "{ 'sort-order': { direction : 'ascending', 'path-index': { text: '/name' } } }"?
     @Override
-    public CombinedQueryDefinition options(String options) {
-        this.options.add(options);
+    public CombinedQueryDefinition options(String... options) {
+        Collections.addAll(this.options, options);
         return this;
     }
 
-    // TODO: Support passing JSON options like this: "{ 'sort-order': { direction : 'ascending', 'path-index': { text: '/name' } } }"?
     @Override
-    public CombinedQueryDefinition options(List<String> options) {
-        this.options.addAll(options);
+    public CombinedQueryDefinition sort(Sort sort) {
+        if (sort != null && sort.iterator().hasNext()) {
+            final MarkLogicPersistentEntity entity = entityClass != null ? mappingContext.getPersistentEntity(entityClass) : null;
+
+            sort.forEach(order -> {
+                String propertyName = order.getProperty();
+                String direction = asMLSort(order.getDirection());
+
+                String path = null;
+                // If there is an entity then we can determine the configuration of the index from it, otherwise we just
+                // default to a path index. An error will be thrown by the database if the index is not created, though.
+                if (entity != null) {
+                    MarkLogicPersistentProperty property = (MarkLogicPersistentProperty) entity.getPersistentProperty(propertyName);
+                    if (!StringUtils.isEmpty(property.getPath())) {
+                        path = property.getPath();
+                    }
+                } else {
+                    path = "/"+ order.getProperty();
+                }
+
+                if (hasText(path)) {
+                    sort(path, direction, IndexType.PATH);
+                } else {
+                    sort(propertyName, direction, IndexType.ELEMENT);
+                }
+            });
+        }
+
         return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition sort(Sort sort, IndexType type) {
+        if (sort != null) {
+            sort.forEach(order -> sort(order.getProperty(), asMLSort(order.getDirection()), type));
+        }
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition sort(String propertyName, String order, IndexType type) {
+        if (hasText(propertyName) && hasText(order) && type != null) {
+            if (type == IndexType.PATH) {
+                options(format("" +
+                        "<sort-order direction='%s'>" +
+                        "   <path-index>%s</path-index>" +
+                        "</sort-order>", order, propertyName));
+            } else {
+                options(format("" +
+                        "<sort-order direction='%s'>" +
+                        "   <element ns='' name='%s'/>" +
+                        "</sort-order>", order, propertyName));
+            }
+        }
+
+        return this;
+    }
+
+    private String asMLSort(Sort.Direction direction) {
+        if (Sort.Direction.DESC.equals(direction)) {
+            return "descending";
+        } else {
+            return "ascending";
+        }
     }
 
     @Override
@@ -329,22 +395,51 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         return this;
     }
 
-//    @Override
+    @Override
+    public CombinedQueryDefinition type(Class entityClass) {
+        this.entityClass = entityClass;
+
+        if (entityClass != null) {
+            MarkLogicPersistentEntity entity = mappingContext.getPersistentEntity(entityClass);
+
+            if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
+                collections(entity.getTypeName());
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition context(MappingContext mappingContext) {
+        this.mappingContext = mappingContext;
+        return this;
+    }
+
+    @Override
     public String getCriteria()
     {
         return criteria;
     }
 
-//    @Override
+    @Override
     public void setCriteria(String criteria)
     {
         this.criteria = criteria;
     }
 
-//    @Override
+    @Override
     public CombinedQueryDefinition withCriteria(String criteria)
     {
         this.criteria = criteria;
+        return this;
+    }
+
+    private CombinedQueryDefinition and(StructuredQueryDefinition query) {
+        if (structuredQuery != null)
+            structuredQuery = qb.and(structuredQuery, query);
+        else
+            structuredQuery = query;
         return this;
     }
 
@@ -374,5 +469,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     public SelectedMode getSelected() {
         return selected;
+    }
+
+    public Class getEntityClass() {
+        return entityClass;
+    }
+
+    public MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> getMappingContext() {
+        return mappingContext;
     }
 }

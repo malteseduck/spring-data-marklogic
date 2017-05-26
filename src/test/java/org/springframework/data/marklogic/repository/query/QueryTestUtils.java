@@ -13,7 +13,7 @@ import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.MarkLogicTemplate;
-import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
@@ -34,7 +34,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.stream.Collectors;
 
-import static org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter.simpleDateFormat8601;
+import static org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter.simpleDateFormat8601;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
 
 public class QueryTestUtils {
@@ -120,8 +121,7 @@ public class QueryTestUtils {
     }
 
     public static String rawQuery(String qbe) {
-        return CombinedQueryDefinitionBuilder
-                .combine()
+        return combine()
                 .byExample(client().newQueryManager().newRawQueryByExampleDefinition(new StringHandle(qbe))
         ).serialize();
     }
@@ -138,17 +138,17 @@ public class QueryTestUtils {
 
     public static StructuredQueryDefinition stringQuery(MarkLogicQueryMethod method, Object... parameters) throws Exception {
         MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
-        return new StringMarkLogicQuery(method, new MarkLogicTemplate(client(), new MappingMarkLogicConverter(context)), PARSER, DefaultEvaluationContextProvider.INSTANCE).createQuery(getAccessor(parameters));
+        return new StringMarkLogicQuery(method, new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(context)), PARSER, DefaultEvaluationContextProvider.INSTANCE).createQuery(getAccessor(parameters));
     }
 
     public static PartTreeMarkLogicQuery tree(MarkLogicQueryMethod method) {
         MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
-        return new PartTreeMarkLogicQuery(method, new MarkLogicTemplate(client(), new MappingMarkLogicConverter(context)));
+        return new PartTreeMarkLogicQuery(method, new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(context)));
     }
 
     public static MarkLogicQueryCreator creator(MarkLogicQueryMethod method, Object... parameters) {
         MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
         PartTree tree = new PartTree(method.getName(), method.getEntityInformation().getJavaType());
-        return new MarkLogicQueryCreator(tree, getAccessor(parameters), new MarkLogicTemplate(client(), new MappingMarkLogicConverter(context)), context, method);
+        return new MarkLogicQueryCreator(tree, getAccessor(parameters), new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(context)), context, method);
     }
 }

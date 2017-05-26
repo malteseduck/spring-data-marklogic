@@ -7,11 +7,11 @@ import com.marklogic.client.document.*;
 import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.impl.RESTServices;
+import com.marklogic.client.io.Format;
+import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.io.ValuesHandle;
 import com.marklogic.client.pojo.PojoQueryBuilder;
-import com.marklogic.client.query.DeleteQueryDefinition;
-import com.marklogic.client.query.QueryDefinition;
-import com.marklogic.client.query.StructuredQueryBuilder;
-import com.marklogic.client.query.StructuredQueryDefinition;
+import com.marklogic.client.query.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -31,14 +31,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.TransactionHolder;
-import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
-import org.springframework.data.marklogic.core.mapping.*;
+import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
+import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
-import org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder;
-import org.springframework.data.marklogic.repository.query.SelectedMode;
 import org.springframework.data.marklogic.repository.query.convert.DefaultMarkLogicQueryConversionService;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import org.springframework.http.HttpEntity;
@@ -48,7 +48,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplate;
 
@@ -58,15 +57,13 @@ import java.io.SequenceInputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
 public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContextAware {
 
@@ -81,19 +78,35 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private RESTServices services;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
-    public MarkLogicTemplate() {
-        // Default to local host DB on default port if nothing is specified
-        this(DatabaseClientFactory.newClient("localhost", 8000), null);
-    }
-
+    /**
+     * Create a template interface using the specified database client and the default entity converter and query conversion
+     * service.
+     *
+     * @param client The MarkLogic database client created from @see {@link DatabaseClientFactory}
+     */
     public MarkLogicTemplate(DatabaseClient client) {
         this(client, null);
     }
 
+    /**
+     * Create a template interface using the specified database client and the default query conversion service.
+     *
+     * @param client The MarkLogic database client created from DatabaseClientFactory.
+     * @param converter A custom entity converter.
+     */
     public MarkLogicTemplate(DatabaseClient client, MarkLogicConverter converter) {
         this(client, converter, null);
     }
 
+    /**
+     * Create a template interface using the specified database client.  Also provide a custom convert that handles the
+     * translation of entities between Java and MarkLogic.  You can also provide a custom query conversion service that will
+     * handle the conversion of different types used in finder queries and @Query queries.
+     *
+     * @param client The MarkLogic database client created from @see {@link DatabaseClientFactory}.
+     * @param converter A custom entity converter.
+     * @param queryConversionService A custom query object conversion service.
+     */
     public MarkLogicTemplate(DatabaseClient client, MarkLogicConverter converter, QueryConversionService queryConversionService) {
         Assert.notNull(client, "A database client object is required!");
         this.client = client;
@@ -101,7 +114,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         this.queryConversionService = queryConversionService == null ? getDefaultQueryConverter() : queryConversionService;
         this.exceptionTranslator = new MarkLogicExceptionTranslator();
 
-        // Create a RestTemplate instance for use directly against the REST API because there are some things that aren't fully supported in the client
+        // Create a RestTemplate instance for use directly against the REST API because there are some things that
+        // aren't fully supported in the client
         HttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCredentialsProvider(provider())
@@ -133,15 +147,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return provider;
     }
 
-    private static final MarkLogicConverter getDefaultConverter() {
-        MappingMarkLogicConverter converter = new MappingMarkLogicConverter(new MarkLogicMappingContext());
+    private static MarkLogicConverter getDefaultConverter() {
+        JacksonMarkLogicConverter converter = new JacksonMarkLogicConverter(new MarkLogicMappingContext());
         converter.afterPropertiesSet();
         return converter;
     }
 
-    private static final QueryConversionService getDefaultQueryConverter() {
-        DefaultMarkLogicQueryConversionService converter = new DefaultMarkLogicQueryConversionService();
-        return converter;
+    private static QueryConversionService getDefaultQueryConverter() {
+        return new DefaultMarkLogicQueryConversionService();
     }
 
     @Override
@@ -205,42 +218,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public <T> StructuredQueryDefinition sortQuery(Sort sort, StructuredQueryDefinition query, Class<T> entityClass) {
         if (sort != null && sort.iterator().hasNext()) {
-            CombinedQueryDefinition combined = CombinedQueryDefinitionBuilder.combine(query);
-
-            final MarkLogicPersistentEntity entity = entityClass != null ? converter.getMappingContext().getPersistentEntity(entityClass) : null;
-
-            // TODO: Move this to the combined query builder?
-            sort.forEach(order -> {
-                StringBuilder options = new StringBuilder();
-                String propertyName = order.getProperty();
-                String direction = asMLSort(order.getDirection());
-
-                options.append("<sort-order direction='").append(direction).append("'>");
-
-                StringBuilder path = new StringBuilder();
-                // If there is an entity then we can determine the configuration of the index from it, otherwise we just
-                // default to a path index. An error will be thrown by the database if the index is not created, though.
-                if (entity != null) {
-                    MarkLogicPersistentProperty property = (MarkLogicPersistentProperty) entity.getPersistentProperty(propertyName);
-                    if (!StringUtils.isEmpty(property.getPath())) path.append(property.getPath());
-                } else {
-                    path.append("/").append(order.getProperty());
-                }
-
-                if (path.length() > 0) {
-                    options.append("<path-index>").append(path).append("</path-index>");
-                } else {
-                    options.append("<element ns='' name='").append(propertyName).append("'/>");
-                }
-                options.append("</sort-order>");
-
-                combined.options(options.toString());
-            });
-
-            return combined;
+            return combine(query)
+                    .type(entityClass)
+                    .sort(sort);
         } else {
             return query;
         }
+    }
+
+    @Override
+    public StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query) {
+        return combine(query).term(term);
     }
 
     private String asMLSort(Sort.Direction direction) {
@@ -248,33 +236,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             return "descending";
         } else {
             return "ascending";
-        }
-    }
-
-    @Override
-    public StructuredQueryDefinition termQuery(String term, StructuredQueryDefinition query) {
-        return CombinedQueryDefinitionBuilder
-                .combine(query)
-                .term(term);
-    }
-
-    @Override
-    public StructuredQueryDefinition limitingQuery(int limit, StructuredQueryDefinition query) {
-        return CombinedQueryDefinitionBuilder
-                .combine(query)
-                .limit(limit);
-    }
-
-    @Override
-    public StructuredQueryDefinition extractQuery(List<String> paths, SelectedMode mode, StructuredQueryDefinition query) {
-        if (paths != null && paths.size() > 0) {
-            SelectedMode modeToUse = mode != null ? mode : SelectedMode.HIERARCHICAL;
-
-            return CombinedQueryDefinitionBuilder
-                    .combine(query)
-                    .extracts(paths, modeToUse);
-        } else {
-            return query;
         }
     }
 
@@ -419,19 +380,31 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass) {
-        return search(query, 0, -1, entityClass).getContent();
+        return search(query, 0, -1, entityClass)
+                .getContent();
     }
 
     @Override
     public <T> T searchOne(StructuredQueryDefinition query, Class<T> entityClass) {
-        List<T> results = search(query, 0, 1, entityClass).getContent();
+        List<T> results = search(query, 0, 1, entityClass)
+                .getContent();
         return results.get(0);
     }
 
-    @Override
+    /**
+     * Query for a list of of documents of the specified type.  As this returns all the documents for the type it can
+     * potentially take a long time to resolve pulling all of them back from the database.  The query will be fast, but
+     * transmitting all the records could time out if the result set is sufficiently large.  It is recommended that you
+     * page your results.
+     *
+     * This method is mainly created to accommodate creating an implementation for the
+     * {@link org.springframework.data.repository.CrudRepository#findAll()} method.
+     *
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     */
     public <T> List<T> search(Class<T> entityClass) {
-        // TODO: Is this dangerous?
-        return search(null, 0, Integer.MAX_VALUE, entityClass).getContent();
+        return search(qb.and(), 0, -1, entityClass)
+                .getContent();
     }
 
     @Override
@@ -512,7 +485,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public boolean exists(Object uri) {
+    public boolean exists(String uri) {
         return execute((manager, transaction) -> singletonList(String.valueOf(uri))
                 .stream()
                 .anyMatch(item -> manager.exists(item, transaction) != null));
@@ -551,13 +524,21 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public void deleteById(Object id) {
-        deleteAll(singletonList(id), null);
+    public void deleteByUri(String... uris) {
+        deleteByUris(Arrays.asList(uris));
+    }
+
+    @Override
+    public void deleteByUris(List<String> uris) {
+        execute((manager, transaction) -> {
+            manager.delete(transaction, uris.toArray(new String[0]));
+            return null;
+        });
     }
 
     @Override
     public <T> void deleteById(Object id, Class<T> entityClass) {
-        deleteAll(singletonList(id), entityClass);
+        deleteByIds(singletonList(id), entityClass);
     }
 
     @Override
@@ -578,12 +559,35 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public void deleteAll(List<?> ids) {
-        deleteAll(ids, null);
+    public <T> void delete(StructuredQueryDefinition query, Class<T> entityClass) {
+        executeWithClient((client, transaction) -> {
+            QueryManager qryMgr = client.newQueryManager();
+            CombinedQueryDefinition combined =
+                    combine(query).options("<values name='uris'><uri/></values>");
+
+            combined = (CombinedQueryDefinition) getConverter().wrapQuery(combined, entityClass);
+            ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");
+            valDef.setQueryDefinition(
+                    qryMgr.newRawCombinedQueryDefinition(new StringHandle(combined.serialize()).withFormat(Format.XML))
+            );
+
+            ValuesHandle results = qryMgr.values(valDef, new ValuesHandle(), transaction);
+
+            // Convert the facets to just a list of the ids
+            List<String> uris = Arrays.stream(results.getValues())
+                    .map(value -> value.get("xs:string", String.class))
+                    .collect(Collectors.toList());
+
+            if (!uris.isEmpty()) {
+                client.newDocumentManager().delete(transaction, uris.toArray(new String[0]));
+            }
+
+            return null;
+        });
     }
 
     @Override
-    public <T> void deleteAll(List<?> ids, Class<T> entityClass) {
+    public <T> void deleteByIds(List<?> ids, Class<T> entityClass) {
         final List<String> uris = converter.getDocumentUris(ids, entityClass);
 
         execute((manager, transaction) -> {
@@ -593,7 +597,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public void deleteAll(String... collections) {
+    public void dropCollections(String... collections) {
         executeQuery((manager, transaction) -> {
             // The REST API only supports deleting one collection at a time, so we need to send a request for each
             asList(collections).forEach(collection -> {
@@ -606,7 +610,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> void deleteAll(Class<T> entityClass) {
+    public <T> void dropCollection(Class<T> entityClass) {
         // TODO: If no entity class is supplied do we just deleteById directory "/"?  Is that safe/good?
         if (entityClass == null) {
             throw new InvalidDataAccessApiUsageException("Entity class is required to determine scope of deleteById");
@@ -620,7 +624,22 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             throw new InvalidDataAccessApiUsageException(String.format("Cannot determine deleteById scope for entity of type %s", entityClass.getName()));
         }
 
-        deleteAll(entityClass.getSimpleName());
+        dropCollections(entityClass.getSimpleName());
+    }
+
+    @Override
+    public <T> void dropCollections(Class<T>... entityClasses) {
+        String[] collections = Arrays.stream(entityClasses)
+                .map(entityClass -> {
+                    MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
+                    if (entity == null || entity.getTypePersistenceStrategy() != TypePersistenceStrategy.COLLECTION) {
+                        throw new InvalidDataAccessApiUsageException(String.format("Cannot determine deleteById scope for entity of type %s", entityClass.getName()));
+                    }
+
+                    return entityClass.getSimpleName();
+                }).toArray(String[]::new);
+
+        dropCollections(collections);
     }
 
     @Override

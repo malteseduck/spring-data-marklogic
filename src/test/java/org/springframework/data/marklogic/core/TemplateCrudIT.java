@@ -49,10 +49,10 @@ public class TemplateCrudIT {
     }
 
     private void cleanDb() {
-        template.deleteAll(Person.class);
-        template.deleteAll(InstantPerson.class);
-        template.deleteAll(IntPerson.class);
-        template.deleteAll(asList("badfred"), BadPerson.class);
+        template.dropCollection(Person.class);
+        template.dropCollection(InstantPerson.class);
+        template.dropCollection(IntPerson.class);
+        template.deleteByIds(asList("badfred"), BadPerson.class);
     }
 
     @Test
@@ -62,8 +62,8 @@ public class TemplateCrudIT {
 
         template.write(asList(bob, george));
 
-        template.deleteById(bob.getId());
-        assertThat(template.exists(bob.getId())).as("deleted by id").isFalse();
+        template.deleteByUri("/" + bob.getId() + ".json");
+        assertThat(template.exists(bob.getId())).as("deleted by uri").isFalse();
 
         template.deleteById(george.getId(), Person.class);
         assertThat(template.exists(george.getId())).as("deleted by id and type").isFalse();
@@ -76,10 +76,7 @@ public class TemplateCrudIT {
 
         template.write(asList(bob, george));
 
-        template.deleteAll(asList(bob.getId()));
-        assertThat(template.exists(bob.getId())).as("without type").isFalse();
-
-        template.deleteAll(asList(george.getId()), Person.class);
+        template.deleteByIds(asList(george.getId()), Person.class);
         assertThat(template.exists(george.getId())).as("options type").isFalse();
     }
 
@@ -90,7 +87,7 @@ public class TemplateCrudIT {
 
         template.write(asList(bob, george));
         template.delete(asList(bob, george));
-        assertThat(template.exists(asList(bob.getId(), george.getId()))).isFalse();
+        assertThat(template.exists(bob.getId(), Person.class)).isFalse();
     }
 
     @Test
@@ -112,9 +109,8 @@ public class TemplateCrudIT {
 
         template.write(person);
 
-        List<Person> people = template.search(Person.class);
-        assertThat(people).hasSize(1);
-        assertThat(people.get(0).getId())
+        Person bob = template.searchOne(null, Person.class);
+        assertThat(bob.getId())
                 .isNotNull()
                 .isNotEqualTo("null");
     }
@@ -183,7 +179,7 @@ public class TemplateCrudIT {
 
     @Test
     public void testNoCollectionDeleteFailure() throws Exception {
-        Throwable thrown = catchThrowable(() -> template.deleteAll(BadPerson.class));
+        Throwable thrown = catchThrowable(() -> template.dropCollection(BadPerson.class));
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
                 .hasMessage("Cannot determine deleteById scope for entity of type org.springframework.data.marklogic.core.TemplateCrudIT$BadPerson");
@@ -202,7 +198,7 @@ public class TemplateCrudIT {
 
     @Test
     public void testNoClassDeleteFailure() throws Exception {
-        Throwable thrown = catchThrowable(() -> template.deleteAll((Class<?>) null));
+        Throwable thrown = catchThrowable(() -> template.dropCollection((Class<?>) null));
 
         assertThat(thrown).isInstanceOf(InvalidDataAccessApiUsageException.class)
                 .hasMessage("Entity class is required to determine scope of deleteById");

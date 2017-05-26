@@ -51,7 +51,7 @@ public class BasicXmlQueryIT {
     }
 
     private void cleanDb() {
-        template.deleteAll(PersonXml.class);
+        template.dropCollection(PersonXml.class);
     }
 
     @Test

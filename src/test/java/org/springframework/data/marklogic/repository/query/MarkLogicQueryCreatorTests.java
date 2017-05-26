@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.*;
-import org.springframework.data.marklogic.core.convert.MappingMarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.repository.PersonRepository;
 import org.springframework.data.marklogic.repository.PersonStreamRepository;
@@ -35,6 +35,7 @@ import java.util.List;
 import static com.marklogic.client.query.StructuredQueryBuilder.Operator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.*;
 import static org.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
 
@@ -48,7 +49,7 @@ public class MarkLogicQueryCreatorTests {
 
     @Before
     public void setUp() throws SecurityException, NoSuchMethodException {
-        operations = new MarkLogicTemplate(client(), new MappingMarkLogicConverter(new MarkLogicMappingContext()));
+        operations = new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(new MarkLogicMappingContext()));
     }
 
     @Test
@@ -58,7 +59,7 @@ public class MarkLogicQueryCreatorTests {
                 "Bubba"
         ).createQuery();
         assertThat(query.serialize())
-                .isEqualTo(qb.value(qb.jsonProperty("name"), "Bubba").serialize());
+                .isEqualTo(combine(qb.value(qb.jsonProperty("name"), "Bubba")).serialize());
     }
 
     @Test
@@ -68,10 +69,13 @@ public class MarkLogicQueryCreatorTests {
                 "Fred", 23
         ).createQuery();
         assertThat(query.serialize())
-                .isEqualTo(qb.and(
-                        qb.value(qb.jsonProperty("name"), "Fred"),
-                        qb.value(qb.jsonProperty("age"), 23)
-                ).serialize());
+                .isEqualTo(
+                        combine(
+                                qb.and(
+                                    qb.value(qb.jsonProperty("name"), "Fred"),
+                                    qb.value(qb.jsonProperty("age"), 23)
+                                )
+                        ).serialize());
     }
 
     @Test
@@ -81,10 +85,12 @@ public class MarkLogicQueryCreatorTests {
                 "John", 30
         ).createQuery();
         assertThat(query.serialize())
-                .isEqualTo(qb.or(
+                .isEqualTo(combine(
+                    qb.or(
                         qb.value(qb.jsonProperty("name"), "John"),
                         qb.value(qb.jsonProperty("age"), 30)
-                ).serialize());
+                    )).serialize()
+                );
     }
 
     @Test
@@ -94,7 +100,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("name"), (String) null).serialize()
+                        combine(qb.value(qb.jsonProperty("name"), (String) null))
+                                .serialize()
                 );
     }
 
@@ -105,9 +112,9 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.not(
+                        combine(qb.not(
                                 qb.value(qb.jsonProperty("name"), (String) null)
-                        ).serialize()
+                        )).serialize()
                 );
     }
 
@@ -119,7 +126,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 23).serialize()
+                        combine(qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 23))
+                                .serialize()
                 );
     }
 
@@ -131,7 +139,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 23).serialize()
+                        combine(qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 23))
+                                .serialize()
                 );
     }
 
@@ -144,7 +153,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.jsonProperty("birthtime"), "xs:dateTime", (String[]) null, Operator.GT, from).serialize()
+                        combine(qb.range(qb.jsonProperty("birthtime"), "xs:dateTime", (String[]) null, Operator.GT, from))
+                                .serialize()
                 );
     }
 
@@ -156,7 +166,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.range(qb.pathIndex("/gender"), "xs:string", (String[]) null, Operator.EQ, "Bubba").serialize()
+                        combine(qb.range(qb.pathIndex("/gender"), "xs:string", (String[]) null, Operator.EQ, "Bubba"))
+                                .serialize()
                 );
     }
 
@@ -168,9 +179,11 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.and(
-                            qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 20),
-                            qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 30)
+                        combine(
+                            qb.and(
+                                qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.GE, 20),
+                                qb.range(qb.pathIndex("/age"), "xs:int", (String[]) null, Operator.LE, 30)
+                            )
                         ).serialize()
                 );
     }
@@ -182,7 +195,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(qb.jsonProperty("age"), qb.and()).serialize()
+                        combine(qb.containerQuery(qb.jsonProperty("age"), qb.and()))
+                                .serialize()
                 );
     }
 
@@ -193,7 +207,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("active"), true).serialize()
+                        combine(qb.value(qb.jsonProperty("active"), true))
+                                .serialize()
                 );
     }
 
@@ -204,7 +219,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("active"), false).serialize()
+                        combine(qb.value(qb.jsonProperty("active"), false))
+                                .serialize()
                 );
     }
 
@@ -216,7 +232,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "Bob*").serialize()
+                        combine( qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "Bob*"))
+                                .serialize()
                 );
 
     }
@@ -229,7 +246,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "Bob*").serialize()
+                        combine(qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "Bob*"))
+                                .serialize()
                 );
 
     }
@@ -242,7 +260,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "*by").serialize()
+                        combine(qb.word(qb.jsonProperty("name"), null, new String[]{ "wildcarded"}, 1.0, "*by"))
+                                .serialize()
                 );
     }
 
@@ -254,7 +273,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.word(qb.jsonProperty("description"), null, new String[]{ "wildcarded"}, 1.0, "*ob*").serialize()
+                        combine(qb.word(qb.jsonProperty("description"), null, new String[]{ "wildcarded"}, 1.0, "*ob*"))
+                                .serialize()
                 );
     }
 
@@ -266,7 +286,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "bobby").serialize()
+                        combine(qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "bobby"))
+                                .serialize()
                 );
     }
 
@@ -278,8 +299,10 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.not(
-                                qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "bobby")
+                        combine(
+                                qb.not(
+                                        qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "bobby")
+                                )
                         ).serialize()
                 );
     }
@@ -314,7 +337,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("hobbies"), "fishing", "hunting").serialize()
+                        combine(qb.value(qb.jsonProperty("hobbies"), "fishing", "hunting"))
+                                .serialize()
                 );
     }
 
@@ -326,7 +350,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("rankings"), 1, 2).serialize()
+                        combine(qb.value(qb.jsonProperty("rankings"), 1, 2))
+                                .serialize()
                 );
     }
 
@@ -338,9 +363,11 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(
-                                qb.jsonProperty("pets"),
-                                qb.value(qb.jsonProperty("name"), "Fluffy")
+                        combine(
+                            qb.containerQuery(
+                                    qb.jsonProperty("pets"),
+                                    qb.value(qb.jsonProperty("name"), "Fluffy")
+                            )
                         ).serialize()
                 );
     }
@@ -353,12 +380,14 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(
-                                qb.jsonProperty("pets"),
-                                qb.containerQuery(
-                                        qb.jsonProperty("immunizations"),
-                                        qb.value(qb.jsonProperty("type"), "shot")
-                                )
+                        combine(
+                            qb.containerQuery(
+                                    qb.jsonProperty("pets"),
+                                    qb.containerQuery(
+                                            qb.jsonProperty("immunizations"),
+                                            qb.value(qb.jsonProperty("type"), "shot")
+                                    )
+                            )
                         ).serialize()
                 );
     }
@@ -371,9 +400,11 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(
-                                qb.jsonProperty("pets"),
-                                qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "fluffy")
+                        combine(
+                            qb.containerQuery(
+                                    qb.jsonProperty("pets"),
+                                    qb.value(qb.jsonProperty("name"), null, new String[]{ "case-insensitive"}, 1.0, "fluffy")
+                            )
                         ).serialize()
                 );
     }
@@ -386,7 +417,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("hobbies"), (String) null).serialize()
+                        combine(qb.value(qb.jsonProperty("hobbies"), (String) null))
+                                .serialize()
                 );
     }
 
@@ -398,11 +430,13 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(qb.jsonProperty("pets"), qb.and(
-                                qb.value(qb.jsonProperty("name"), "Fluffy"),
-                                qb.value(qb.jsonProperty("type"), "lion"),
-                                qb.value(qb.jsonProperty("immunizations"), new String[]{null})
-                        )).serialize()
+                        combine(
+                            qb.containerQuery(qb.jsonProperty("pets"), qb.and(
+                                    qb.value(qb.jsonProperty("name"), "Fluffy"),
+                                    qb.value(qb.jsonProperty("type"), "lion"),
+                                    qb.value(qb.jsonProperty("immunizations"), new String[]{null})
+                            ))
+                        ).serialize()
                 );
     }
 
@@ -427,12 +461,14 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.containerQuery(qb.jsonProperty("pets"), qb.and(
-                                qb.value(qb.jsonProperty("name"), "Fluffy"),
-                                qb.value(qb.jsonProperty("type"), "lion"),
-                                qb.value(qb.jsonProperty("immunizations"), new String[]{ null }),
-                                qb.value(qb.jsonProperty("age"), 10)
-                        )).serialize()
+                        combine(
+                            qb.containerQuery(qb.jsonProperty("pets"), qb.and(
+                                    qb.value(qb.jsonProperty("name"), "Fluffy"),
+                                    qb.value(qb.jsonProperty("type"), "lion"),
+                                    qb.value(qb.jsonProperty("immunizations"), new String[]{ null }),
+                                    qb.value(qb.jsonProperty("age"), 10)
+                            ))
+                        ).serialize()
                 );
     }
 
@@ -445,11 +481,10 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        operations.sortQuery(
-                                new Sort("age"),
-                                qb.value(qb.jsonProperty("gender"), "female"),
-                                Person.class
-                        ).serialize()
+                        combine(qb.value(qb.jsonProperty("gender"), "female"))
+                                .type(Person.class)
+                                .sort(new Sort("age"))
+                                .serialize()
                 );
     }
 
@@ -461,10 +496,13 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        CombinedQueryDefinitionBuilder
-                                .combine()
-                                .options("<sort-order direction='ascending'><path-index>/pets/name</path-index></sort-order>")
-                                .options("<sort-order direction='ascending'><element ns='' name='name'/></sort-order>")
+                        combine()
+                                .options("<sort-order direction='ascending'>" +
+                                        "   <path-index>/pets/name</path-index>" +
+                                        "</sort-order>")
+                                .options("<sort-order direction='ascending'>" +
+                                        "   <element ns='' name='name'/>" +
+                                        "</sort-order>")
                                 .serialize()
                 );
     }
@@ -478,7 +516,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.jsonProperty("id"), "23").serialize()
+                        combine(qb.value(qb.jsonProperty("id"), "23"))
+                                .serialize()
                 );
     }
 
@@ -490,7 +529,8 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        qb.value(qb.element("name"), "Bubba").serialize()
+                        combine(qb.value(qb.element("name"), "Bubba"))
+                                .serialize()
                 );
     }
 
@@ -503,11 +543,10 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery();
         assertThat(query.serialize())
                 .isEqualTo(
-                        operations.sortQuery(
-                                new Sort("age"),
-                                qb.value(qb.element("gender"), "female"),
-                                PersonXml.class
-                        ).serialize()
+                        combine(qb.value(qb.element("gender"), "female"))
+                        .type(PersonXml.class)
+                        .sort(new Sort("age"))
+                        .serialize()
                 );
     }
 
@@ -519,9 +558,9 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery(getAccessor("Bobby"));
         assertThat(query.serialize())
                 .isEqualTo(
-                        new CombinedQueryDefinitionBuilder(
-                                qb.value(qb.jsonProperty("name"), "Bobby")
-                        ).limit(1).serialize()
+                        combine(qb.value(qb.jsonProperty("name"), "Bobby"))
+                        .limit(1)
+                        .serialize()
                 );
     }
 
@@ -533,13 +572,11 @@ public class MarkLogicQueryCreatorTests {
         ).createQuery(getAccessor());
         assertThat(query.serialize())
                 .isEqualTo(
-                        ((CombinedQueryDefinition)
-                                operations.sortQuery(
-                                        new Sort("name"),
-                                        null,
-                                        Person.class
-                                )
-                        ).limit(2).serialize()
+                        combine()
+                                .type(Person.class)
+                                .sort(new Sort("name"))
+                                .limit(2)
+                                .serialize()
                 );
     }
 }

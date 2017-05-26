@@ -10,7 +10,6 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonDatabindHandle;
 import com.marklogic.client.query.QueryDefinition;
-import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +26,21 @@ import org.springframework.data.marklogic.repository.query.CombinedQueryDefiniti
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.util.StringUtils.hasText;
 
-public class MappingMarkLogicConverter implements MarkLogicConverter, InitializingBean {
+public class JacksonMarkLogicConverter implements MarkLogicConverter, InitializingBean {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MappingMarkLogicConverter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JacksonMarkLogicConverter.class);
 
     private static final ConversionService converter = new DefaultConversionService();
 
@@ -51,7 +54,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
     private ObjectMapper objectMapper;
     private ObjectMapper xmlMapper;
 
-    public MappingMarkLogicConverter(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext) {
+    public JacksonMarkLogicConverter(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext) {
         this.mappingContext = mappingContext;
     }
 
@@ -178,28 +181,13 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
 
     @Override
     public <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
-        if (query == null) {
-            query = new StructuredQueryBuilder().and();
+        boolean isRaw = query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe();
+        CombinedQueryDefinition combined = combine(query).type(entityClass);
+        if (isRaw) {
+            return combined.getRawQbe();
+        } else {
+            return combined;
         }
-        if (entityClass != null) {
-            MarkLogicPersistentEntity entity = getMappingContext().getPersistentEntity(entityClass);
-
-            // TODO: If type information is configured on a property then add the value clause here
-            if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
-                List<String> collections = new ArrayList<>();
-                Collections.addAll(collections, query.getCollections());
-                collections.add(entity.getTypeName());
-                query.setCollections(collections.toArray(new String[0]));
-            }
-
-//            if (query.getResponseTransform() == null) {
-//                query.setResponseTransform(getDeserializer(entityClass));
-//            }
-        }
-        if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe())
-            return ((CombinedQueryDefinition) query).getRawQbe();
-        else
-            return query;
     }
 
     @Override
@@ -251,7 +239,7 @@ public class MappingMarkLogicConverter implements MarkLogicConverter, Initializi
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                     .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
                     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                    .setDateFormat(MappingMarkLogicConverter.simpleDateFormat8601)
+                    .setDateFormat(JacksonMarkLogicConverter.simpleDateFormat8601)
                     .registerModule(new JavaTimeModule())
                     .disableDefaultTyping();
         } catch (ClassNotFoundException e) {

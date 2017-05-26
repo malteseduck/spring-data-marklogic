@@ -67,7 +67,7 @@ public class CustomRepositoryIT {
     }
 
     private void cleanDb() {
-        operations.deleteAll("Employee", "Contact");
+        operations.dropCollections("Employee", "Contact");
     }
 
     @Test

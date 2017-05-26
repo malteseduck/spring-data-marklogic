@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 
 import static com.marklogic.client.query.StructuredQueryBuilder.Operator.*;
 import static java.util.Arrays.asList;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
 
@@ -102,9 +103,11 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
      */
     @Override
     protected StructuredQueryDefinition complete(StructuredQueryDefinition criteria, Sort sort) {
-        StructuredQueryDefinition query = operations.sortQuery(sort, criteria, method.getEntityInformation().getJavaType());
-
-        query = operations.extractQuery(Arrays.asList(method.getExtracts()), method.getSelected(), query);
+        StructuredQueryDefinition query =
+                combine(criteria)
+                        .type(method.getEntityInformation().getJavaType())
+                        .sort(sort)
+                        .extracts(Arrays.asList(method.getExtracts()), method.getSelected());
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Created query " + query);

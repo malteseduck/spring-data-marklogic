@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
 public class SimpleMarkLogicRepository<T, ID extends Serializable> implements MarkLogicRepository<T, ID> {
 
@@ -32,10 +33,18 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
+    public List<T> findAll() {
+        return operations.search(qb.and(), 0, Integer.MAX_VALUE, entityInformation.getJavaType())
+                .getContent();
+    }
+
+    @Override
     public List<T> findAll(Sort sort) {
         Assert.notNull(sort, "The given Sort must not be null");
         return operations.search(
-                operations.sortQuery(sort, null, entityInformation.getJavaType()),
+                combine()
+                        .type(entityInformation.getJavaType())
+                        .sort(sort),
                 entityInformation.getJavaType()
         );
     }
@@ -44,7 +53,9 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     public Page<T> findAll(Pageable pageable) {
         Assert.notNull(pageable, "The given Pageable must not be null");
         return operations.search(
-                operations.sortQuery(pageable.getSort(), null, entityInformation.getJavaType()),
+                combine()
+                        .type(entityInformation.getJavaType())
+                        .sort(pageable.getSort()),
                 pageable.getOffset(),
                 pageable.getPageSize(),
                 entityInformation.getJavaType()
@@ -78,11 +89,6 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    public List<T> findAll() {
-        return operations.search(entityInformation.getJavaType());
-    }
-
-    @Override
     public Iterable<T> findAll(Iterable<ID> ids) {
         Assert.notNull(ids, "The given Iterable of ids must not be null");
         return operations.read(convertIterableToList(ids), entityInformation.getJavaType());
@@ -108,12 +114,12 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public void delete(Iterable<? extends T> entities) {
         Assert.notNull(entities, "The given Iterable of entities must not be null");
-        operations.deleteById(entities, entityInformation.getJavaType());
+        operations.delete((List<T>) entities);
     }
 
     @Override
     public void deleteAll() {
-        operations.deleteAll(entityInformation.getJavaType());
+        operations.dropCollection(entityInformation.getJavaType());
     }
 
     private static <T> List<T> convertIterableToList(Iterable<T> entities) {
