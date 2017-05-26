@@ -1,0 +1,28 @@
+-classpath
+'/Users/cieslinskice/.m2/repository/org/springframework/spring-beans/4.3.8.RELEASE/spring-beans-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.8.7/jackson-datatype-jsr310-2.8.7.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-web/4.3.8.RELEASE/spring-web-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/org/jvnet/mimepull/mimepull/1.9.4/mimepull-1.9.4.jar:/Users/cieslinskice/.m2/repository/org/ow2/asm/asm-tree/5.0.3/asm-tree-5.0.3.jar:/Users/cieslinskice/.m2/repository/org/codehaus/woodstox/woodstox-core-asl/4.4.1/woodstox-core-asl-4.4.1.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-tx/4.3.8.RELEASE/spring-tx-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/org/json/json/20160810/json-20160810.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.8.3/jackson-annotations-2.8.3.jar:/Users/cieslinskice/.m2/repository/org/apache/httpcomponents/httpcore/4.4.4/httpcore-4.4.4.jar:/Users/cieslinskice/.m2/repository/org/apache/httpcomponents/httpclient/4.5.2/httpclient-4.5.2.jar:/Users/cieslinskice/.m2/repository/org/slf4j/slf4j-api/1.7.22/slf4j-api-1.7.22.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.8.7/jackson-dataformat-xml-2.8.7.jar:/Users/cieslinskice/.m2/repository/net/sourceforge/plantuml/plantuml/8032/plantuml-8032.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.8.3/jackson-core-2.8.3.jar:/Users/cieslinskice/.m2/repository/com/google/guava/guava/18.0/guava-18.0.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.8.7/jackson-module-jaxb-annotations-2.8.7.jar:/Users/cieslinskice/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-expression/4.3.8.RELEASE/spring-expression-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/com/sun/jersey/contribs/jersey-apache-client4/1.17/jersey-apache-client4-1.17.jar:/Users/cieslinskice/.m2/repository/com/marklogic/marklogic-client-api/4.0.1/marklogic-client-api-4.0.1.jar:/Users/cieslinskice/.m2/repository/org/springframework/data/spring-data-commons/1.13.0.RELEASE/spring-data-commons-1.13.0.RELEASE.jar:/Users/cieslinskice/.m2/repository/org/ow2/asm/asm/5.0.3/asm-5.0.3.jar:/Users/cieslinskice/.m2/repository/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2.jar:/Users/cieslinskice/.m2/repository/commons-codec/commons-codec/1.9/commons-codec-1.9.jar:/Users/cieslinskice/.m2/repository/com/sun/jersey/jersey-client/1.17/jersey-client-1.17.jar:/Users/cieslinskice/.m2/repository/org/parboiled/parboiled-core/1.1.7/parboiled-core-1.1.7.jar:/Users/cieslinskice/.m2/repository/org/jvnet/mimepull/1.6/mimepull-1.6.jar:/Users/cieslinskice/.m2/repository/org/ow2/asm/asm-analysis/5.0.3/asm-analysis-5.0.3.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.8.7/jackson-databind-2.8.7.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-aop/4.3.8.RELEASE/spring-aop-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-context/4.3.8.RELEASE/spring-context-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/com/sun/jersey/jersey-core/1.17/jersey-core-1.17.jar:/Users/cieslinskice/.m2/repository/org/pegdown/pegdown/1.6.0/pegdown-1.6.0.jar:/Users/cieslinskice/.m2/repository/com/sun/jersey/contribs/jersey-multipart/1.17/jersey-multipart-1.17.jar:/Users/cieslinskice/.m2/repository/org/ow2/asm/asm-util/5.0.3/asm-util-5.0.3.jar:/Users/cieslinskice/.m2/repository/org/codehaus/woodstox/stax2-api/3.1.4/stax2-api-3.1.4.jar:/Users/cieslinskice/.m2/repository/ch/raffael/pegdown-doclet/pegdown-doclet/1.3/pegdown-doclet-1.3.jar:/Users/cieslinskice/.m2/repository/org/springframework/spring-core/4.3.8.RELEASE/spring-core-4.3.8.RELEASE.jar:/Users/cieslinskice/.m2/repository/org/parboiled/parboiled-java/1.1.7/parboiled-java-1.1.7.jar:/Users/cieslinskice/.m2/repository/com/fasterxml/woodstox/woodstox-core/5.0.3/woodstox-core-5.0.3.jar'
+-encoding
+'UTF-8'
+-protected
+-quiet
+-sourcepath
+'/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/src/main/java:/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2017. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/docs'
+-docencoding
+'UTF-8'
+-doctitle
+'Spring Data MarkLogic - Core 1.0.1.RELEASE API'
+-linkoffline
+'http://docs.oracle.com/javase/8/docs/api' '/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/target/javadoc-bundle-options'
+-linksource
+-sourcetab
+4
+-use
+-version
+-windowtitle
+'Spring Data MarkLogic - Core 1.0.1.RELEASE API'
