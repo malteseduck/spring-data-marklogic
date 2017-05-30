@@ -16,7 +16,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Spring Data MarkLogic - Core 1.1.0.RELEASE API'
+'Spring Data MarkLogic - Core 1.1.1.RELEASE API'
 -linkoffline
 'http://docs.oracle.com/javase/8/docs/api' '/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/target/javadoc-bundle-options'
 -linksource
@@ -25,4 +25,4 @@
 -use
 -version
 -windowtitle
-'Spring Data MarkLogic - Core 1.1.0.RELEASE API'
+'Spring Data MarkLogic - Core 1.1.1.RELEASE API'
