@@ -50,7 +50,13 @@ public class MarkLogicQueryMethod extends QueryMethod {
         this.method = method;
         this.mappingContext = mappingContext;
         this.domainClass = getEntityInformation().getJavaType();
-        this.format = mappingContext.getPersistentEntity(domainClass).getDocumentFormat();
+
+        // If the query format is overridden in the @Query annotation then use that, otherwise use the entity type
+        if (getQueryFormat() != Format.UNKNOWN) {
+            this.format = getQueryFormat();
+        } else {
+            this.format = mappingContext.getPersistentEntity(domainClass).getDocumentFormat();
+        }
     }
 
     public boolean isStreamingQuery() {
@@ -80,6 +86,12 @@ public class MarkLogicQueryMethod extends QueryMethod {
         return getQueryAnnotation() != null
                 ? getQueryAnnotation().type()
                 : QueryType.VALUE;
+    }
+
+    Format getQueryFormat() {
+        return getQueryAnnotation() != null
+                ? getQueryAnnotation().format()
+                : Format.UNKNOWN;
     }
 
     /**

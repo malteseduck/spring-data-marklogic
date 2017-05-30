@@ -38,7 +38,13 @@ public @interface Query {
 
     /**
      * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need
-     * a StructuredQueryDefinition using the query builder in order to match both formats
+     * a StructuredQueryDefinition using the query builder in order to match both formats.  Using the MarkLogic
+     * {@link com.marklogic.client.io.Format} instead of {@link org.springframework.data.marklogic.core.mapping.DocumentFormat}
+     * since we allow "UNKNOWN" as the default.
+     *
+     * Setting this to "UNKNOWN", BINARY" OR "TEXT" would just end up setting the queries as JSON format, since that is
+     * default query "language"
+     *
      * @return
      */
     Format format() default Format.UNKNOWN;

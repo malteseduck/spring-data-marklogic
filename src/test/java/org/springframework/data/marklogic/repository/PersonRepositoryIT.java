@@ -1,6 +1,9 @@
 package org.springframework.data.marklogic.repository;
 
 
+import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.Format;
+import com.marklogic.client.io.StringHandle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -529,6 +532,30 @@ public class PersonRepositoryIT {
     }
 
     // ====== Transforming Queries =====
+
+    @Test // spring-data-marklogic/issues/8
+    public void testFindByPersonNameAsElementValueQuery() {
+        operations.execute((manager, transaction) -> {
+            DocumentMetadataHandle meta = new DocumentMetadataHandle();
+            meta.getCollections().addAll("Person");
+            manager.write(
+                    "/Person/testPerson.xml",
+                    meta,
+                    new StringHandle("" +
+                            "<person>" +
+                            "   <id>testPerson</id>" +
+                            "   <name>Bubba</name>" +
+                            "</person>").withFormat(Format.XML),
+                    transaction
+            );
+
+            return null;
+        });
+
+        boolean exists = transRepository.existsByName("Bubba");
+
+        assertThat(exists).isTrue();
+    }
 
     @Test
     public void testFindPersonAndTransform() {
