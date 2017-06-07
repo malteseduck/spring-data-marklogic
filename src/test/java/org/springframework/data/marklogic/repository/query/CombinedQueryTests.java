@@ -29,4 +29,28 @@ public class CombinedQueryTests {
                 .contains("<sort-order direction='ascending'>")
                 .contains("<path-index>/name</path-index>");
     }
+
+    @Test
+    public void testCanDoAndQuery() throws Exception {
+        String serialized = combine(
+                qb.value(qb.element("name"), "Bob"))
+                .and(qb.value(qb.element("age"), 23))
+                .serialize();
+        assertThat(serialized)
+                .contains("<and-query>")
+                .contains("<element ns=\"\" name=\"name\"/><text>Bob</text>")
+                .contains("<element ns=\"\" name=\"age\"/><text>23</text>");
+    }
+
+    @Test
+    public void testCanDoOrQuery() throws Exception {
+        String serialized = combine(
+                qb.value(qb.element("name"), "Bob"))
+                .or(qb.value(qb.element("name"), "Fred"))
+                .serialize();
+        assertThat(serialized)
+                .contains("<or-query>")
+                .contains("<element ns=\"\" name=\"name\"/><text>Bob</text>")
+                .contains("<element ns=\"\" name=\"name\"/><text>Fred</text>");
+    }
 }

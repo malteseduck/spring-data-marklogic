@@ -50,6 +50,24 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe, Format format);
 
     /**
+     * Combine the current structured queries in the combined query with the specified queries using an "and".
+     *
+     * @param queries Queries to add to the combined query
+     *
+     * @return The current query definition for use in continued building.
+     */
+    CombinedQueryDefinition and(StructuredQueryDefinition... queries);
+
+    /**
+     * Combine the current structured queries in the combined query with the specified queries using an "or".
+     *
+     * @param queries Queries to add to the combined query
+     *
+     * @return The current query definition for use in continued building.
+     */
+    CombinedQueryDefinition or(StructuredQueryDefinition... queries);
+
+    /**
      * Adds constraints to limit results to only documents contained in one of the specified collections.  This can be
      * called multiple times and the result is additive.
      *

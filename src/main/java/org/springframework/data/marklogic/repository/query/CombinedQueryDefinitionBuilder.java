@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.springframework.util.StringUtils.hasText;
 
 /**
@@ -252,6 +253,31 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
             this.qbe = qbe;
         }
         return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition and(StructuredQueryDefinition... queries) {
+        this.structuredQuery = qb.and(collect(queries));
+        return this;
+    }
+
+    @Override
+    public CombinedQueryDefinition or(StructuredQueryDefinition... queries) {
+        this.structuredQuery = qb.or(collect(queries));
+        return this;
+    }
+
+    /**
+     * Create an array of queries, starting with the current structured queries and adding the specified ones.
+     *
+     * @param queries Variable number of structured query definitions.
+     *
+     * @return An array of structured query definitions that can be sent to and() and or(), or whatever takes varargs.
+     */
+    private StructuredQueryDefinition[] collect(StructuredQueryDefinition... queries) {
+        Set<StructuredQueryDefinition> current = new HashSet<>(singletonList(structuredQuery));
+        Collections.addAll(current, queries);
+        return current.toArray(new StructuredQueryDefinition[0]);
     }
 
     @Override
