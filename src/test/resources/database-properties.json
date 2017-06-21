@@ -1,4 +1,5 @@
 {
+  "stemmed-searches": "basic",
   "trailing-wildcard-searches": true,
   "range-path-index": [
     {
