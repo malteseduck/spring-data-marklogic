@@ -18,6 +18,8 @@
         <woodstox>4.4.1</woodstox>
         <json>20160810</json>
         <jackson>2.8.7</jackson>
+        <maven-javadoc-plugin>2.10.4</maven-javadoc-plugin>
+        <maven-source-plugin>3.0.1</maven-source-plugin>
 
         <!-- Testing versions -->
         <mockito>2.2.0</mockito>
@@ -210,8 +212,21 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
+                <version>${maven-javadoc-plugin}</version>
                 <configuration>
                     <quiet>true</quiet>
                     <detectLinks>false</detectLinks>
