@@ -5,24 +5,24 @@
 -protected
 -quiet
 -sourcepath
-'/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/src/main/java:/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/target/generated-sources/annotations'
+'/Users/cieslinskice/Documents/Projects/Spring_Data/spring-data-marklogic/src/main/java:/Users/cieslinskice/Documents/Projects/Spring_Data/spring-data-marklogic/target/generated-sources/annotations'
 -author
 -bottom
 'Copyright &#169; 2017. All rights reserved.'
 -charset
 'UTF-8'
 -d
-'/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/docs'
+'/Users/cieslinskice/Documents/Projects/Spring_Data/spring-data-marklogic/docs'
 -docencoding
 'UTF-8'
 -doctitle
-'Spring Data MarkLogic - Core 1.1.1.RELEASE API'
+'Spring Data MarkLogic - Core 1.1.2.RELEASE API'
 -linkoffline
-'http://docs.oracle.com/javase/8/docs/api' '/Users/cieslinskice/Projects/Spring_Data/spring-data-marklogic/target/javadoc-bundle-options'
+'http://docs.oracle.com/javase/8/docs/api' '/Users/cieslinskice/Documents/Projects/Spring_Data/spring-data-marklogic/target/javadoc-bundle-options'
 -linksource
 -sourcetab
 4
 -use
 -version
 -windowtitle
-'Spring Data MarkLogic - Core 1.1.1.RELEASE API'
+'Spring Data MarkLogic - Core 1.1.2.RELEASE API'

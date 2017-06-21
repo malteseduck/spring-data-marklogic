@@ -69,7 +69,6 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
         return combine()
                 .type(type)
                 .byExample(definition, formatToUse)
-                .extracts(Arrays.asList(annotation.extract()))
                 .sort(accessor.getSort());
     }
 

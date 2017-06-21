@@ -14,6 +14,8 @@ import org.springframework.util.ClassUtils;
 import java.time.*;
 import java.util.*;
 
+import static java.util.Arrays.asList;
+
 public class DefaultMarkLogicQueryConversionService implements QueryConversionService {
 
     private final Map<Object, QueryTypeConverter> converters;
@@ -244,26 +246,18 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
     }
 
     private static StructuredQueryDefinition booleanValueQuery(PropertyIndex index, List<String> options, Object values) {
-        if (options != null && !options.isEmpty())
-            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, as(values, boolean.class));
-        else
-            return qb.value((TextIndex) index.get(), as(values, boolean.class));
-
+        options = defaultValueOptions(options);
+        return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, as(values, boolean.class));
     }
 
     private static StructuredQueryDefinition numberValueQuery(PropertyIndex index, List<String> options, Object values) {
-        if (options != null && !options.isEmpty())
-            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
-        else
-            return qb.value((TextIndex) index.get(), asArray(values, Number[].class));
-
+        options = defaultValueOptions(options);
+        return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, Number[].class));
     }
 
     private static StructuredQueryDefinition stringValueQuery(PropertyIndex index, List<String> options, Object values) {
-        if (options != null && !options.isEmpty())
-            return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
-        else
-            return qb.value((TextIndex) index.get(), asArray(values, String[].class));
+        options = defaultValueOptions(options);
+        return qb.value((TextIndex) index.get(), null, options.toArray(new String[0]), 1.0, asArray(values, String[].class));
     }
 
     private static StructuredQueryDefinition rangeQuery(PropertyIndex index, List<String> options, Object values) {
@@ -271,6 +265,13 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
             return qb.range((RangeIndex) index.get(), index.getRangeIndexType(), options.toArray(new String[0]), index.getOperator(), asArray(values, Object[].class));
         else
             return qb.range((RangeIndex) index.get(), index.getRangeIndexType(), index.getOperator(), asArray(values, Object[].class));
+    }
+
+    private static List<String> defaultValueOptions(List<String> options) {
+        if (options == null) options = asList("exact");
+        if (options.isEmpty()) options.add("exact");
+
+        return options;
     }
 
     @SuppressWarnings("unchecked")

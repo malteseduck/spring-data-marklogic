@@ -109,7 +109,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     @Override
     public String serialize() {
-        List<String> optionsToSerialize = options;
+        List<String> optionsToSerialize = new ArrayList<>(options);
 
         if (limit >= 0) optionsToSerialize.add(format("<page-length>%s</page-length>", limit));
 
