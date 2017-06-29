@@ -18,7 +18,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 <dependency>
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
-    <version>1.1.0.RELEASE</version>
+    <version>1.1.3.RELEASE</version>
 </dependency>
 ```
 
