@@ -322,17 +322,27 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 // default to a path index. An error will be thrown by the database if the index is not created, though.
                 if (entity != null) {
                     MarkLogicPersistentProperty property = (MarkLogicPersistentProperty) entity.getPersistentProperty(propertyName);
-                    if (!StringUtils.isEmpty(property.getPath())) {
-                        path = property.getPath();
+                    if (property != null) {
+                        // If the user specified type of "PATH" (default), or a path was specified, do we set it.  If
+                        // they specify type of "ELEMENT" then we don't set a path and let it fall through into the
+                        // logic of creating an element sort
+                        if (property.getIndexType() == IndexType.PATH && !StringUtils.isEmpty(property.getPath())) {
+                            path = property.getPath();
+                        }
+                    } else {
+                        // If the property was not found (user probably specified a path) then we default to path index
+                        path = "/"+ order.getProperty();
                     }
                 } else {
                     path = "/"+ order.getProperty();
                 }
 
-                if (hasText(path)) {
-                    sort(path, direction, IndexType.PATH);
-                } else {
+                // If any of the conditions above made it seem like this needs to be an element sort, then do so,
+                // otherwise default to a path index sort
+                if (!hasText(path)) {
                     sort(propertyName, direction, IndexType.ELEMENT);
+                } else {
+                    sort(path, direction, IndexType.PATH);
                 }
             });
         }

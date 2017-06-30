@@ -16,6 +16,7 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
 
     private static final Logger LOG = LoggerFactory.getLogger(BasicMarkLogicPersistentProperty.class);
     private final String path;
+    private final IndexType indexType;
 
     public BasicMarkLogicPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity<?, MarkLogicPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
         super(field, propertyDescriptor, owner, simpleTypeHolder);
@@ -30,14 +31,16 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
         }
 
         if (indexed != null) {
+            indexType = indexed.type();
             if (!StringUtils.isEmpty(indexed.path())) {
-                this.path = indexed.path();
+                path = indexed.path();
             } else if (indexed.type() == IndexType.PATH) {
                 path = "/" + name;
             } else {
                 path = null;
             }
         } else {
+            indexType = IndexType.PATH;
             path = "/" + name;
         }
     }
@@ -60,5 +63,10 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
     @Override
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public IndexType getIndexType() {
+        return indexType;
     }
 }

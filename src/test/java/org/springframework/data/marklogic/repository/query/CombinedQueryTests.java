@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.repository.query;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import org.junit.Test;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.marklogic.core.Person;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
@@ -28,6 +29,18 @@ public class CombinedQueryTests {
                 .contains("<search xmlns=\"http://marklogic.com/appservices/search\">")
                 .contains("<sort-order direction='ascending'>")
                 .contains("<path-index>/name</path-index>");
+    }
+
+    @Test
+    public void testSortedOnNestedPathWithIndexedAnnotation() throws Exception {
+        String serialized = combine()
+                .type(Person.class)
+                .sort(new Sort("pets/name"))
+                .serialize();
+        assertThat(serialized)
+                .contains("<search xmlns=\"http://marklogic.com/appservices/search\">")
+                .contains("<sort-order direction='ascending'>")
+                .contains("<path-index>/pets/name</path-index>");
     }
 
     @Test
