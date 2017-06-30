@@ -1,6 +1,7 @@
 package org.springframework.data.marklogic.core.mapping;
 
 import com.marklogic.client.document.DocumentRecord;
+import com.marklogic.client.impl.JerseyServices;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.marker.ContentHandle;
