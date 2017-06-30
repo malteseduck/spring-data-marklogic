@@ -15,11 +15,13 @@ public interface MarkLogicConverter extends
         EntityConverter<MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty, Object, DocumentDescriptor>, EntityWriter<Object, DocumentDescriptor>,
         EntityReader<Object, DocumentDescriptor> {
 
-    boolean mapAsXml(MarkLogicPersistentEntity entity);
-
     List<String> getDocumentUris(List<?> ids);
 
     <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass);
 
     <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass);
+
+    <R extends Object> R doRead(Class<R> type, DocumentDescriptor source);
+
+    void doWrite(Object source, DocumentDescriptor sink);
 }

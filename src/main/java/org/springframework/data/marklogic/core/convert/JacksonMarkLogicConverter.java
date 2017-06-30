@@ -36,64 +36,24 @@ import java.util.stream.Stream;
 import static java.util.Arrays.asList;
 import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
-public class JacksonMarkLogicConverter implements MarkLogicConverter, InitializingBean {
+public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implements InitializingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(JacksonMarkLogicConverter.class);
-
-    private static final ConversionService converter = new DefaultConversionService();
-
-    private static final Pattern formats = Pattern.compile("\\.(json|xml)");
 
     public static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
     public static SimpleDateFormat simpleDateFormat8601 = new SimpleDateFormat(ISO_8601_FORMAT);
     static { simpleDateFormat8601.setTimeZone(TimeZone.getTimeZone("UTC")); }
 
-    private MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
     private ObjectMapper objectMapper;
     private ObjectMapper xmlMapper;
 
     public JacksonMarkLogicConverter(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext) {
-        this.mappingContext = mappingContext;
+        super(mappingContext);
     }
 
     @Override
-    public MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> getMappingContext() {
-        return mappingContext;
-    }
-
-    @Override
-    public ConversionService getConversionService() {
-        return null;
-    }
-
-    @Override
-    public void write(Object source, DocumentDescriptor doc) {
+    public void doWrite(Object source, DocumentDescriptor doc) {
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(source.getClass());
-
-        if (entity != null && entity.hasIdProperty()) {
-            PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
-
-            if (Collection.class.isAssignableFrom(idProperty.getType()) || Map.class.isAssignableFrom(idProperty.getType()))
-                throw new IllegalArgumentException("Collection types not supported as entity id");
-
-            try {
-                // TODO: Better way to do this?
-                // TODO: Support document URI templates if the ID value is null
-                Object id = idProperty.getGetter().invoke(source);
-                doc.setUri(getDocumentUris(asList(id), entity.getType()).get(0));
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Unable to access value of @Id from " + idProperty.getName());
-            }
-        } else {
-            throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
-        }
-
-        if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
-            if (doc.getMetadata() == null) doc.setMetadata(new DocumentMetadataHandle());
-            doc.setMetadata(doc.getMetadata().withCollections(entity.getTypeName()));
-        } else {
-            doc.setMetadata(new DocumentMetadataHandle());
-        }
 
         JacksonDatabindHandle contentHandle = new JacksonDatabindHandle<>(source);
         if (mapAsXml(entity)) {
@@ -102,12 +62,11 @@ public class JacksonMarkLogicConverter implements MarkLogicConverter, Initializi
             contentHandle.setMapper(objectMapper);
         }
 
-        doc.setFormat(entity.getDocumentFormat());
         doc.setContent(contentHandle);
     }
 
     @Override
-    public <R> R read(Class<R> clazz, DocumentDescriptor doc) {
+    public <R> R doRead(Class<R> clazz, DocumentDescriptor doc) {
         final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(clazz);
 
         JacksonDatabindHandle<R> handle = new JacksonDatabindHandle<>(clazz);
@@ -117,75 +76,11 @@ public class JacksonMarkLogicConverter implements MarkLogicConverter, Initializi
             handle.setMapper(objectMapper);
         }
 
-        R mapped = doc.getRecord().getContent(handle).get();
-
-        // We assume that the ID from the database is the correct one, so update the property with the @Id annotation with the "correct" ID
-        if (entity != null && entity.hasIdProperty() && mapped != null) {
-            PersistentProperty idProperty = entity.getPersistentProperty(entity.getIdProperty().getName());
-            try {
-                // TODO: Better way to do this?
-                Method setter = idProperty.getSetter();
-                if (setter != null) setter.invoke(mapped, uriToId(doc.getUri(), entity.getDocumentFormat(), entity.getBaseUri(), idProperty.getType()));
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Unable to set value of @Id from " + idProperty.getName());
-            }
-        }
-
-        return mapped;
+        return doc.getRecord().getContent(handle).get();
     }
 
-    @Override
-    public List<String> getDocumentUris(List<?> ids) {
-        return getDocumentUris(ids, null);
-    }
-
-    @Override
-    public <T> List<String> getDocumentUris(List<?> ids, Class<T> entityClass) {
-
-        final List<String> uris = ids.stream()
-                .flatMap(id -> {
-                    if (entityClass != null) {
-                        final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
-                        return Stream.of(idToUri(id, entity.getDocumentFormat(), entity.getBaseUri()));
-                    } else {
-                        // Just from the ID we don't know the type, or can't infer it, so we need to "try" both.  The potential downside
-                        // is if they have both JSON/XML for the same id - might get "odd" results?
-                        return Stream.of(
-                                idToUri(id, Format.JSON, "/"),
-                                idToUri(id, Format.XML, "/")
-                        );
-                    }
-                })
-                .collect(Collectors.toList());
-
-        return uris;
-    }
-
-    @Override
-    public boolean mapAsXml(MarkLogicPersistentEntity entity) {
+    private boolean mapAsXml(MarkLogicPersistentEntity entity) {
         return entity != null && entity.getDocumentFormat() == Format.XML && xmlMapper != null;
-    }
-
-    private Object uriToId(String uri, Format format, String baseUri, Class<?> idType) {
-        String id = formats
-                .matcher(uri.substring(baseUri.length()))
-                .replaceAll("");
-        return converter.convert(id, idType);
-    }
-
-    private String idToUri(Object id, Format format, String baseUri) {
-        return baseUri + String.valueOf(id) + "." + format.toString().toLowerCase();
-    }
-
-    @Override
-    public <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
-        boolean isRaw = query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe();
-        CombinedQueryDefinition combined = combine(query).type(entityClass);
-        if (isRaw) {
-            return combined.getRawQbe();
-        } else {
-            return combined;
-        }
     }
 
     @Override
