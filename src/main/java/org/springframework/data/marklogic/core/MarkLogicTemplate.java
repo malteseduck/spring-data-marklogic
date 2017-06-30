@@ -334,7 +334,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
-            if ( page == null || page.hasNext() == false ) {
+            if ( page == null || !page.hasNext()) {
                 throw new DataRetrievalFailureException("Could not find documents of with uris: " + uris);
             }
 
@@ -350,7 +350,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
 
-            if ( page == null || page.hasNext() == false ) {
+            if ( page == null || !page.hasNext()) {
                 throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
             }
 
@@ -645,19 +645,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return resolved == null ? ex : resolved;
     }
 
-    private <T> List<T> toEntityList(Class<T> entityClass, DocumentPage page) {
+    protected  <T> List<T> toEntityList(Class<T> entityClass, DocumentPage page) {
         final List<T> results = new ArrayList<>();
-        page.iterator().forEachRemaining(item -> {
-            results.add(converter.read(entityClass, new DocumentDescriptor(item)));
-        });
+        page.iterator().forEachRemaining(item -> results.add(converter.read(entityClass, new DocumentDescriptor(item))));
         return results;
     }
 
-    private List<DocumentRecord> toRecordList(DocumentPage page) {
+    protected List<DocumentRecord> toRecordList(DocumentPage page) {
         final List<DocumentRecord> results = new ArrayList<>();
-        page.iterator().forEachRemaining(item -> {
-            results.add(item);
-        });
+        page.iterator().forEachRemaining(results::add);
         return results;
     }
 }
