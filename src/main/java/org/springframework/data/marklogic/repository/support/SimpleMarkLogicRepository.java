@@ -1,6 +1,10 @@
 package org.springframework.data.marklogic.repository.support;
 
 import com.marklogic.client.pojo.PojoQueryBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,6 +22,8 @@ import static java.util.Collections.singletonList;
 import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
 public class SimpleMarkLogicRepository<T, ID extends Serializable> implements MarkLogicRepository<T, ID> {
+
+    private static final Logger log = LoggerFactory.getLogger(SimpleMarkLogicRepository.class);
 
     private final MarkLogicOperations operations;
     private final MarkLogicEntityInformation<T, ID> entityInformation;

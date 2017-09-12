@@ -285,7 +285,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> write(List<T> entities, ServerTransform transform) {
-        return write(entities, transform, null);
+        return write(entities, transform);
     }
 
     @Override
@@ -325,7 +325,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> T read(Object id, Class<T> entityClass) {
-        return read(singletonList(id), entityClass).get(0);
+        List<T> results = read(singletonList(id), entityClass);
+        return results.isEmpty() ? null : results.get(0);
     }
 
     @Override
@@ -333,11 +334,9 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
-
-            if ( page == null || !page.hasNext()) {
-                throw new DataRetrievalFailureException("Could not find documents of with uris: " + uris);
-            }
-
+//            if ( page == null || !page.hasNext()) {
+//                throw new DataRetrievalFailureException("Could not find documents with uris: " + uris);
+//            }
             return toRecordList(page);
         });
     }
@@ -349,11 +348,9 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
-
-            if ( page == null || !page.hasNext()) {
-                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
-            }
-
+//            if ( page == null || !page.hasNext()) {
+//                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
+//            }
             return toEntityList(entityClass, page);
         });
     }
@@ -417,15 +414,16 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
+    public <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
         return execute((manager, transaction) -> {
-            if (length >= 0) manager.setPageLength(length);
+            if (limit >= 0) manager.setPageLength(limit);
 
             QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
             DocumentPage docPage = manager.search(finalQuery, start + 1, transaction);
 
             List<T> results = toEntityList(entityClass, docPage);
-            return new PageImpl<>(results, new ChunkRequest(start, (int) manager.getPageLength()), docPage.getTotalSize());
+            int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
+            return new PageImpl<>(results, new ChunkRequest(start, length), docPage.getTotalSize());
         });
     }
 

@@ -4,32 +4,35 @@ package org.springframework.data.marklogic.repository;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
-import org.springframework.data.marklogic.core.*;
+import org.springframework.data.marklogic.core.Immunization;
+import org.springframework.data.marklogic.core.MarkLogicOperations;
+import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.PersonXml;
+import org.springframework.data.marklogic.core.Pet;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.List;
-
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.streamXml;
 
@@ -39,9 +42,7 @@ import static org.springframework.data.marklogic.repository.query.QueryTestUtils
         @ContextConfiguration(classes = DatabaseConfiguration.class),
         @ContextConfiguration(classes = PersonRepositoryIntegrationConfiguration.class)
 })
-public class PersonRepositoryIT {
-
-    private static final Logger log = LoggerFactory.getLogger(PersonRepositoryIT.class);
+public class EmptyPersonRepositoryIT {
 
     @Autowired
     private PersonRepository repository;
@@ -79,14 +80,14 @@ public class PersonRepositoryIT {
 
         henry.setRankings(asList(1, 2, 3));
 
-        all = repository.save(asList(jenny, bobby, george, jane, andrea, henry));
+        all = emptyList();
 
         freddy = new Person("Freddy", 27, "male", "policeman", "", Instant.parse("2016-08-01T00:00:00Z"), asList("gaming"));
-        operations.write(freddy, "OtherPeople");
+        //operations.write(freddy, "OtherPeople");
 
         jimmy = new PersonXml("Jimmy", 15, "male", "student", "Lives next door", Instant.parse("2016-12-01T00:00:00Z"));
 
-        allXml = xmlRepository.save(asList(jimmy));
+        allXml = emptyList();
     }
 
     @After
@@ -102,90 +103,77 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindsPersonById() throws Exception {
-        Person found = repository.findOne(bobby.getId());
-        assertThat(found).isEqualTo(bobby);
-
-        try {
-            found = repository.findOne("does-not-exist");
-            assertThat(found).isNull();
-        } catch (Exception ex) {
-            fail(ex.getMessage(), ex);
-        }
+        Person found = repository.findOne("does-not-exist");
+        assertThat(found).isNull();
     }
 
     @Test
     public void testFindsAllPeople() throws Exception {
         List<Person> people = repository.findAll();
-        assertThat(people).containsAll(all);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsAllPeopleOrderedByName() throws Exception {
         List<Person> people = repository.findAll(new Sort("name"));
-        assertThat(people).containsExactly(andrea, bobby, george, henry, jane, jenny);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsAllWithGivenIds() {
-        Iterable<Person> people = repository.findAll(asList(george.getId(), bobby.getId()));
-        assertThat(people).containsExactlyInAnyOrder(george, bobby);
+        Iterable<Person> people = repository.findAll(asList("", bobby.getId()));
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testDeletesPersonCorrectly() throws Exception {
+        assertThat(repository.findAll()).isEmpty();
         repository.delete(george);
-
-        List<Person> people = repository.findAll();
-        assertThat(people).hasSize(all.size() - 1);
-        assertThat(people).doesNotContain(george);
+        assertThat(repository.findAll()).isEmpty();
     }
 
     @Test
     public void testDeleteByIdCorrectly() throws Exception {
+        assertThat(repository.findAll()).isEmpty();
         repository.deleteById(george.getId());
-
-        List<Person> people = repository.findAll();
-        assertThat(people).hasSize(all.size() - 1);
-        assertThat(people).doesNotContain(george);
+        assertThat(repository.findAll()).isEmpty();
     }
 
     @Test
     public void testDeletesPersonByIdCorrectly() {
+        assertThat(repository.findAll()).isEmpty();
         repository.delete(bobby.getId());
-
-        List<Person> people = repository.findAll();
-        assertThat(people).hasSize(all.size() - 1);
-        assertThat(people).doesNotContain(bobby);
+        assertThat(repository.findAll()).isEmpty();
     }
 
     @Test
     public void testFindsPersonsOrderedByName() throws Exception {
         List<Person> people = repository.findAllByOrderByNameAsc();
-        assertThat(people).containsExactly(andrea, bobby, george, henry, jane, jenny);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsPersonsByName() throws Exception {
         List<Person> people = repository.findByName("Jane");
-        assertThat(people).containsExactly(jane);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsPersonsByNameOrderedByAge() throws Exception {
         List<Person> people = repository.findByGenderOrderByAge("female");
-        assertThat(people).containsExactly(andrea, jenny, jane);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindPersonsByOccupationOrderedByName() throws Exception {
         List<Person> people = repository.findByOccupationOrderByNameAsc("dentist");
-        assertThat(people).containsExactly(bobby, jenny);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsPersonsByNameIn() throws Exception {
         List<Person> people = repository.findByNameIn("Jane", "George");
-        assertThat(people).containsExactlyInAnyOrder(jane, george);
+        assertThat(people).isEmpty();
     }
 
     @Test
@@ -203,19 +191,19 @@ public class PersonRepositoryIT {
     @Test
     public void testFindsPersonsByAge() throws Exception {
         List<Person> people = repository.findByAge(23);
-        assertThat(people).containsExactly(bobby);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsPersonByBirthtime() throws Exception {
         Person person = repository.findByBirthtime(Instant.parse("2016-01-01T00:00:00Z"));
-        assertThat(person).isEqualTo(bobby);
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindsPersonsByGenderLike() throws Exception {
         List<Person> people = repository.findByGenderLike("ma*");
-        assertThat(people).containsExactlyInAnyOrder(bobby, george, henry);
+        assertThat(people).isEmpty();
     }
 
     @Test
@@ -227,9 +215,7 @@ public class PersonRepositoryIT {
     @Test
     public void testFindsPagedPersonsOrderedByName() throws Exception {
         Page<Person> page = repository.findAll(new PageRequest(1, 2, Sort.Direction.ASC, "name"));
-        assertThat(page.isFirst()).isFalse();
-        assertThat(page.isLast()).isFalse();
-        assertThat(page).containsExactly(george, henry);
+        assertEmpty(page);
     }
 
     @Test
@@ -244,92 +230,81 @@ public class PersonRepositoryIT {
     public void testExecutesPagedFinderCorrectly() throws Exception {
         Page<Person> page = repository.findByGenderLike("fem*",
                 new PageRequest(0, 2, Sort.Direction.ASC, "name"));
-        
-        assertThat(page.isFirst()).isTrue();
-        assertThat(page.isLast()).isFalse();
-        assertThat(page.getNumberOfElements()).isEqualTo(2);
-        assertThat(page).containsExactly(andrea, jane);
-
-        // Wildcard index required for result total to be correct
-        assertThat(page.getTotalElements()).isEqualTo(3);
+        assertEmpty(page);
     }
 
     @Test
     public void testExistsWorksCorrectly() {
-        assertThat(repository.exists(bobby.getId())).isTrue();
+        assertThat(repository.exists(bobby.getId())).isFalse();
     }
 
     @Test
     public void testFindsPeopleUsingNotPredicate() {
         List<Person> people = repository.findByNameNot("Andrea");
-        
-        assertThat(people)
-                .doesNotContain(andrea)
-                .hasSize(all.size() - 1);
+
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void tesetExecutesAndQueryCorrectly() {
         List<Person> people = repository.findByNameAndAge("Bobby", 23);
 
-        assertThat(people).containsExactly(bobby);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testExecutesOrQueryCorrectly() {
         List<Person> people = repository.findByNameOrAge("Bobby", 23);
 
-        assertThat(people).containsExactly(bobby);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testExecutesDerivedCountProjection() {
-        assertThat(repository.countByName("George")).isEqualTo(1);
+        assertThat(repository.countByName("George")).isEqualTo(0);
     }
 
     @Test
     public void testExecutesDerivedExistsProjectionToBoolean() {
-        assertThat(repository.existsByName("Jane")).as("does exist").isTrue();
+        assertThat(repository.existsByName("Jane")).as("does exist").isFalse();
         assertThat(repository.existsByName("Brunhilda")).as("doesn't exist").isFalse();
     }
 
     @Test
     public void testExecutesDerivedStartsWithQueryCorrectly() {
         List<Person> people = repository.findByNameStartsWith("J");
-        
-        assertThat(people).containsExactlyInAnyOrder(jenny, jane);
+
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFxecutesDerivedEndsWithQueryCorrectly() {
         List<Person> people = repository.findByNameEndsWith("nny");
-        assertThat(people).containsExactly(jenny);
+        assertThat(people).isEmpty();
     }
-    
+
     @Test
     public void testFindByNameIgnoreCase() {
         List<Person> people = repository.findByNameIgnoreCase("george");
-        assertThat(people).containsExactly(george);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByNameNotIgnoreCase() {
         List<Person> people = repository.findByNameNotIgnoreCase("george");
-        assertThat(people)
-                .hasSize(all.size()-1)
-                .doesNotContain(george);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByNameStartingWithIgnoreCase() {
         List<Person> people = repository.findByNameStartingWithIgnoreCase("ge");
-        assertThat(people).containsExactly(george);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByHobbiesContains() throws Exception {
         List<Person> people = repository.findByHobbiesContains(asList("running"));
-        assertThat(people).containsExactlyInAnyOrder(bobby, jane);
+        assertThat(people).isEmpty();
     }
 
     @Test
@@ -341,27 +316,19 @@ public class PersonRepositoryIT {
     @Test
     public void testFindByPet() throws Exception {
         List<Person> people = repository.findByPets(new Pet("Powderkeg", "wolverine"));
-        assertThat(people).containsExactly(jenny);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByPetImmunizationsType() throws Exception {
         List<Person> people = repository.findByPetsImmunizationsType("shot");
-        assertThat(people).containsExactly(andrea);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByOccupationUsingExtract() {
         List<Person> people = repository.findByOccupation("engineer");
-
-        assertThat(people).hasSize(1);
-
-        Person person = people.get(0);
-        assertThat(person.getName()).isEqualTo(george.getName());
-        assertThat(person.getAge()).isEqualTo(george.getAge());
-        assertThat(person.getDescription()).isNullOrEmpty();
-        assertThat(person.getHobbies()).isNullOrEmpty();
-        assertThat(person.getBirthtime()).isNull();
+        assertThat(people).isEmpty();
     }
 
     // ===== Range Queries
@@ -369,25 +336,25 @@ public class PersonRepositoryIT {
     @Test
     public void testFindByAgeBetween() {
         List<Person> people = repository.findByAgeBetween(20, 40);
-        assertThat(people).containsExactlyInAnyOrder(bobby, henry);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByAgeGreaterThanEqual() {
         List<Person> people = repository.findByAgeGreaterThanEqual(50);
-        assertThat(people).containsExactly(jane);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByBirthtimeGreaterThan() {
         List<Person> people = repository.findByBirthtimeGreaterThan(Instant.parse("2016-05-02T00:00:00Z"));
-        assertThat(people).containsExactly(jenny);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByGenderUsingForcedRangeQuery() {
         List<Person> people = repository.findByGender("female");
-        assertThat(people).containsExactlyInAnyOrder(andrea, jane, jenny);
+        assertThat(people).isEmpty();
     }
 
     // ===== Limiting Queries
@@ -395,19 +362,19 @@ public class PersonRepositoryIT {
     @Test
     public void testFindFirstByName() {
         Person person = repository.findFirstByName("Bobby");
-        assertThat(person).isEqualTo(bobby);
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindTop2ByOrderByName() {
         List<Person> people = repository.findTop2ByOrderByName();
-        assertThat(people).containsExactly(andrea, bobby);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindFirst2OrderByName() {
-        Page<Person> people = repository.findFirst2ByOrderByName(new PageRequest(0, 10, Sort.Direction.ASC, "name"));
-        assertThat(people).containsExactly(andrea, bobby);
+        Page<Person> page = repository.findFirst2ByOrderByName(new PageRequest(0, 10, Sort.Direction.ASC, "name"));
+        assertEmpty(page);
     }
 
     // ===== Query By Example
@@ -420,74 +387,70 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindAllWithPageableQBE() throws Exception {
-        Page<Person> people = repository.qbeFindAllWithPageable(
+        Page<Person> page = repository.qbeFindAllWithPageable(
                 new PageRequest(0, 1, Sort.Direction.ASC, "name")
         );
-        assertThat(people).containsExactly(andrea);
+        assertEmpty(page);
     }
 
     @Test
     public void testFindByNameQBE() throws Exception {
         Person person = repository.qbeFindByName("Bobby");
-        assertThat(person).isEqualTo(bobby);
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindByNameExtractingQBE() throws Exception {
         Person person = repository.qbeFindByNameExtractingNameAndAge("Bobby");
-        assertThat(person.getName()).isEqualTo(bobby.getName());
-        assertThat(person.getAge()).isEqualTo(bobby.getAge());
-        assertThat(person.getDescription()).isNullOrEmpty();
-        assertThat(person.getHobbies()).isNullOrEmpty();
-        assertThat(person.getBirthtime()).isNull();
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindListByNameQBE() throws Exception {
         List<Person> person = repository.qbeFindByNameList("Bobby");
-        assertThat(person).containsExactly(bobby);
+        assertThat(person).isEmpty();
     }
 
     @Test
     public void testFindBobby() throws Exception {
         Person person = repository.qbeFindBobby();
-        assertThat(person).isEqualTo(bobby);
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindByNameQBEQuoted() throws Exception {
         Person person = repository.qbeFindByNameQuoted("Bobby");
-        assertThat(person).isEqualTo(bobby);
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindByPetQBE() throws Exception {
         List<Person> people = repository.qbeFindByPet(new Pet("Snoopy", "dog"));
-        assertThat(people).containsExactly(george);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByGenderWithPageableQBE() throws Exception {
-        Page<Person> people = repository.qbeFindByGenderWithPageable(
+        Page<Person> page = repository.qbeFindByGenderWithPageable(
                 "female",
                 new PageRequest(0, 2, Sort.Direction.ASC, "name")
         );
-        assertThat(people).containsExactly(andrea, jane);
+        assertEmpty(page);
     }
 
     @Test
     public void testFindByComplicatedQBE() throws Exception {
         List<Person> people = repository.qbeFindByComplicated("fish");
-        assertThat(people).containsExactly(george);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindByGenderQBEHonorsCollections() throws Exception {
-        Page<Person> people = repository.qbeFindByGenderWithPageable(
+        Page<Person> page = repository.qbeFindByGenderWithPageable(
                 "male",
                 new PageRequest(0, 20, Sort.Direction.ASC, "name")
         );
-        assertThat(people).containsExactly(bobby, george, henry);
+        assertEmpty(page);
     }
 
     // ===== XML Query By Example
@@ -495,13 +458,13 @@ public class PersonRepositoryIT {
     @Test
     public void testFindXmlByNameQBE() throws Exception {
         List<PersonXml> people = xmlRepository.qbeFindByName("Jimmy");
-        assertThat(people).containsExactly(jimmy);
+        assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindXmlByNameQBEWithoutSpecifyingFormat() throws Exception {
         List<PersonXml> people = xmlRepository.qbeFindByNameWithoutSpecifyingFormat("Jimmy");
-        assertThat(people).containsExactly(jimmy);
+        assertThat(people).isEmpty();
     }
 
     // ===== Various forms of streaming
@@ -509,31 +472,31 @@ public class PersonRepositoryIT {
     @Test
     public void testFindByNameReturningDocumentStream() {
         InputStream people = streamRepository.findAllByName("Bobby");
-        assertThat(people).hasSameContentAs(stream(bobby));
+        assertThat(people).hasSameContentAs(stream());
     }
 
     @Test
     public void testFindByNameReturningInputStream() {
         InputStream people = streamRepository.findAllByNameUsingGeneric("Bobby");
-        assertThat(people).hasSameContentAs(stream(bobby));
+        assertThat(people).hasSameContentAs(stream());
     }
 
     @Test
     public void testFindAllByOrderByNameReturningDocumentStream() {
         InputStream people = streamRepository.findAllByOrderByName();
-        assertThat(people).hasSameContentAs(stream(andrea, bobby, george, henry, jane, jenny));
+        assertThat(people).hasSameContentAs(stream());
     }
 
     @Test
     public void testFindAllByOrderByPetsNameReturningDocumentStream() {
         InputStream people = streamRepository.findAllByOrderByPetsNameAscNameAsc();
-        assertThat(people).hasSameContentAs(stream(bobby, andrea, george, jenny, henry, jane));
+        assertThat(people).hasSameContentAs(stream());
     }
 
     @Test
     public void testFindAllByGenderReturningDocumentStream() {
         InputStream people = streamRepository.findAllByGenderOrderByName("female");
-        assertThat(people).hasSameContentAs(stream(andrea, jane, jenny));
+        assertThat(people).hasSameContentAs(stream());
     }
 
     @Test
@@ -547,60 +510,45 @@ public class PersonRepositoryIT {
 
     @Test // spring-data-marklogic/issues/8
     public void testFindByPersonNameAsElementValueQuery() {
-        operations.execute((manager, transaction) -> {
-            DocumentMetadataHandle meta = new DocumentMetadataHandle();
-            meta.getCollections().addAll("Person");
-            manager.write(
-                    "/Person/testPerson.xml",
-                    meta,
-                    new StringHandle("" +
-                            "<person>" +
-                            "   <id>testPerson</id>" +
-                            "   <name>Bubba</name>" +
-                            "</person>").withFormat(Format.XML),
-                    transaction
-            );
-
-            return null;
-        });
-
         boolean exists = transRepository.existsByName("Bubba");
-
-        assertThat(exists).isTrue();
+        assertThat(exists).isFalse();
     }
 
     @Test
     public void testFindPersonAndTransform() {
         Person person = transRepository.findByNameTransforming("Bobby");
-        assertThat(person).isNotNull();
-        assertThat(person.getName()).isEqualTo("Override Master Read");
+        assertThat(person).isNull();
     }
 
     @Test
     public void testFindAllOverriddenWithTransform() {
-        Page<Person> results = transRepository.findAllBy(new PageRequest(0, 1));
-        assertThat(results).isNotEmpty();
-
-        Person person = results.iterator().next();
-        assertThat(person.getName()).isEqualTo("Override Master Read");
+        Page<Person> page = transRepository.findAllBy(new PageRequest(0, 1));
+        assertEmpty(page);
     }
 
-    @Ignore("Maybe not possible?")
+    //    @Ignore("Maybe not possible?")
     @Test
     public void testDefaultImplementationFind() {
-        Page<Person> results = transRepository.findAllBy(new PageRequest(0, 1));
-
-        assertThat(results).isNotEmpty();
-
-        Person person = results.iterator().next();
-
-        assertThat(person.getName()).isEqualTo("Override Master Read");
+        Page<Person> page = transRepository.findAllBy(new PageRequest(0, 1));
+        assertEmpty(page);
     }
 
     @Test
     public void testFindPersonWithStructuredQueryAndTransform() {
         Person person = transRepository.findFirstByOccupation("construction");
-        assertThat(person).isNotNull();
-        assertThat(person.getName()).isEqualTo("Override Master Read");
+        assertThat(person).isNull();
+    }
+
+    private static void assertEmpty(Page<Person> page) {
+        assertThat(page).isEmpty();
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.isLast()).isTrue();
+        assertThat(page.getTotalElements()).isEqualTo(0);
+        assertThat(page.getTotalPages()).isEqualTo(1);
+        assertThat(page.getNumber()).isEqualTo(0);
+        assertThat(page.getNumberOfElements()).isEqualTo(0);
+        assertThat(page.getContent()).isEmpty();
+        assertThat(page.getSize()).isEqualTo(0);
+        assertThat(page.getSort()).isNull();
     }
 }

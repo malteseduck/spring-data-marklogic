@@ -26,7 +26,7 @@ public class ChunkRequest implements Pageable, Serializable {
 
     @Override
     public int getPageNumber() {
-        return getOffset() / getPageSize();
+        return getPageSize() == 0 ? 0 : getOffset() / getPageSize();
     }
 
     @Override
