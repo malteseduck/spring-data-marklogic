@@ -334,9 +334,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
-//            if ( page == null || !page.hasNext()) {
-//                throw new DataRetrievalFailureException("Could not find documents with uris: " + uris);
-//            }
             return toRecordList(page);
         });
     }
@@ -348,9 +345,6 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
             DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
-//            if ( page == null || !page.hasNext()) {
-//                throw new DataRetrievalFailureException("Could not find documents of type " + entityClass.getName() + " with ids: " + ids);
-//            }
             return toEntityList(entityClass, page);
         });
     }
