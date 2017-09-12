@@ -24,52 +24,60 @@
 <span class="sourceLineNo">016</span><a name="line.16"></a>
 <span class="sourceLineNo">017</span>    private static final Logger LOG = LoggerFactory.getLogger(BasicMarkLogicPersistentProperty.class);<a name="line.17"></a>
 <span class="sourceLineNo">018</span>    private final String path;<a name="line.18"></a>
-<span class="sourceLineNo">019</span><a name="line.19"></a>
-<span class="sourceLineNo">020</span>    public BasicMarkLogicPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity&lt;?, MarkLogicPersistentProperty&gt; owner, SimpleTypeHolder simpleTypeHolder) {<a name="line.20"></a>
-<span class="sourceLineNo">021</span>        super(field, propertyDescriptor, owner, simpleTypeHolder);<a name="line.21"></a>
-<span class="sourceLineNo">022</span><a name="line.22"></a>
-<span class="sourceLineNo">023</span>        Indexed indexed = this.findAnnotation(Indexed.class);<a name="line.23"></a>
-<span class="sourceLineNo">024</span>        JsonProperty jsonProperty = this.findAnnotation(JsonProperty.class);<a name="line.24"></a>
-<span class="sourceLineNo">025</span><a name="line.25"></a>
-<span class="sourceLineNo">026</span>        String name = field != null ? field.getName() : "";<a name="line.26"></a>
-<span class="sourceLineNo">027</span><a name="line.27"></a>
-<span class="sourceLineNo">028</span>        if (jsonProperty != null &amp;&amp; !StringUtils.isEmpty(jsonProperty.value())) {<a name="line.28"></a>
-<span class="sourceLineNo">029</span>            name = jsonProperty.value();<a name="line.29"></a>
-<span class="sourceLineNo">030</span>        }<a name="line.30"></a>
-<span class="sourceLineNo">031</span><a name="line.31"></a>
-<span class="sourceLineNo">032</span>        if (indexed != null) {<a name="line.32"></a>
-<span class="sourceLineNo">033</span>            if (!StringUtils.isEmpty(indexed.path())) {<a name="line.33"></a>
-<span class="sourceLineNo">034</span>                this.path = indexed.path();<a name="line.34"></a>
-<span class="sourceLineNo">035</span>            } else if (indexed.type() == IndexType.PATH) {<a name="line.35"></a>
-<span class="sourceLineNo">036</span>                path = "/" + name;<a name="line.36"></a>
-<span class="sourceLineNo">037</span>            } else {<a name="line.37"></a>
-<span class="sourceLineNo">038</span>                path = null;<a name="line.38"></a>
-<span class="sourceLineNo">039</span>            }<a name="line.39"></a>
-<span class="sourceLineNo">040</span>        } else {<a name="line.40"></a>
-<span class="sourceLineNo">041</span>            path = "/" + name;<a name="line.41"></a>
-<span class="sourceLineNo">042</span>        }<a name="line.42"></a>
-<span class="sourceLineNo">043</span>    }<a name="line.43"></a>
-<span class="sourceLineNo">044</span><a name="line.44"></a>
-<span class="sourceLineNo">045</span>    @Override<a name="line.45"></a>
-<span class="sourceLineNo">046</span>    protected Association&lt;MarkLogicPersistentProperty&gt; createAssociation() {<a name="line.46"></a>
-<span class="sourceLineNo">047</span>        return null;<a name="line.47"></a>
-<span class="sourceLineNo">048</span>    }<a name="line.48"></a>
-<span class="sourceLineNo">049</span><a name="line.49"></a>
-<span class="sourceLineNo">050</span>    @Override<a name="line.50"></a>
-<span class="sourceLineNo">051</span>    public String getFieldName() {<a name="line.51"></a>
-<span class="sourceLineNo">052</span>        return null;<a name="line.52"></a>
-<span class="sourceLineNo">053</span>    }<a name="line.53"></a>
-<span class="sourceLineNo">054</span><a name="line.54"></a>
-<span class="sourceLineNo">055</span>    @Override<a name="line.55"></a>
-<span class="sourceLineNo">056</span>    public boolean isExplicitIdProperty() {<a name="line.56"></a>
-<span class="sourceLineNo">057</span>        return false;<a name="line.57"></a>
-<span class="sourceLineNo">058</span>    }<a name="line.58"></a>
-<span class="sourceLineNo">059</span><a name="line.59"></a>
-<span class="sourceLineNo">060</span>    @Override<a name="line.60"></a>
-<span class="sourceLineNo">061</span>    public String getPath() {<a name="line.61"></a>
-<span class="sourceLineNo">062</span>        return path;<a name="line.62"></a>
-<span class="sourceLineNo">063</span>    }<a name="line.63"></a>
-<span class="sourceLineNo">064</span>}<a name="line.64"></a>
+<span class="sourceLineNo">019</span>    private final IndexType indexType;<a name="line.19"></a>
+<span class="sourceLineNo">020</span><a name="line.20"></a>
+<span class="sourceLineNo">021</span>    public BasicMarkLogicPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity&lt;?, MarkLogicPersistentProperty&gt; owner, SimpleTypeHolder simpleTypeHolder) {<a name="line.21"></a>
+<span class="sourceLineNo">022</span>        super(field, propertyDescriptor, owner, simpleTypeHolder);<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>        Indexed indexed = this.findAnnotation(Indexed.class);<a name="line.24"></a>
+<span class="sourceLineNo">025</span>        JsonProperty jsonProperty = this.findAnnotation(JsonProperty.class);<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>        String name = field != null ? field.getName() : "";<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>        if (jsonProperty != null &amp;&amp; !StringUtils.isEmpty(jsonProperty.value())) {<a name="line.29"></a>
+<span class="sourceLineNo">030</span>            name = jsonProperty.value();<a name="line.30"></a>
+<span class="sourceLineNo">031</span>        }<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>        if (indexed != null) {<a name="line.33"></a>
+<span class="sourceLineNo">034</span>            indexType = indexed.type();<a name="line.34"></a>
+<span class="sourceLineNo">035</span>            if (!StringUtils.isEmpty(indexed.path())) {<a name="line.35"></a>
+<span class="sourceLineNo">036</span>                path = indexed.path();<a name="line.36"></a>
+<span class="sourceLineNo">037</span>            } else if (indexed.type() == IndexType.PATH) {<a name="line.37"></a>
+<span class="sourceLineNo">038</span>                path = "/" + name;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>            } else {<a name="line.39"></a>
+<span class="sourceLineNo">040</span>                path = null;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>            }<a name="line.41"></a>
+<span class="sourceLineNo">042</span>        } else {<a name="line.42"></a>
+<span class="sourceLineNo">043</span>            indexType = IndexType.PATH;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>            path = "/" + name;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>        }<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    }<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    @Override<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    protected Association&lt;MarkLogicPersistentProperty&gt; createAssociation() {<a name="line.49"></a>
+<span class="sourceLineNo">050</span>        return null;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    }<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    @Override<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    public String getFieldName() {<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        return null;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    }<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    @Override<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    public boolean isExplicitIdProperty() {<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        return false;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    }<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    @Override<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    public String getPath() {<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        return path;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    }<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    @Override<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    public IndexType getIndexType() {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        return indexType;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    }<a name="line.71"></a>
+<span class="sourceLineNo">072</span>}<a name="line.72"></a>
 
 
 
