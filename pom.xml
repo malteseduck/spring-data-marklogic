@@ -16,7 +16,7 @@
         <marklogic>4.0.1</marklogic>
         <springdata.commons>1.13.0.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
-        <json>20160810</json>
+        <json>20170516</json>
         <jackson>2.8.7</jackson>
         <maven-javadoc-plugin>2.10.4</maven-javadoc-plugin>
         <maven-source-plugin>3.0.1</maven-source-plugin>
