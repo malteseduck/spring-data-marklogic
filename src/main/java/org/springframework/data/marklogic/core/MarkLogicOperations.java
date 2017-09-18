@@ -293,13 +293,13 @@ public interface MarkLogicOperations {
      *
      * @param query The structured query to use to match documents in the database.
      * @param start The starting index within the result set of matches.
-     * @param length The number of documents to return.
+     * @param limit The number of documents to return.
      * @param entityClass The entity type class.
      * @param <T> The type of entity.
      *
      * @return A page of documents matching the specified parameters.
      */
-    <T> Page<T> search(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
+    <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
 
     // ========== Database Queries Streaming Results =========== //
 
