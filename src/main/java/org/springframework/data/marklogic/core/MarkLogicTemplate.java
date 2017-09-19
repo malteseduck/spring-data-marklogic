@@ -285,7 +285,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> write(List<T> entities, ServerTransform transform) {
-        return write(entities, transform);
+        return write(entities, transform, (String[]) null);
     }
 
     @Override
