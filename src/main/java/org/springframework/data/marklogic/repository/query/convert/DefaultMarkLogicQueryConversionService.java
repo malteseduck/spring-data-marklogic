@@ -274,27 +274,35 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         return options;
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T as(Object value, Class<T> type) {
         if (value instanceof Collection ||
                 value != null && (value.getClass().isArray() || !ClassUtils.isAssignable(type, value.getClass()))) {
             throw new IllegalArgumentException(
                     String.format("Expected parameter type of %s but got %s!", type, value.getClass()));
         }
-
-        return (T) value;
+        return cast(value);
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T[] asArray(Object values, Class<T[]> type) {
         if (values instanceof Collection) {
-            return (T[]) ((Collection<T>) values).toArray();
+            Collection<T> collection = cast(values);
+            return collection.toArray(newArray(type, collection.size()));
         } else if (values != null && values.getClass().isArray()) {
-            return (T[]) values;
+            return cast(values);
         } else if (values != null && String[].class.equals(type)){
             return Arrays.copyOf(new Object[] { values.toString() }, 1, type);
         } else {
             return Arrays.copyOf(new Object[] { values }, 1, type);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T cast(Object o) {
+        return (T) o;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T[] newArray(Class<T[]> type, int size) {
+        return (T[]) java.lang.reflect.Array.newInstance(type.getComponentType(), size);
     }
 }
