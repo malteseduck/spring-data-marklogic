@@ -6,7 +6,7 @@
 
     <artifactId>spring-data-marklogic</artifactId>
     <groupId>org.springframework.data</groupId>
-    <version>1.1.4.RELEASE</version>
+    <version>1.1.5.RELEASE</version>
 
     <name>Spring Data MarkLogic - Core</name>
     <description>MarkLogic support for Spring Data</description>
