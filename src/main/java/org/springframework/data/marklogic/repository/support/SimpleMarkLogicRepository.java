@@ -95,7 +95,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    public Iterable<T> findAll(Iterable<ID> ids) {
+    public List<T> findAll(Iterable<ID> ids) {
         Assert.notNull(ids, "The given Iterable of ids must not be null");
         return operations.read(convertIterableToList(ids), entityInformation.getJavaType());
     }

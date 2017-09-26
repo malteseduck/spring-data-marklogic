@@ -75,6 +75,7 @@ public class DefaultMarkLogicQueryConversionService implements QueryConversionSe
         Map<Object, QueryTypeConverter> converters = new HashMap<>();
 
         // TODO: Can we just register the class and not worry if it is an array?
+        converters.put(UUID.class, ObjectToStringValueConverter.INSTANCE);
         converters.put(Instant.class, ObjectToStringValueConverter.INSTANCE);
         converters.put(LocalDateTime.class, ObjectToStringValueConverter.INSTANCE);
         converters.put(ZonedDateTime.class, ObjectToStringValueConverter.INSTANCE);
