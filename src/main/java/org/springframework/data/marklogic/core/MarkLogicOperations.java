@@ -10,6 +10,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 
 import java.io.IOException;
@@ -300,6 +301,27 @@ public interface MarkLogicOperations {
      * @return A page of documents matching the specified parameters.
      */
     <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
+
+    /**
+     * @see MarkLogicOperations#facetedSearch(StructuredQueryDefinition, int, int, Class)
+     */
+    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass);
+
+    /**
+     * Similar to a normal paged query, except also includes facets for the matched results.  In order for the facets to
+     * be generated you need to ensure the specified query has the name of persisted options that describe the facets,
+     * or the query is a {@link org.springframework.data.marklogic.repository.query.CombinedQueryDefinition} that includes
+     * the ad-hoc options definitions for them.
+     *
+     * @param query The structured query to use to match documents in the database.
+     * @param start The starting index within the result set of matches.
+     * @param limit The number of documents to return.
+     * @param entityClass The entity type class.
+     * @param <T> The type of entity.
+     *
+     * @return A page of documents matching the specified parameters with the included facets.
+     */
+    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
 
     // ========== Database Queries Streaming Results =========== //
 

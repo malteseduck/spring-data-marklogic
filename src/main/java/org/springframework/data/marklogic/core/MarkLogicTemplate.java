@@ -8,6 +8,7 @@ import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.impl.RESTServices;
 import com.marklogic.client.io.Format;
+import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.ValuesHandle;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -38,6 +39,7 @@ import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.data.marklogic.domain.ChunkRequest;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.convert.DefaultMarkLogicQueryConversionService;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
@@ -418,6 +420,28 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             List<T> results = toEntityList(entityClass, docPage);
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
             return new PageImpl<>(results, new ChunkRequest(start, length), docPage.getTotalSize());
+        });
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+        return facetedSearch(query, start, -1, entityClass);
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
+        return execute((manager, transaction) -> {
+            if (limit >= 0) manager.setPageLength(limit);
+
+            manager.setSearchView(QueryManager.QueryView.FACETS);
+            SearchHandle results = new SearchHandle();
+            QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
+
+            DocumentPage docPage = manager.search(finalQuery, start + 1, results, transaction);
+
+            List<T> entities = toEntityList(entityClass, docPage);
+            int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
+            return new FacetedPage<>(entities, new ChunkRequest(start, length), docPage.getTotalSize(), results.getFacetResults());
         });
     }
 

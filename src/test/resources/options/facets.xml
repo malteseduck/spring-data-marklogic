@@ -1,0 +1,25 @@
+<options xmlns="http://marklogic.com/appservices/search">
+    <return-results>false</return-results>
+    <return-facets>true</return-facets>
+    <constraint name="occupation">
+        <range type="xs:string" facet="true">
+            <path-index>/occupation</path-index>
+            <facet-option>frequency-order</facet-option>
+            <facet-option>limit=20</facet-option>
+        </range>
+    </constraint>
+    <constraint name="age">
+        <range type="xs:int" facet="true">
+            <path-index>/age</path-index>
+            <facet-option>frequency-order</facet-option>
+            <facet-option>limit=20</facet-option>
+        </range>
+    </constraint>
+    <constraint name="gender">
+        <range type="xs:string" facet="true">
+            <path-index>/gender</path-index>
+            <facet-option>frequency-order</facet-option>
+            <facet-option>limit=20</facet-option>
+        </range>
+    </constraint>
+</options>

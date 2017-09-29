@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.InvalidMarkLogicApiUsageException;
+import org.springframework.data.marklogic.domain.facets.FacetResultDto;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -21,6 +23,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -176,14 +179,21 @@ public class BasicQueryIT {
         );
     }
 
-    @Ignore("not yet implemented")
     @Test
-    public void testQueryByValueReturningFacets() {
-//        FacetResult facets = template.values("/occupation", qb.value("gender", "male"));
-//
-//        assertThat(facets.map(FacetValue::getName))
-//                .containsExactlyInAnyOrder(george.getOccupation(), bobby.getOccupation())
+    public void testQueryReturningFacets() {
+        FacetedPage<Person> results = template.facetedSearch(
+                combine()
+                        .sort(new Sort("name"))
+                        .optionsName("facets"),
+                0,
+                1,
+                Person.class
+        );
+
+        assertThat(results.getContent()).contains(bobby);
+        assertThat(results.getFacets())
+                .extracting(FacetResultDto::getName).contains("occupation", "age", "gender");
+        assertThat(results.getFacets())
+                .extracting(FacetResultDto::getCount).contains(3L, 3L, 2L);
     }
-
-
 }
