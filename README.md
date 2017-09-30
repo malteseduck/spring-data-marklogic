@@ -298,7 +298,12 @@ For more information on the details of each of these methods, see the [javadocs]
 
 Sometimes when doing searches it is helpful to give aggregates of "category" values that allow a user to either narrow down their search or give useful information about the composition of their data.  These values are called "facets".  For more information about the specifics of what facets are and how they can be used see [Generating Search Facets](http://docs.marklogic.com/guide/rest-dev/search#id_27983).
 
-In order to use facets you must create configuration for the facets and perist them to the database, or create ad-hoc configuration with the `CombinedQueryDefinitionBuilder` (see below).  If you are using repository queries you will need to persist the options.  Then you can use the `@Query` annotation to specify the options name that have your facets configured, and set the return type of your method to `FacetedPage` and you will get those facets returned back as part of your page object.
+In order to use facets you must create configuration for the facets and perist them to the database, or create ad-hoc configuration with the `CombinedQueryDefinitionBuilder` (see below).  If you are using repository queries you will need to persist the options.  Then you can use the `@Query` annotation to specify the options name that have your facets configured, and set the return type of your method to `FacetedPage` and you will get those facets returned back as part of your page object, for example:
+
+```java
+    @Query(optionsName = "facet-options")
+    FacetedPage<Person> findByNameAndGenderAndPetsName(String name, String gender, String petName);
+```
 
 ### MarkLogic `DocumentManager` and `QueryManager`
 If you need to do more than just construct a structured query you can get "access" to the document manager, query manager, or database client objects to build your queries directly with the MarkLogic Java Client Library.
