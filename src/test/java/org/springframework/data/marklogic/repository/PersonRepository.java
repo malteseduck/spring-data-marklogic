@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
 import org.springframework.data.marklogic.core.Pet;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.QueryType;
 
 import java.time.Instant;
@@ -79,6 +80,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> findByHobbiesNotContaining(List<String> hobbies);
 
     Page<Person> findByGenderLike(String gender, Pageable pageable);
+
+    @Query(optionsName = "facets")
+    FacetedPage<Person> findByGenderIsLike(String gender, Pageable page);
 
     List<Person> findByNameIn(String... names);
 
@@ -140,7 +144,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ name: ?0 }")
     Person qbeFindByName(String name);
 
-    @Query(value = "{ name: ?0 }", extract = {"/name", "/age"})
+    @Query(query = "{ name: ?0 }", extract = {"/name", "/age"})
     Person qbeFindByNameExtractingNameAndAge(String name);
 
     @Query("{ name: ?0 }")
@@ -155,8 +159,11 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ 'name': 'Bobby' }")
     Person qbeFindBobby();
 
-    @Query("{ 'pets': ?0 }")
+    @Query(query = "{ 'pets': ?0 }")
     List<Person> qbeFindByPet(Pet pet);
+
+//    @Query(query = "{ 'pets': ?0 }", optionsName = "facets")
+//    FacetedPage<Person> qbeFindByPetPaged(Pet pet, Pageable page);
 
     @Query("{ name: ?0, pet: ?1 }")
     Person qbeFindByLastnameAndPet(String lastname, Pet pet);
@@ -179,7 +186,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
             "}")
     List<Person> qbeFindByComplicated(String term);
 
-    @Query(value = "{ $or: [{ age: ?0 }, {'age': '?0'}] }")
+    @Query(query = "{ $or: [{ age: ?0 }, {'age': '?0'}] }")
     boolean qbeFindByAgeQuotedAndUnquoted(int age);
 
     @Query("{ arg0: ?0, arg1: ?1 }")

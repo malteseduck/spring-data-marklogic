@@ -18,6 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.core.*;
+import org.springframework.data.marklogic.domain.facets.FacetResultDto;
+import org.springframework.data.marklogic.domain.facets.FacetValueDto;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -25,11 +28,13 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.fail;
+import static org.springframework.data.marklogic.repository.query.QueryTestUtils.queryMethod;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.streamXml;
 
@@ -255,6 +260,23 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testExecutesFacetedPagedFinderCorrectly() throws Exception {
+        FacetedPage<Person> page = repository.findByGenderIsLike("fem*",
+                new PageRequest(0, 2, Sort.Direction.ASC, "name"));
+
+        assertThat(page.getNumberOfElements()).isEqualTo(2);
+        assertThat(page).containsExactly(andrea, jane);
+
+        // Wildcard index required for result total to be correct
+        assertThat(page.getTotalElements()).isEqualTo(3);
+
+        assertThat(page.getFacets())
+                .extracting(FacetResultDto::getName).contains("occupation", "age", "gender");
+        assertThat(page.getFacets())
+                .extracting(FacetResultDto::getCount).contains(3L, 3L, 1L);
+    }
+
+    @Test
     public void testExistsWorksCorrectly() {
         assertThat(repository.exists(bobby.getId())).isTrue();
     }
@@ -464,6 +486,19 @@ public class PersonRepositoryIT {
     public void testFindByPetQBE() throws Exception {
         List<Person> people = repository.qbeFindByPet(new Pet("Snoopy", "dog"));
         assertThat(people).containsExactly(george);
+    }
+
+    @Ignore("facets not supported from QBE endpoint")
+    @Test
+    public void testFindByPetPagedQBE() throws Exception {
+//        FacetedPage<Person> page = repository.qbeFindByPetPaged(
+//                new Pet("Snoopy", "dog"),
+//                new PageRequest(0, 1, Sort.Direction.ASC, "name"));
+//        assertThat(page.getContent()).containsExactly(george);
+//        assertThat(page.getFacets())
+//                .extracting(FacetResultDto::getName).contains("occupation", "age", "gender");
+//        assertThat(page.getFacets().stream().flatMap(result -> result.getValues().stream()).collect(Collectors.toList()))
+//                .extracting(FacetValueDto::getName).contains("", "23", "");
     }
 
     @Test

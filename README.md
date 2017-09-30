@@ -18,7 +18,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 <dependency>
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
-    <version>1.1.3.RELEASE</version>
+    <version>1.1.6.RELEASE</version>
 </dependency>
 ```
 
@@ -262,6 +262,9 @@ This allows you to specify the name of a transform to use when reading the docum
 #### `extract`/`selected`
 These are used to specify which properties are included/excluded from the result documents before they return from the database. The `extract` field is for specifying the XPath of each property this effects, and the `selected` allows you whether to include or exclude those fields.
 
+#### `optionsName`
+You can persist query configuration into your MarkLogic database and reference that configuration in your queries.  This is a more optimize approach to using options (as opposed to creating ad-hoc ones at query time).  This option allows you to specify the name of one of your persisted options.  These options will be used as part of the annotated query that is run.
+
 For more information on extracts see [Extracting a Portion of Matching Documents](http://docs.marklogic.com/guide/java/searches#id_90087).
 
 ### Structured Query Building
@@ -290,6 +293,12 @@ Once you have build your query constraints you can pass it into one of the follo
 Each of these methods also have a companion `stream` method that returns an `InputStream` instead of entities.  This allows you to stream the data out through your application layer without incurring the cost of de-serialization and serialization.  You would only do this if you wanted to return the raw documents without interaction with them in the application.
 
 For more information on the details of each of these methods, see the [javadocs](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html).
+
+### Facets
+
+Sometimes when doing searches it is helpful to give aggregates of "category" values that allow a user to either narrow down their search or give useful information about the composition of their data.  These values are called "facets".  For more information about the specifics of what facets are and how they can be used see [Generating Search Facets](http://docs.marklogic.com/guide/rest-dev/search#id_27983).
+
+In order to use facets you must create configuration for the facets and perist them to the database, or create ad-hoc configuration with the `CombinedQueryDefinitionBuilder` (see below).  If you are using repository queries you will need to persist the options.  Then you can use the `@Query` annotation to specify the options name that have your facets configured, and set the return type of your method to `FacetedPage` and you will get those facets returned back as part of your page object.
 
 ### MarkLogic `DocumentManager` and `QueryManager`
 If you need to do more than just construct a structured query you can get "access" to the document manager, query manager, or database client objects to build your queries directly with the MarkLogic Java Client Library.

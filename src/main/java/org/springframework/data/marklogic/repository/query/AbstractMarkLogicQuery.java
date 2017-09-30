@@ -92,8 +92,11 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         } else if (method.isStreamingQuery()) {
             return new StreamingExecution(operations, accessor.getPageable());
         } else if (method.isSliceQuery() || method.isPageQuery()) {
-            // TODO: Do we need to support slice differently?  A page is a slice...
-            return new PagedExecution(operations, accessor.getPageable());
+            if (method.isFacetedQuery()) {
+                return new FacetedPageExecution(operations, accessor.getPageable());
+            } else {
+                return new PagedExecution(operations, accessor.getPageable());
+            }
         } else if (method.isCollectionQuery()) {
             return new EntityListExecution(operations);
         } else {
