@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.InvalidMarkLogicApiUsageException;
+import org.springframework.data.marklogic.domain.ChunkRequest;
 import org.springframework.data.marklogic.domain.facets.FacetResultDto;
 import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.test.context.ContextConfiguration;
@@ -156,6 +157,17 @@ public class BasicQueryIT {
     }
 
     @Test
+    public void testQueryWithPageable() {
+        Page<Person> people = template.search(
+                null,
+                new ChunkRequest(0, 3, new Sort("name")),
+                Person.class
+        );
+
+        assertThat(people.getContent()).containsExactly(bobby, george, jane);
+    }
+
+    @Test
     public void testQueryByValueSorted() {
         List<Person> people = template.search(
             template.sortQuery(
@@ -172,6 +184,17 @@ public class BasicQueryIT {
     public void testQueryByValueStreamed() throws JsonProcessingException {
         InputStream people = template.stream(
                 qb.value(qb.jsonProperty("name"), "Bobby"),
+                PersonToStream.class
+        );
+
+        assertThat(people).hasSameContentAs(stream(bobby));
+    }
+
+    @Test
+    public void testQueryByValueStreamedWithPagable() throws JsonProcessingException {
+        InputStream people = template.stream(
+                qb.value(qb.jsonProperty("gender"), "male"),
+                new ChunkRequest(0, 1, new Sort("name")),
                 PersonToStream.class
         );
 

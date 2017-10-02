@@ -8,6 +8,7 @@ import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
 import org.springframework.data.marklogic.domain.facets.FacetedPage;
@@ -258,6 +259,13 @@ public interface MarkLogicOperations {
      */
     DocumentPage search(StructuredQueryDefinition query, int start, int length);
 
+    /**
+     * Same as search with int bounds, but allows paging/sorting based off Spring Pageable.
+     *
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     */
+    DocumentPage search(StructuredQueryDefinition query, Pageable pageable);
+
     // ========== Database Queries with Entity =========== //
 
     /**
@@ -303,6 +311,13 @@ public interface MarkLogicOperations {
     <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
 
     /**
+     * Same as search with int bounds, but allows paging/sorting based off Spring Pageable.
+     *
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     */
+    <T> Page<T> search(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
+
+    /**
      * @see MarkLogicOperations#facetedSearch(StructuredQueryDefinition, int, int, Class)
      */
     <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass);
@@ -322,6 +337,13 @@ public interface MarkLogicOperations {
      * @return A page of documents matching the specified parameters with the included facets.
      */
     <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
+
+    /**
+     * Same as faceted search with int bounds, but allows paging/sorting based off Spring Pageable.
+     *
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     */
+    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
 
     // ========== Database Queries Streaming Results =========== //
 
@@ -351,6 +373,13 @@ public interface MarkLogicOperations {
     InputStream stream(StructuredQueryDefinition query, int start, int length);
 
     /**
+     * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
+     *
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     */
+    InputStream stream(StructuredQueryDefinition query, Pageable pageable);
+
+    /**
      * Queries just like the {@link MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)} method does,
      * but instead of a page/list of documents it returns an input stream straight from the results of the REST call
      * against the database.  The purpose of these methods is to skip the serialization/deserialization process of
@@ -365,6 +394,13 @@ public interface MarkLogicOperations {
      * @return An input stream of all the documents that matched the specified parameters.
      */
     <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
+
+    /**
+     * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
+     *
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     */
+    <T> InputStream stream(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
 
     // ========== Database Existence Checks =========== //
 

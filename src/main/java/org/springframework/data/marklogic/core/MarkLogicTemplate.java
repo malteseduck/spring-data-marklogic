@@ -30,6 +30,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
@@ -410,6 +411,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public DocumentPage search(StructuredQueryDefinition query, Pageable pageable) {
+        return search(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize());
+    }
+
+    @Override
     public <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (limit >= 0) manager.setPageLength(limit);
@@ -421,6 +430,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
             return new PageImpl<>(results, new ChunkRequest(start, length), docPage.getTotalSize());
         });
+    }
+
+    @Override
+    public <T> Page<T> search(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return search(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
     }
 
     @Override
@@ -443,6 +461,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
             return new FacetedPage<>(entities, new ChunkRequest(start, length), docPage.getTotalSize(), results.getFacetResults());
         });
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return facetedSearch(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
     }
 
     @Override
@@ -471,6 +498,14 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public InputStream stream(StructuredQueryDefinition query, Pageable pageable) {
+        return stream(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize());
+    }
+
+    @Override
     public <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
@@ -486,6 +521,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             return new SequenceInputStream(results);
         });
+    }
+
+    @Override
+    public <T> InputStream stream(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return stream(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
     }
 
     @Override
