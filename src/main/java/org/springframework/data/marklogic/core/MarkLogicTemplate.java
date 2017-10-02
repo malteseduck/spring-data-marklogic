@@ -369,7 +369,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> T searchOne(StructuredQueryDefinition query, Class<T> entityClass) {
         List<T> results = search(query, 0, 1, entityClass)
                 .getContent();
-        return results.get(0);
+        return results == null || results.isEmpty() ? null : results.get(0);
     }
 
     /**

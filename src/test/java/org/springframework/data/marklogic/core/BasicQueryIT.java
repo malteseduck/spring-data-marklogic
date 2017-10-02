@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.pojo.PojoQueryBuilder;
+import com.marklogic.client.query.StructuredQueryBuilder;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -34,7 +35,7 @@ import static org.springframework.data.marklogic.repository.query.QueryTestUtils
 public class BasicQueryIT {
 
     private MarkLogicTemplate template;
-    private PojoQueryBuilder qb;
+    private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     private Person bobby, george, jane;
     private List<Person> all;
@@ -45,7 +46,6 @@ public class BasicQueryIT {
     @Autowired
     public void setClient(DatabaseClient client) {
         template = new MarkLogicTemplate(client);
-        qb = template.qb(Person.class);
     }
 
     @Before
@@ -70,8 +70,8 @@ public class BasicQueryIT {
 
     @Test
     public void testExists() throws Exception {
-        assertThat(template.exists(qb.value("age", 23), Person.class)).as("does exist").isTrue();
-        assertThat(template.exists(qb.value("occupation", "knight"), Person.class)).as("doesn't exist").isFalse();
+        assertThat(template.exists(qb.value(qb.jsonProperty("age"), 23), Person.class)).as("does exist").isTrue();
+        assertThat(template.exists(qb.value(qb.jsonProperty("occupation"), "knight"), Person.class)).as("doesn't exist").isFalse();
     }
 
     @Test
@@ -98,14 +98,14 @@ public class BasicQueryIT {
 
     @Test
     public void testCountByQuery() throws Exception {
-        assertThat(template.count(qb.value("gender", "male"))).as("without type").isEqualTo(2);
-        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("options type").isEqualTo(2);
+        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"))).as("without type").isEqualTo(2);
+        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"), Person.class)).as("options type").isEqualTo(2);
     }
 
     @Test
     public void testQueryByValue() {
         List<Person> people = template.search(
-            qb.value("gender", "male"),
+            qb.value(qb.jsonProperty("gender"), "male"),
             Person.class
         );
 
@@ -115,7 +115,7 @@ public class BasicQueryIT {
     @Test
     public void testQueryByValueWithLimit() {
         Page<Person> people = template.search(
-            qb.value("gender", "male"),
+            qb.value(qb.jsonProperty("gender"), "male"),
             0,
             1,
             Person.class
@@ -128,11 +128,21 @@ public class BasicQueryIT {
     @Test
     public void testSearchOne() {
         Person person = template.searchOne(
-                qb.value("name", "Bobby"),
+                qb.value(qb.jsonProperty("name"), "Bobby"),
                 Person.class
         );
 
         assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
+    public void testSearchOneReturningNoResults() {
+        Person person = template.searchOne(
+                qb.value(qb.jsonProperty("name"), "BubbaMan"),
+                Person.class
+        );
+
+        assertThat(person).isNull();
     }
 
     @Test
@@ -150,7 +160,7 @@ public class BasicQueryIT {
         List<Person> people = template.search(
             template.sortQuery(
                 new Sort("name"),
-                qb.value("gender", "male")
+                qb.value(qb.jsonProperty("gender"), "male")
             ),
             Person.class
         );
@@ -161,7 +171,7 @@ public class BasicQueryIT {
     @Test
     public void testQueryByValueStreamed() throws JsonProcessingException {
         InputStream people = template.stream(
-                qb.value("name", "Bobby"),
+                qb.value(qb.jsonProperty("name"), "Bobby"),
                 PersonToStream.class
         );
 
