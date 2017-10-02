@@ -367,6 +367,12 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindByPetName() throws Exception {
+        List<Person> people = repository.findByPetsName("Powderkeg");
+        assertThat(people).containsExactly(jenny);
+    }
+
+    @Test
     public void testFindByPetImmunizationsType() throws Exception {
         List<Person> people = repository.findByPetsImmunizationsType("shot");
         assertThat(people).containsExactly(andrea);
