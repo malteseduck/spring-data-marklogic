@@ -10,6 +10,7 @@
     <!--<logger name="org.apache.http" level="debug" />-->
     <logger name="org" level="warn" />
     <logger name="org.springframework.data.marklogic" level="debug" />
+    <logger name="com.marklogic.client" level="debug" />
 
     <root level="error">
         <appender-ref ref="console" />
