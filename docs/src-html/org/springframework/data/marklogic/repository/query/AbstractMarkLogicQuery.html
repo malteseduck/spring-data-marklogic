@@ -100,21 +100,24 @@
 <span class="sourceLineNo">092</span>        } else if (method.isStreamingQuery()) {<a name="line.92"></a>
 <span class="sourceLineNo">093</span>            return new StreamingExecution(operations, accessor.getPageable());<a name="line.93"></a>
 <span class="sourceLineNo">094</span>        } else if (method.isSliceQuery() || method.isPageQuery()) {<a name="line.94"></a>
-<span class="sourceLineNo">095</span>            // TODO: Do we need to support slice differently?  A page is a slice...<a name="line.95"></a>
-<span class="sourceLineNo">096</span>            return new PagedExecution(operations, accessor.getPageable());<a name="line.96"></a>
-<span class="sourceLineNo">097</span>        } else if (method.isCollectionQuery()) {<a name="line.97"></a>
-<span class="sourceLineNo">098</span>            return new EntityListExecution(operations);<a name="line.98"></a>
-<span class="sourceLineNo">099</span>        } else {<a name="line.99"></a>
-<span class="sourceLineNo">100</span>            return new SingleEntityExecution(operations);<a name="line.100"></a>
-<span class="sourceLineNo">101</span>        }<a name="line.101"></a>
-<span class="sourceLineNo">102</span>    }<a name="line.102"></a>
-<span class="sourceLineNo">103</span><a name="line.103"></a>
-<span class="sourceLineNo">104</span>    protected abstract StructuredQueryDefinition createQuery(ParameterAccessor accessor);<a name="line.104"></a>
-<span class="sourceLineNo">105</span><a name="line.105"></a>
-<span class="sourceLineNo">106</span>    protected abstract boolean isCountQuery();<a name="line.106"></a>
-<span class="sourceLineNo">107</span>    protected abstract boolean isExistsQuery();<a name="line.107"></a>
-<span class="sourceLineNo">108</span>    protected abstract boolean isDeleteQuery();<a name="line.108"></a>
-<span class="sourceLineNo">109</span>}<a name="line.109"></a>
+<span class="sourceLineNo">095</span>            if (method.isFacetedQuery()) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>                return new FacetedPageExecution(operations, accessor.getPageable());<a name="line.96"></a>
+<span class="sourceLineNo">097</span>            } else {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>                return new PagedExecution(operations, accessor.getPageable());<a name="line.98"></a>
+<span class="sourceLineNo">099</span>            }<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        } else if (method.isCollectionQuery()) {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            return new EntityListExecution(operations);<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        } else {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            return new SingleEntityExecution(operations);<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        }<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    }<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    protected abstract StructuredQueryDefinition createQuery(ParameterAccessor accessor);<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    protected abstract boolean isCountQuery();<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    protected abstract boolean isExistsQuery();<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    protected abstract boolean isDeleteQuery();<a name="line.111"></a>
+<span class="sourceLineNo">112</span>}<a name="line.112"></a>
 
 
 

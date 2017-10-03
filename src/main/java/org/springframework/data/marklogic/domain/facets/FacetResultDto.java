@@ -1,14 +1,12 @@
 package org.springframework.data.marklogic.domain.facets;
 
 import com.marklogic.client.query.FacetResult;
-import com.sun.istack.internal.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FacetResultDto {
-    @NotNull
     private final String name;
 
     private final long count;

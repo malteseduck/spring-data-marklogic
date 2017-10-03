@@ -2,6 +2,7 @@ org.springframework.data.marklogic.core
 org.springframework.data.marklogic.core.convert
 org.springframework.data.marklogic.core.mapping
 org.springframework.data.marklogic.domain
+org.springframework.data.marklogic.domain.facets
 org.springframework.data.marklogic
 org.springframework.data.marklogic.repository.config
 org.springframework.data.marklogic.repository
