@@ -176,6 +176,14 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    @Ignore("projects not enabled until queries limit values returned")
+    public void testFindsPersonsByNameReturningOnyName() throws Exception {
+        List<PersonView> people = repository.queryByName("Jane");
+        assertThat(people).extracting(PersonView::getName)
+                .contains("Jane");
+    }
+
+    @Test
     public void testFindsPersonsByNameOrderedByAge() throws Exception {
         List<Person> people = repository.findByGenderOrderByAge("female");
         assertThat(people).containsExactly(andrea, jenny, jane);
@@ -620,6 +628,22 @@ public class PersonRepositoryIT {
     @Test
     public void testFindAllOverriddenWithTransform() {
         Page<Person> results = transRepository.findAllBy(new PageRequest(0, 1));
+        assertThat(results).isNotEmpty();
+
+        Person person = results.iterator().next();
+        assertThat(person.getName()).isEqualTo("Override Master Read");
+    }
+
+    @Test
+    public void testFindPersonWithFullTransform() {
+        Person person = transRepository.findByNameFullTransforming("Bobby");
+        assertThat(person).isNotNull();
+        assertThat(person.getName()).isEqualTo("Override Master Read");
+    }
+
+    @Test
+    public void testFindAllOverriddenWithFullTransform() {
+        Page<Person> results = transRepository.queryAllBy(new PageRequest(0, 1));
         assertThat(results).isNotEmpty();
 
         Person person = results.iterator().next();

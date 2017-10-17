@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.PersonView;
 import org.springframework.data.marklogic.core.Pet;
 import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.QueryType;
@@ -33,6 +34,8 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> findAllByOrderByNameAsc();
 
     List<Person> findByName(String name);
+
+    List<PersonView> queryByName(String name);
 
     List<Person> findByGenderOrderByAge(String gender);
 

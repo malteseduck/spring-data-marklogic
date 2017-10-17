@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.QueryMapper;
 import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 
@@ -557,6 +558,14 @@ public interface MarkLogicOperations {
      * @return The converter object.
      */
     MarkLogicConverter getConverter();
+
+    /**
+     * The query mapper is responsible for interpreting entity/query annotations and applying the information to a query
+     * before it is executed in MarkLogicTemplate.  It also handles converting Query By Example objects into a MarkLogic
+     * query.  The query mapper can be used when it is necessary to use the "execute" methods but you still want to take
+     * advantage of the annotations and other logic that is part of this framework.
+     */
+    QueryMapper getQueryMapper();
 
     /**
      * Get the query object convert service that is used to convert various Java types into their "correct" form for

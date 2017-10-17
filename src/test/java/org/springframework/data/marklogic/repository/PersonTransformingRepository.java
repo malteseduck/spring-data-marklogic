@@ -4,6 +4,7 @@ import com.marklogic.client.io.Format;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.marklogic.core.Person;
+import org.springframework.data.marklogic.core.SimplePersonTransformer;
 
 public interface PersonTransformingRepository extends MarkLogicRepository<Person, String> {
 
@@ -19,5 +20,11 @@ public interface PersonTransformingRepository extends MarkLogicRepository<Person
 
     @Query(transform = "query-transform")
     Page<Person> findAllBy(Pageable page);
+
+    @Query(value = "{ name: ?0 }", transformer = SimplePersonTransformer.class)
+    Person findByNameFullTransforming(String name);
+
+    @Query(transformer = SimplePersonTransformer.class)
+    Page<Person> queryAllBy(Pageable page);
 
 }

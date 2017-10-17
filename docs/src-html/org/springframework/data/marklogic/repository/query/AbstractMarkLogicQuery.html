@@ -13,111 +13,120 @@
 <span class="sourceLineNo">005</span>import org.slf4j.Logger;<a name="line.5"></a>
 <span class="sourceLineNo">006</span>import org.slf4j.LoggerFactory;<a name="line.6"></a>
 <span class="sourceLineNo">007</span>import org.springframework.data.marklogic.core.MarkLogicOperations;<a name="line.7"></a>
-<span class="sourceLineNo">008</span>import org.springframework.data.marklogic.repository.Query;<a name="line.8"></a>
-<span class="sourceLineNo">009</span>import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;<a name="line.9"></a>
-<span class="sourceLineNo">010</span>import org.springframework.data.repository.query.*;<a name="line.10"></a>
-<span class="sourceLineNo">011</span>import org.springframework.util.Assert;<a name="line.11"></a>
-<span class="sourceLineNo">012</span>import org.springframework.util.StringUtils;<a name="line.12"></a>
-<span class="sourceLineNo">013</span><a name="line.13"></a>
-<span class="sourceLineNo">014</span>import java.util.Arrays;<a name="line.14"></a>
+<span class="sourceLineNo">008</span>import org.springframework.data.marklogic.core.convert.ServerTransformer;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.springframework.data.marklogic.repository.Query;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import org.springframework.data.repository.query.*;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import org.springframework.util.Assert;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import org.springframework.util.StringUtils;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import sun.reflect.generics.tree.ReturnType;<a name="line.14"></a>
 <span class="sourceLineNo">015</span><a name="line.15"></a>
-<span class="sourceLineNo">016</span>import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;<a name="line.16"></a>
+<span class="sourceLineNo">016</span>import java.util.Arrays;<a name="line.16"></a>
 <span class="sourceLineNo">017</span><a name="line.17"></a>
-<span class="sourceLineNo">018</span>public abstract class AbstractMarkLogicQuery implements RepositoryQuery {<a name="line.18"></a>
+<span class="sourceLineNo">018</span>import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;<a name="line.18"></a>
 <span class="sourceLineNo">019</span><a name="line.19"></a>
-<span class="sourceLineNo">020</span>    private static final Logger LOG = LoggerFactory.getLogger(AbstractMarkLogicQuery.class);<a name="line.20"></a>
-<span class="sourceLineNo">021</span>    private final MarkLogicQueryMethod method;<a name="line.21"></a>
-<span class="sourceLineNo">022</span>    private final MarkLogicOperations operations;<a name="line.22"></a>
-<span class="sourceLineNo">023</span><a name="line.23"></a>
-<span class="sourceLineNo">024</span>    public AbstractMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations) {<a name="line.24"></a>
-<span class="sourceLineNo">025</span>        Assert.notNull(operations, "MarkLogicOperations must not be null!");<a name="line.25"></a>
-<span class="sourceLineNo">026</span>        Assert.notNull(method, "MarkLogicQueryMethod must not be null!");<a name="line.26"></a>
-<span class="sourceLineNo">027</span><a name="line.27"></a>
-<span class="sourceLineNo">028</span>        this.method = method;<a name="line.28"></a>
-<span class="sourceLineNo">029</span>        this.operations = operations;<a name="line.29"></a>
-<span class="sourceLineNo">030</span>    }<a name="line.30"></a>
-<span class="sourceLineNo">031</span><a name="line.31"></a>
-<span class="sourceLineNo">032</span>    @Override<a name="line.32"></a>
-<span class="sourceLineNo">033</span>    public Object execute(Object[] values) {<a name="line.33"></a>
-<span class="sourceLineNo">034</span>        ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);<a name="line.34"></a>
-<span class="sourceLineNo">035</span>        StructuredQueryDefinition query = createQuery(accessor);<a name="line.35"></a>
-<span class="sourceLineNo">036</span><a name="line.36"></a>
-<span class="sourceLineNo">037</span>        // Add transforms and extracts to the query, if they are in the annotations<a name="line.37"></a>
-<span class="sourceLineNo">038</span>        query = transform(query);<a name="line.38"></a>
-<span class="sourceLineNo">039</span>        query = extracts(query);<a name="line.39"></a>
-<span class="sourceLineNo">040</span><a name="line.40"></a>
-<span class="sourceLineNo">041</span>        if (LOG.isDebugEnabled()) {<a name="line.41"></a>
-<span class="sourceLineNo">042</span>            LOG.debug("Executing query " + query.serialize());<a name="line.42"></a>
-<span class="sourceLineNo">043</span>        }<a name="line.43"></a>
+<span class="sourceLineNo">020</span>public abstract class AbstractMarkLogicQuery implements RepositoryQuery {<a name="line.20"></a>
+<span class="sourceLineNo">021</span><a name="line.21"></a>
+<span class="sourceLineNo">022</span>    private static final Logger LOG = LoggerFactory.getLogger(AbstractMarkLogicQuery.class);<a name="line.22"></a>
+<span class="sourceLineNo">023</span>    private final MarkLogicQueryMethod method;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>    private final MarkLogicOperations operations;<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>    public AbstractMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations) {<a name="line.26"></a>
+<span class="sourceLineNo">027</span>        Assert.notNull(operations, "MarkLogicOperations must not be null!");<a name="line.27"></a>
+<span class="sourceLineNo">028</span>        Assert.notNull(method, "MarkLogicQueryMethod must not be null!");<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>        this.method = method;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>        this.operations = operations;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>    }<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>    @Override<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    public Object execute(Object[] values) {<a name="line.35"></a>
+<span class="sourceLineNo">036</span>        // TODO: projections are not enabled until we can add extracts to limit properties returned (based on projection interface)<a name="line.36"></a>
+<span class="sourceLineNo">037</span>        ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);<a name="line.37"></a>
+<span class="sourceLineNo">038</span>        StructuredQueryDefinition query = createQuery(accessor);<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>//        ResultProcessor processor = method.getResultProcessor().withDynamicProjection(accessor);<a name="line.40"></a>
+<span class="sourceLineNo">041</span>        ResultProcessor processor = method.getResultProcessor();<a name="line.41"></a>
+<span class="sourceLineNo">042</span>        ReturnedType returnedType = processor.getReturnedType();<a name="line.42"></a>
+<span class="sourceLineNo">043</span>        Class typeToRead = returnedType.getDomainType();<a name="line.43"></a>
 <span class="sourceLineNo">044</span><a name="line.44"></a>
-<span class="sourceLineNo">045</span>        // TODO: This currently uses the type specified in the repository, it should use the return type of the method.<a name="line.45"></a>
-<span class="sourceLineNo">046</span>        // TODO: Do we need a "special" type like DocumentStream&lt;T&gt; to better signify return type once convert exists?<a name="line.46"></a>
-<span class="sourceLineNo">047</span>        // TODO: What is required to support projections?<a name="line.47"></a>
-<span class="sourceLineNo">048</span>        ResultProcessor processor = method.getResultProcessor();<a name="line.48"></a>
-<span class="sourceLineNo">049</span>        return getExecution(accessor).execute(query, processor.getReturnedType().getDomainType());<a name="line.49"></a>
-<span class="sourceLineNo">050</span>    }<a name="line.50"></a>
-<span class="sourceLineNo">051</span><a name="line.51"></a>
-<span class="sourceLineNo">052</span>    @Override<a name="line.52"></a>
-<span class="sourceLineNo">053</span>    public QueryMethod getQueryMethod() {<a name="line.53"></a>
-<span class="sourceLineNo">054</span>        return method;<a name="line.54"></a>
+<span class="sourceLineNo">045</span>        // Add transforms and extracts to the query, if they are in the annotations<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        query = transform(query, typeToRead, accessor);<a name="line.46"></a>
+<span class="sourceLineNo">047</span>        query = extracts(query);<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>        if (LOG.isDebugEnabled()) {<a name="line.49"></a>
+<span class="sourceLineNo">050</span>            LOG.debug("Executing query " + query.serialize());<a name="line.50"></a>
+<span class="sourceLineNo">051</span>        }<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>//        return processor.processResult(getExecution(accessor).execute(query, typeToRead));<a name="line.53"></a>
+<span class="sourceLineNo">054</span>        return getExecution(accessor).execute(query, typeToRead);<a name="line.54"></a>
 <span class="sourceLineNo">055</span>    }<a name="line.55"></a>
 <span class="sourceLineNo">056</span><a name="line.56"></a>
-<span class="sourceLineNo">057</span>    /**<a name="line.57"></a>
-<span class="sourceLineNo">058</span>     * Add a server transform to the created query, if one is specified.<a name="line.58"></a>
-<span class="sourceLineNo">059</span>     *<a name="line.59"></a>
-<span class="sourceLineNo">060</span>     * @param query<a name="line.60"></a>
-<span class="sourceLineNo">061</span>     * @return<a name="line.61"></a>
-<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
-<span class="sourceLineNo">063</span>    private StructuredQueryDefinition transform(StructuredQueryDefinition query) {<a name="line.63"></a>
-<span class="sourceLineNo">064</span>        Query queryAnnotation = method.getQueryAnnotation();<a name="line.64"></a>
-<span class="sourceLineNo">065</span>        if (queryAnnotation != null &amp;&amp; StringUtils.hasText(queryAnnotation.transform())) {<a name="line.65"></a>
-<span class="sourceLineNo">066</span>            query.setResponseTransform(new ServerTransform(queryAnnotation.transform()));<a name="line.66"></a>
-<span class="sourceLineNo">067</span>        }<a name="line.67"></a>
-<span class="sourceLineNo">068</span>        return query;<a name="line.68"></a>
-<span class="sourceLineNo">069</span>    }<a name="line.69"></a>
-<span class="sourceLineNo">070</span><a name="line.70"></a>
-<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
-<span class="sourceLineNo">072</span>     * Add extracts to the created query, if any are specified.<a name="line.72"></a>
-<span class="sourceLineNo">073</span>     *<a name="line.73"></a>
-<span class="sourceLineNo">074</span>     * @param query<a name="line.74"></a>
-<span class="sourceLineNo">075</span>     * @return<a name="line.75"></a>
-<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
-<span class="sourceLineNo">077</span>    private StructuredQueryDefinition extracts(StructuredQueryDefinition query) {<a name="line.77"></a>
-<span class="sourceLineNo">078</span>        String[] extracts = method.getExtracts();<a name="line.78"></a>
-<span class="sourceLineNo">079</span>        if (extracts != null &amp;&amp; extracts.length &gt; 0) {<a name="line.79"></a>
-<span class="sourceLineNo">080</span>            query = combine(query).extracts(Arrays.asList(extracts));<a name="line.80"></a>
-<span class="sourceLineNo">081</span>        }<a name="line.81"></a>
-<span class="sourceLineNo">082</span>        return query;<a name="line.82"></a>
-<span class="sourceLineNo">083</span>    }<a name="line.83"></a>
-<span class="sourceLineNo">084</span><a name="line.84"></a>
-<span class="sourceLineNo">085</span>    private MarkLogicQueryExecution getExecution(ParameterAccessor accessor) {<a name="line.85"></a>
-<span class="sourceLineNo">086</span>        if (isDeleteQuery()) {<a name="line.86"></a>
-<span class="sourceLineNo">087</span>            return new DeleteExecution(operations);<a name="line.87"></a>
-<span class="sourceLineNo">088</span>        } else if (isExistsQuery()) {<a name="line.88"></a>
-<span class="sourceLineNo">089</span>            return new ExistsExecution(operations);<a name="line.89"></a>
-<span class="sourceLineNo">090</span>        } else if (isCountQuery()) {<a name="line.90"></a>
-<span class="sourceLineNo">091</span>            return new CountExecution(operations);<a name="line.91"></a>
-<span class="sourceLineNo">092</span>        } else if (method.isStreamingQuery()) {<a name="line.92"></a>
-<span class="sourceLineNo">093</span>            return new StreamingExecution(operations, accessor.getPageable());<a name="line.93"></a>
-<span class="sourceLineNo">094</span>        } else if (method.isSliceQuery() || method.isPageQuery()) {<a name="line.94"></a>
-<span class="sourceLineNo">095</span>            if (method.isFacetedQuery()) {<a name="line.95"></a>
-<span class="sourceLineNo">096</span>                return new FacetedPageExecution(operations, accessor.getPageable());<a name="line.96"></a>
-<span class="sourceLineNo">097</span>            } else {<a name="line.97"></a>
-<span class="sourceLineNo">098</span>                return new PagedExecution(operations, accessor.getPageable());<a name="line.98"></a>
-<span class="sourceLineNo">099</span>            }<a name="line.99"></a>
-<span class="sourceLineNo">100</span>        } else if (method.isCollectionQuery()) {<a name="line.100"></a>
-<span class="sourceLineNo">101</span>            return new EntityListExecution(operations);<a name="line.101"></a>
-<span class="sourceLineNo">102</span>        } else {<a name="line.102"></a>
-<span class="sourceLineNo">103</span>            return new SingleEntityExecution(operations);<a name="line.103"></a>
-<span class="sourceLineNo">104</span>        }<a name="line.104"></a>
-<span class="sourceLineNo">105</span>    }<a name="line.105"></a>
-<span class="sourceLineNo">106</span><a name="line.106"></a>
-<span class="sourceLineNo">107</span>    protected abstract StructuredQueryDefinition createQuery(ParameterAccessor accessor);<a name="line.107"></a>
-<span class="sourceLineNo">108</span><a name="line.108"></a>
-<span class="sourceLineNo">109</span>    protected abstract boolean isCountQuery();<a name="line.109"></a>
-<span class="sourceLineNo">110</span>    protected abstract boolean isExistsQuery();<a name="line.110"></a>
-<span class="sourceLineNo">111</span>    protected abstract boolean isDeleteQuery();<a name="line.111"></a>
-<span class="sourceLineNo">112</span>}<a name="line.112"></a>
+<span class="sourceLineNo">057</span>    @Override<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    public QueryMethod getQueryMethod() {<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        return method;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    }<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    /**<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * Add a server transform to the created query, if one is specified.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     */<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    private StructuredQueryDefinition transform(StructuredQueryDefinition query, Class typeToRead, ParameterAccessor accessor) {<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        Query queryAnnotation = method.getQueryAnnotation();<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        if (queryAnnotation != null) {<a name="line.67"></a>
+<span class="sourceLineNo">068</span>            if (queryAnnotation.transformer() != ServerTransformer.class) {<a name="line.68"></a>
+<span class="sourceLineNo">069</span>                ServerTransform reader = operations.getQueryMapper()<a name="line.69"></a>
+<span class="sourceLineNo">070</span>                        .getTransformer(queryAnnotation.transformer())<a name="line.70"></a>
+<span class="sourceLineNo">071</span>                        .reader(operations.getConverter().getMappingContext().getPersistentEntity(typeToRead), accessor);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>                query.setResponseTransform(reader);<a name="line.72"></a>
+<span class="sourceLineNo">073</span>            } else if (StringUtils.hasText(queryAnnotation.transform())) {<a name="line.73"></a>
+<span class="sourceLineNo">074</span>                query.setResponseTransform(new ServerTransform(queryAnnotation.transform()));<a name="line.74"></a>
+<span class="sourceLineNo">075</span>            }<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        }<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        return query;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    }<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Add extracts to the created query, if any are specified.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * @param query<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @return<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    private StructuredQueryDefinition extracts(StructuredQueryDefinition query) {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        String[] extracts = method.getExtracts();<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        if (extracts != null &amp;&amp; extracts.length &gt; 0) {<a name="line.88"></a>
+<span class="sourceLineNo">089</span>            query = combine(query).extracts(Arrays.asList(extracts));<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        }<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        return query;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    private MarkLogicQueryExecution getExecution(ParameterAccessor accessor) {<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        if (isDeleteQuery()) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>            return new DeleteExecution(operations);<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        } else if (isExistsQuery()) {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            return new ExistsExecution(operations);<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        } else if (isCountQuery()) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            return new CountExecution(operations);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        } else if (method.isStreamingQuery()) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>            return new StreamingExecution(operations, accessor.getPageable());<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        } else if (method.isSliceQuery() || method.isPageQuery()) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            if (method.isFacetedQuery()) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                return new FacetedPageExecution(operations, accessor.getPageable());<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            } else {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                return new PagedExecution(operations, accessor.getPageable());<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            }<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        } else if (method.isCollectionQuery()) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            return new EntityListExecution(operations);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        } else {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            return new SingleEntityExecution(operations);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        }<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    }<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span>    protected abstract StructuredQueryDefinition createQuery(ParameterAccessor accessor);<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    protected abstract boolean isCountQuery();<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    protected abstract boolean isExistsQuery();<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    protected abstract boolean isDeleteQuery();<a name="line.120"></a>
+<span class="sourceLineNo">121</span>}<a name="line.121"></a>
 
 
 

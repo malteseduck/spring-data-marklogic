@@ -5,11 +5,13 @@ import com.marklogic.client.query.StructuredQueryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
+import org.springframework.data.marklogic.core.convert.ServerTransformer;
 import org.springframework.data.marklogic.repository.Query;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecution.*;
 import org.springframework.data.repository.query.*;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import sun.reflect.generics.tree.ReturnType;
 
 import java.util.Arrays;
 
@@ -31,22 +33,25 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
     @Override
     public Object execute(Object[] values) {
+        // TODO: projections are not enabled until we can add extracts to limit properties returned (based on projection interface)
         ParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
         StructuredQueryDefinition query = createQuery(accessor);
 
+//        ResultProcessor processor = method.getResultProcessor().withDynamicProjection(accessor);
+        ResultProcessor processor = method.getResultProcessor();
+        ReturnedType returnedType = processor.getReturnedType();
+        Class typeToRead = returnedType.getDomainType();
+
         // Add transforms and extracts to the query, if they are in the annotations
-        query = transform(query);
+        query = transform(query, typeToRead, accessor);
         query = extracts(query);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Executing query " + query.serialize());
         }
 
-        // TODO: This currently uses the type specified in the repository, it should use the return type of the method.
-        // TODO: Do we need a "special" type like DocumentStream<T> to better signify return type once convert exists?
-        // TODO: What is required to support projections?
-        ResultProcessor processor = method.getResultProcessor();
-        return getExecution(accessor).execute(query, processor.getReturnedType().getDomainType());
+//        return processor.processResult(getExecution(accessor).execute(query, typeToRead));
+        return getExecution(accessor).execute(query, typeToRead);
     }
 
     @Override
@@ -56,14 +61,18 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
 
     /**
      * Add a server transform to the created query, if one is specified.
-     *
-     * @param query
-     * @return
      */
-    private StructuredQueryDefinition transform(StructuredQueryDefinition query) {
+    private StructuredQueryDefinition transform(StructuredQueryDefinition query, Class typeToRead, ParameterAccessor accessor) {
         Query queryAnnotation = method.getQueryAnnotation();
-        if (queryAnnotation != null && StringUtils.hasText(queryAnnotation.transform())) {
-            query.setResponseTransform(new ServerTransform(queryAnnotation.transform()));
+        if (queryAnnotation != null) {
+            if (queryAnnotation.transformer() != ServerTransformer.class) {
+                ServerTransform reader = operations.getQueryMapper()
+                        .getTransformer(queryAnnotation.transformer())
+                        .reader(operations.getConverter().getMappingContext().getPersistentEntity(typeToRead), accessor);
+                query.setResponseTransform(reader);
+            } else if (StringUtils.hasText(queryAnnotation.transform())) {
+                query.setResponseTransform(new ServerTransform(queryAnnotation.transform()));
+            }
         }
         return query;
     }

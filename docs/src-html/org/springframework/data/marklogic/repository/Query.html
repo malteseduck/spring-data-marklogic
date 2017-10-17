@@ -11,100 +11,108 @@
 <span class="sourceLineNo">003</span>import com.marklogic.client.io.Format;<a name="line.3"></a>
 <span class="sourceLineNo">004</span>import org.springframework.core.annotation.AliasFor;<a name="line.4"></a>
 <span class="sourceLineNo">005</span>import org.springframework.data.annotation.QueryAnnotation;<a name="line.5"></a>
-<span class="sourceLineNo">006</span>import org.springframework.data.marklogic.repository.query.QueryType;<a name="line.6"></a>
-<span class="sourceLineNo">007</span>import org.springframework.data.marklogic.repository.query.SelectedMode;<a name="line.7"></a>
-<span class="sourceLineNo">008</span><a name="line.8"></a>
-<span class="sourceLineNo">009</span>import java.lang.annotation.*;<a name="line.9"></a>
-<span class="sourceLineNo">010</span><a name="line.10"></a>
-<span class="sourceLineNo">011</span>/**<a name="line.11"></a>
-<span class="sourceLineNo">012</span> * Declare QBE queries directly on repository methods. This allows cleaner queries for more complex cases. This also<a name="line.12"></a>
-<span class="sourceLineNo">013</span> * allows the "tweaking" of basic search parameters in a repository interface without having to use MarkLogicTemplate<a name="line.13"></a>
-<span class="sourceLineNo">014</span> * directly to set them.<a name="line.14"></a>
-<span class="sourceLineNo">015</span> *<a name="line.15"></a>
-<span class="sourceLineNo">016</span> */<a name="line.16"></a>
-<span class="sourceLineNo">017</span>@Retention(RetentionPolicy.RUNTIME)<a name="line.17"></a>
-<span class="sourceLineNo">018</span>@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })<a name="line.18"></a>
-<span class="sourceLineNo">019</span>@Documented<a name="line.19"></a>
-<span class="sourceLineNo">020</span>@QueryAnnotation<a name="line.20"></a>
-<span class="sourceLineNo">021</span>public @interface Query {<a name="line.21"></a>
-<span class="sourceLineNo">022</span><a name="line.22"></a>
-<span class="sourceLineNo">023</span>    /**<a name="line.23"></a>
-<span class="sourceLineNo">024</span>     * Takes a MarkLogic QBE JSON string to define the actual query to be executed. This one will take precedence over the<a name="line.24"></a>
-<span class="sourceLineNo">025</span>     * method name then.<a name="line.25"></a>
-<span class="sourceLineNo">026</span>     *<a name="line.26"></a>
-<span class="sourceLineNo">027</span>     * @return<a name="line.27"></a>
-<span class="sourceLineNo">028</span>     */<a name="line.28"></a>
-<span class="sourceLineNo">029</span>    @AliasFor("query")<a name="line.29"></a>
-<span class="sourceLineNo">030</span>    String value() default "";<a name="line.30"></a>
-<span class="sourceLineNo">031</span><a name="line.31"></a>
-<span class="sourceLineNo">032</span>    @AliasFor("value")<a name="line.32"></a>
-<span class="sourceLineNo">033</span>    String query() default "";<a name="line.33"></a>
-<span class="sourceLineNo">034</span><a name="line.34"></a>
-<span class="sourceLineNo">035</span>    /**<a name="line.35"></a>
-<span class="sourceLineNo">036</span>     * Sometimes it is better to force the use of a range index for equality checks (to point to specific properties instead of<a name="line.36"></a>
-<span class="sourceLineNo">037</span>     * any property in a hierarchy).  This allows the ability to do so.  Changing to the RANGE type would require a range index<a name="line.37"></a>
-<span class="sourceLineNo">038</span>     * created, and possible the @Indexed attribute with the path set on the property in the POJO class.<a name="line.38"></a>
-<span class="sourceLineNo">039</span>     *<a name="line.39"></a>
-<span class="sourceLineNo">040</span>     * @return<a name="line.40"></a>
-<span class="sourceLineNo">041</span>     */<a name="line.41"></a>
-<span class="sourceLineNo">042</span>    QueryType type() default QueryType.VALUE;<a name="line.42"></a>
-<span class="sourceLineNo">043</span><a name="line.43"></a>
-<span class="sourceLineNo">044</span>    /**<a name="line.44"></a>
-<span class="sourceLineNo">045</span>     * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need<a name="line.45"></a>
-<span class="sourceLineNo">046</span>     * a StructuredQueryDefinition using the query builder in order to match both formats.  Using the MarkLogic<a name="line.46"></a>
-<span class="sourceLineNo">047</span>     * {@link com.marklogic.client.io.Format} instead of {@link org.springframework.data.marklogic.core.mapping.DocumentFormat}<a name="line.47"></a>
-<span class="sourceLineNo">048</span>     * since we allow "UNKNOWN" as the default.<a name="line.48"></a>
-<span class="sourceLineNo">049</span>     *<a name="line.49"></a>
-<span class="sourceLineNo">050</span>     * Setting this to "UNKNOWN", BINARY" OR "TEXT" would just end up setting the queries as JSON format, since that is<a name="line.50"></a>
-<span class="sourceLineNo">051</span>     * default query "language"<a name="line.51"></a>
-<span class="sourceLineNo">052</span>     *<a name="line.52"></a>
-<span class="sourceLineNo">053</span>     * @return<a name="line.53"></a>
-<span class="sourceLineNo">054</span>     */<a name="line.54"></a>
-<span class="sourceLineNo">055</span>    Format format() default Format.UNKNOWN;<a name="line.55"></a>
-<span class="sourceLineNo">056</span><a name="line.56"></a>
-<span class="sourceLineNo">057</span>    /**<a name="line.57"></a>
-<span class="sourceLineNo">058</span>     * Defines the properties that should be returned for the given query. Note that only these properties will make it into the<a name="line.58"></a>
-<span class="sourceLineNo">059</span>     * domain object returned.<a name="line.59"></a>
-<span class="sourceLineNo">060</span>     *<a name="line.60"></a>
-<span class="sourceLineNo">061</span>     * @return<a name="line.61"></a>
-<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
-<span class="sourceLineNo">063</span>    String[] extract() default {};<a name="line.63"></a>
-<span class="sourceLineNo">064</span><a name="line.64"></a>
-<span class="sourceLineNo">065</span>    /**<a name="line.65"></a>
-<span class="sourceLineNo">066</span>     * Used in conjunction with the extract paths.  This determines how the extracted nodes are returned.  By default this<a name="line.66"></a>
-<span class="sourceLineNo">067</span>     * returns specified nodes in their original hierarchy, but you can also specify to just return the extracted nodes, or to<a name="line.67"></a>
-<span class="sourceLineNo">068</span>     * exclude the specified nodes.<a name="line.68"></a>
-<span class="sourceLineNo">069</span>     *<a name="line.69"></a>
-<span class="sourceLineNo">070</span>     * @return<a name="line.70"></a>
-<span class="sourceLineNo">071</span>     */<a name="line.71"></a>
-<span class="sourceLineNo">072</span>    SelectedMode selected() default SelectedMode.HIERARCHICAL;<a name="line.72"></a>
-<span class="sourceLineNo">073</span><a name="line.73"></a>
-<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
-<span class="sourceLineNo">075</span>     * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some<a name="line.75"></a>
-<span class="sourceLineNo">076</span>     * kind, or MarkLogic could add additional options, this is not limited by an enumeration but the query will fail with<a name="line.76"></a>
-<span class="sourceLineNo">077</span>     * incorrect options.  These options are applied to all the value/range/text queries that are created, so if fine-<a name="line.77"></a>
-<span class="sourceLineNo">078</span>     * tuning is required at that level a custom Repository is required.<a name="line.78"></a>
-<span class="sourceLineNo">079</span>     *<a name="line.79"></a>
-<span class="sourceLineNo">080</span>     * @return<a name="line.80"></a>
-<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
-<span class="sourceLineNo">082</span>    String[] options() default {};<a name="line.82"></a>
-<span class="sourceLineNo">083</span><a name="line.83"></a>
-<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
-<span class="sourceLineNo">085</span>     * Instead of specifying limited query options individually you can persist an options configuration to the database<a name="line.85"></a>
-<span class="sourceLineNo">086</span>     * and just reference it to be used in the query.  This allows full configuration of the query for the annotated query.<a name="line.86"></a>
-<span class="sourceLineNo">087</span>     *<a name="line.87"></a>
-<span class="sourceLineNo">088</span>     * @return<a name="line.88"></a>
-<span class="sourceLineNo">089</span>     */<a name="line.89"></a>
-<span class="sourceLineNo">090</span>    String optionsName() default "";<a name="line.90"></a>
-<span class="sourceLineNo">091</span><a name="line.91"></a>
-<span class="sourceLineNo">092</span>    /**<a name="line.92"></a>
-<span class="sourceLineNo">093</span>     * The name of a transform to use when returning/saving documents (depends on the type of operations that is annotated).<a name="line.93"></a>
-<span class="sourceLineNo">094</span>     * This transform must have been previously configured through the REST API otherwise the operation will fail.<a name="line.94"></a>
-<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
-<span class="sourceLineNo">096</span>     * @return<a name="line.96"></a>
-<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
-<span class="sourceLineNo">098</span>    String transform() default "";<a name="line.98"></a>
-<span class="sourceLineNo">099</span>}<a name="line.99"></a>
+<span class="sourceLineNo">006</span>import org.springframework.data.marklogic.core.convert.ServerTransformer;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.springframework.data.marklogic.repository.query.QueryType;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.springframework.data.marklogic.repository.query.SelectedMode;<a name="line.8"></a>
+<span class="sourceLineNo">009</span><a name="line.9"></a>
+<span class="sourceLineNo">010</span>import java.lang.annotation.*;<a name="line.10"></a>
+<span class="sourceLineNo">011</span><a name="line.11"></a>
+<span class="sourceLineNo">012</span>/**<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * Declare QBE queries directly on repository methods. This allows cleaner queries for more complex cases. This also<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * allows the "tweaking" of basic search parameters in a repository interface without having to use MarkLogicTemplate<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * directly to set them.<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> */<a name="line.17"></a>
+<span class="sourceLineNo">018</span>@Retention(RetentionPolicy.RUNTIME)<a name="line.18"></a>
+<span class="sourceLineNo">019</span>@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })<a name="line.19"></a>
+<span class="sourceLineNo">020</span>@Documented<a name="line.20"></a>
+<span class="sourceLineNo">021</span>@QueryAnnotation<a name="line.21"></a>
+<span class="sourceLineNo">022</span>public @interface Query {<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>    /**<a name="line.24"></a>
+<span class="sourceLineNo">025</span>     * Takes a MarkLogic QBE JSON string to define the actual query to be executed. This one will take precedence over the<a name="line.25"></a>
+<span class="sourceLineNo">026</span>     * method name then.<a name="line.26"></a>
+<span class="sourceLineNo">027</span>     *<a name="line.27"></a>
+<span class="sourceLineNo">028</span>     * @return<a name="line.28"></a>
+<span class="sourceLineNo">029</span>     */<a name="line.29"></a>
+<span class="sourceLineNo">030</span>    @AliasFor("query")<a name="line.30"></a>
+<span class="sourceLineNo">031</span>    String value() default "";<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>    @AliasFor("value")<a name="line.33"></a>
+<span class="sourceLineNo">034</span>    String query() default "";<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>    /**<a name="line.36"></a>
+<span class="sourceLineNo">037</span>     * Sometimes it is better to force the use of a range index for equality checks (to point to specific properties instead of<a name="line.37"></a>
+<span class="sourceLineNo">038</span>     * any property in a hierarchy).  This allows the ability to do so.  Changing to the RANGE type would require a range index<a name="line.38"></a>
+<span class="sourceLineNo">039</span>     * created, and possible the @Indexed attribute with the path set on the property in the POJO class.<a name="line.39"></a>
+<span class="sourceLineNo">040</span>     *<a name="line.40"></a>
+<span class="sourceLineNo">041</span>     * @return<a name="line.41"></a>
+<span class="sourceLineNo">042</span>     */<a name="line.42"></a>
+<span class="sourceLineNo">043</span>    QueryType type() default QueryType.VALUE;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>    /**<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * a StructuredQueryDefinition using the query builder in order to match both formats.  Using the MarkLogic<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * {@link com.marklogic.client.io.Format} instead of {@link org.springframework.data.marklogic.core.mapping.DocumentFormat}<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * since we allow "UNKNOWN" as the default.<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     *<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * Setting this to "UNKNOWN", BINARY" OR "TEXT" would just end up setting the queries as JSON format, since that is<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * default query "language"<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     *<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * @return<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    Format format() default Format.UNKNOWN;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Defines the properties that should be returned for the given query. Note that only these properties will make it into the<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * domain object returned.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     *<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * @return<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    String[] extract() default {};<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * Used in conjunction with the extract paths.  This determines how the extracted nodes are returned.  By default this<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * returns specified nodes in their original hierarchy, but you can also specify to just return the extracted nodes, or to<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * exclude the specified nodes.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * @return<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    SelectedMode selected() default SelectedMode.HIERARCHICAL;<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * kind, or MarkLogic could add additional options, this is not limited by an enumeration but the query will fail with<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * incorrect options.  These options are applied to all the value/range/text queries that are created, so if fine-<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * tuning is required at that level a custom Repository is required.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     *<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * @return<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    String[] options() default {};<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Instead of specifying limited query options individually you can persist an options configuration to the database<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * and just reference it to be used in the query.  This allows full configuration of the query for the annotated query.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @return<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     */<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    String optionsName() default "";<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * The name of a transform to use when returning/saving documents (depends on the type of operations that is annotated).<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * This transform must have been previously configured through the REST API otherwise the operation will fail.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @return<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    String transform() default "";<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * If you need the ability to create a full ServerTransform then you can specify a ServerTransformer implementation<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * that will generate the reader() and writer() transformers.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @return<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    Class&lt;? extends ServerTransformer&gt; transformer() default ServerTransformer.class;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>}<a name="line.107"></a>
 
 
 

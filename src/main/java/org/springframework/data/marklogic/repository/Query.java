@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.repository;
 import com.marklogic.client.io.Format;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.data.annotation.QueryAnnotation;
+import org.springframework.data.marklogic.core.convert.ServerTransformer;
 import org.springframework.data.marklogic.repository.query.QueryType;
 import org.springframework.data.marklogic.repository.query.SelectedMode;
 
@@ -96,4 +97,11 @@ public @interface Query {
      * @return
      */
     String transform() default "";
+
+    /**
+     * If you need the ability to create a full ServerTransform then you can specify a ServerTransformer implementation
+     * that will generate the reader() and writer() transformers.
+     * @return
+     */
+    Class<? extends ServerTransformer> transformer() default ServerTransformer.class;
 }

@@ -5,6 +5,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
+import org.springframework.data.marklogic.core.convert.ServerTransformer;
 import org.springframework.data.util.TypeInformation;
 
 import java.util.Comparator;
@@ -18,6 +19,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     private Format documentFormat;
     private String baseUri;
     private String typeName;
+    private Class<? extends ServerTransformer> transformer;
 
     public BasicMarkLogicPersistentEntity(TypeInformation<T> information) {
         this(information, null);
@@ -31,9 +33,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
         String defaultTypeName = information.getType().getSimpleName();
         Format defaultFormat = Format.JSON;
         String defaultUri = normalize(defaultTypeName);
-        String defaultDbSerializer = null;
-        String defautlDbDeserializer = null;
-        Format defaultDbFormat = Format.JSON;
+        Class<? extends ServerTransformer> defaultTransformer = null;
 
         if (document != null) {
             this.baseUri = normalize(coalesce(document.uri(), document.value(), defaultUri));
@@ -41,11 +41,13 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
             this.typePersistenceStrategy = document.typeStrategy();
             // TODO: if configuration says use full name instead of simple name, let that be the default
             this.typeName = coalesce(document.type(), defaultTypeName);
+            this.transformer = document.transformer();
         } else {
             this.baseUri = defaultUri;
             this.typePersistenceStrategy = defaultTypeStrategy;
             this.documentFormat = defaultFormat;
             this.typeName = defaultTypeName;
+            this.transformer = defaultTransformer;
         }
     }
 
@@ -76,6 +78,11 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
     @Override
     public String getTypeName() {
         return typeName;
+    }
+
+    @Override
+    public Class<? extends ServerTransformer> getTransformer() {
+        return transformer;
     }
 
     private String normalize(String uri) {

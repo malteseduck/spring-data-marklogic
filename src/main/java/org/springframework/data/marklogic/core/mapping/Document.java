@@ -1,6 +1,7 @@
 package org.springframework.data.marklogic.core.mapping;
 
 import org.springframework.data.annotation.Persistent;
+import org.springframework.data.marklogic.core.convert.ServerTransformer;
 
 import java.lang.annotation.*;
 
@@ -42,4 +43,12 @@ public @interface Document
 	 * @return
 	 */
 	TypePersistenceStrategy typeStrategy() default TypePersistenceStrategy.COLLECTION;
+
+	/**
+	 * The configured transformer class to use for the entity for server read/write transforms.  An implementation of the
+	 * ServerTransform interface.
+	 *
+	 * @return
+	 */
+	Class<? extends ServerTransformer> transformer() default ServerTransformer.class;
 }
