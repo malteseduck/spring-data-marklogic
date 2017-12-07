@@ -2,9 +2,13 @@ package org.springframework.data.marklogic.repository.support;
 
 import com.marklogic.client.pojo.PojoQueryBuilder;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,11 +16,6 @@ import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.repository.MarkLogicRepository;
 import org.springframework.data.marklogic.repository.query.MarkLogicEntityInformation;
 import org.springframework.util.Assert;
-
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.util.Collections.singletonList;
 import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
@@ -29,6 +28,9 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     private final MarkLogicEntityInformation<T, ID> entityInformation;
     private final PojoQueryBuilder<T> qb;
 
+    private final static int DEFAULT_START = 0;
+    private final static int DEFAULT_LIMIT = Integer.MAX_VALUE;
+
     public SimpleMarkLogicRepository(MarkLogicEntityInformation<T, ID> metadata, MarkLogicOperations operations) {
         Assert.notNull(metadata, "MarkLogicEntityInformation must not be null!");
         Assert.notNull(operations, "MarkLogicOperations must not be null!");
@@ -40,8 +42,12 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
 
     @Override
     public List<T> findAll() {
-        return operations.search(qb.and(), 0, Integer.MAX_VALUE, entityInformation.getJavaType())
-                .getContent();
+        return operations.search(
+                qb.and(),
+                DEFAULT_START,
+                DEFAULT_LIMIT,
+                entityInformation.getJavaType())
+            .getContent();
     }
 
     @Override
@@ -49,10 +55,12 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
         Assert.notNull(sort, "The given Sort must not be null");
         return operations.search(
                 combine()
-                        .type(entityInformation.getJavaType())
-                        .sort(sort),
-                entityInformation.getJavaType()
-        );
+                    .type(entityInformation.getJavaType())
+                    .sort(sort),
+                DEFAULT_START,
+                DEFAULT_LIMIT,
+                entityInformation.getJavaType())
+            .getContent();
     }
 
     @Override
@@ -64,15 +72,14 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
                         .sort(pageable.getSort()),
                 pageable.getOffset(),
                 pageable.getPageSize(),
-                entityInformation.getJavaType()
-        );
+                entityInformation.getJavaType());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <S extends T> S save(S entity) {
         Assert.notNull(entity, "Entity must not be null");
-        Method calling = SimpleMarkLogicRepository.class.getEnclosingMethod();
+        Method calling = SimpleMarkLogicRepository.class.getEnclosingMethod(); // TODO What does this do?
         return (S) operations.write(entity);
     }
 

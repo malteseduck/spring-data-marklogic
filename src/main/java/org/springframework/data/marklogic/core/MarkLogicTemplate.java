@@ -351,7 +351,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public List<DocumentRecord> search(StructuredQueryDefinition query) {
-        DocumentPage page = search(query, 0, -1);
+        DocumentPage page = search(query, 0, Integer.MAX_VALUE);
         final List<DocumentRecord> results = new ArrayList<>();
         page.iterator().forEachRemaining(results::add);
         return results;
@@ -359,7 +359,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass) {
-        return search(query, 0, -1, entityClass)
+        return search(query, 0, Integer.MAX_VALUE, entityClass)
                 .getContent();
     }
 
@@ -382,18 +382,18 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
      * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
      */
     public <T> List<T> search(Class<T> entityClass) {
-        return search(qb.and(), 0, -1, entityClass)
+        return search(qb.and(), 0, Integer.MAX_VALUE, entityClass)
                 .getContent();
     }
 
     @Override
     public DocumentPage search(StructuredQueryDefinition query, int start) {
-        return search(query, start, -1);
+        return search(query, start, Integer.MAX_VALUE);
     }
 
     @Override
     public <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass) {
-        return search(query, start, -1, entityClass);
+        return search(query, start, Integer.MAX_VALUE, entityClass);
     }
 
     @Override
