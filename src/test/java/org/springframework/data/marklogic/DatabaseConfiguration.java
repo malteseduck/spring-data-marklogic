@@ -1,6 +1,8 @@
 package org.springframework.data.marklogic;
 
 import com.marklogic.client.DatabaseClient;
+import com.marklogic.client.admin.QueryOptionsManager;
+import com.marklogic.client.admin.ServerConfigurationManager;
 import com.marklogic.client.admin.TransformExtensionsManager;
 import com.marklogic.client.io.StringHandle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,16 +36,24 @@ public class DatabaseConfiguration {
     @Value("classpath:transforms/write-transform.sjs")
     private Resource writeTransform;
 
+    @Value("classpath:options/facets.xml")
+    private Resource facetOptions;
+
     @PostConstruct
     public void configureDatabase() throws IOException {
         operations.configure(configuration);
 
-        TransformExtensionsManager transMgr = client.newServerConfigManager().newTransformExtensionsManager();
+        ServerConfigurationManager configMgr = client.newServerConfigManager();
+        TransformExtensionsManager transMgr = configMgr.newTransformExtensionsManager();
 
         String theQueryTransform = new String(Files.readAllBytes(Paths.get(queryTransform.getURI())));
         transMgr.writeJavascriptTransform("query-transform", new StringHandle(theQueryTransform));
 
         String theWriteTransform = new String(Files.readAllBytes(Paths.get(writeTransform.getURI())));
         transMgr.writeJavascriptTransform("write-transform", new StringHandle(theWriteTransform));
+
+        QueryOptionsManager optionsMgr = configMgr.newQueryOptionsManager();
+        String theFacetOptions = new String(Files.readAllBytes(Paths.get(facetOptions.getURI())));
+        optionsMgr.writeOptions("facets", new StringHandle(theFacetOptions));
     }
 }

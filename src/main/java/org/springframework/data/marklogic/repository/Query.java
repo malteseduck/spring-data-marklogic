@@ -1,7 +1,9 @@
 package org.springframework.data.marklogic.repository;
 
 import com.marklogic.client.io.Format;
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.data.annotation.QueryAnnotation;
+import org.springframework.data.marklogic.core.convert.ServerTransformer;
 import org.springframework.data.marklogic.repository.query.QueryType;
 import org.springframework.data.marklogic.repository.query.SelectedMode;
 
@@ -25,7 +27,11 @@ public @interface Query {
      *
      * @return
      */
+    @AliasFor("query")
     String value() default "";
+
+    @AliasFor("value")
+    String query() default "";
 
     /**
      * Sometimes it is better to force the use of a range index for equality checks (to point to specific properties instead of
@@ -61,6 +67,7 @@ public @interface Query {
      * Used in conjunction with the extract paths.  This determines how the extracted nodes are returned.  By default this
      * returns specified nodes in their original hierarchy, but you can also specify to just return the extracted nodes, or to
      * exclude the specified nodes.
+     *
      * @return
      */
     SelectedMode selected() default SelectedMode.HIERARCHICAL;
@@ -76,10 +83,25 @@ public @interface Query {
     String[] options() default {};
 
     /**
+     * Instead of specifying limited query options individually you can persist an options configuration to the database
+     * and just reference it to be used in the query.  This allows full configuration of the query for the annotated query.
+     *
+     * @return
+     */
+    String optionsName() default "";
+
+    /**
      * The name of a transform to use when returning/saving documents (depends on the type of operations that is annotated).
      * This transform must have been previously configured through the REST API otherwise the operation will fail.
      *
      * @return
      */
     String transform() default "";
+
+    /**
+     * If you need the ability to create a full ServerTransform then you can specify a ServerTransformer implementation
+     * that will generate the reader() and writer() transformers.
+     * @return
+     */
+    Class<? extends ServerTransformer> transformer() default ServerTransformer.class;
 }

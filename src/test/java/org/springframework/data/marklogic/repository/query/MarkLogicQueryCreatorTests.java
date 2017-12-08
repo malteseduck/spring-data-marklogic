@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.core.*;
 import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
@@ -173,6 +174,20 @@ public class MarkLogicQueryCreatorTests {
                         combine(qb.range(qb.pathIndex("/gender"), "xs:string", (String[]) null, Operator.EQ, "Bubba"))
                                 .serialize()
                 );
+    }
+
+    @Test
+    public void testQueryWithOptionsName() throws Exception {
+        StructuredQueryDefinition query = creator(
+                queryMethod(PersonRepository.class, "findByGenderIsLike", String.class, Pageable.class),
+                "Bubba"
+        ).createQuery();
+        assertThat(query.serialize())
+                .isEqualTo(
+                        combine(qb.word(qb.jsonProperty("gender"), null, new String[]{"wildcarded"}, 1.0, "Bubba*"))
+                                .serialize()
+                );
+        assertThat(query.getOptionsName()).isEqualTo("facets");
     }
 
     @Test

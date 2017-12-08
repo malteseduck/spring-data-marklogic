@@ -31,6 +31,13 @@
       "invalid-values": "reject"
     },
     {
+      "scalar-type": "string",
+      "path-expression": "/occupation",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "reject"
+    },
+    {
       "scalar-type": "dateTime",
       "path-expression": "/birthtime",
       "collation": null,

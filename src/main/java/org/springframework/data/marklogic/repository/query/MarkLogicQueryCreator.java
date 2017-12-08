@@ -106,6 +106,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
         StructuredQueryDefinition query =
                 combine(criteria)
                         .type(method.getEntityInformation().getJavaType())
+                        .optionsName(method.getQueryOptionsName())
                         .sort(sort);
 
         return query;

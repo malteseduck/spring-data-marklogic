@@ -21,6 +21,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -57,10 +58,17 @@ public class MarkLogicQueryMethod extends QueryMethod {
         } else {
             this.format = mappingContext.getPersistentEntity(domainClass).getDocumentFormat();
         }
+
+        // QBE cannot return a FacetedPage
+        Assert.isTrue(!hasAnnotatedQuery() || getAnnotatedQuery() == null || !isFacetedQuery(), "@Query queries cannot return facets");
     }
 
     public boolean isStreamingQuery() {
         return InputStream.class.isAssignableFrom(method.getReturnType());
+    }
+
+    public boolean isFacetedQuery() {
+        return FacetedPage.class.isAssignableFrom(method.getReturnType());
     }
 
     public Format getFormat() {
@@ -80,6 +88,12 @@ public class MarkLogicQueryMethod extends QueryMethod {
         return getQueryAnnotation() != null
                 ? getQueryAnnotation().options()
                 : new String[0];
+    }
+
+    String getQueryOptionsName() {
+        return getQueryAnnotation() != null
+                ? getQueryAnnotation().optionsName()
+                : null;
     }
 
     QueryType getQueryType() {

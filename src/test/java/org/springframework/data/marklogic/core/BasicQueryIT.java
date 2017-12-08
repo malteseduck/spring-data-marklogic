@@ -3,6 +3,7 @@ package org.springframework.data.marklogic.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.pojo.PojoQueryBuilder;
+import com.marklogic.client.query.StructuredQueryBuilder;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -11,6 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.DatabaseConfiguration;
 import org.springframework.data.marklogic.InvalidMarkLogicApiUsageException;
+import org.springframework.data.marklogic.domain.ChunkRequest;
+import org.springframework.data.marklogic.domain.facets.FacetResultDto;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -21,6 +25,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 import static org.springframework.data.marklogic.repository.query.QueryTestUtils.stream;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -31,7 +36,7 @@ import static org.springframework.data.marklogic.repository.query.QueryTestUtils
 public class BasicQueryIT {
 
     private MarkLogicTemplate template;
-    private PojoQueryBuilder qb;
+    private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     private Person bobby, george, jane;
     private List<Person> all;
@@ -42,7 +47,6 @@ public class BasicQueryIT {
     @Autowired
     public void setClient(DatabaseClient client) {
         template = new MarkLogicTemplate(client);
-        qb = template.qb(Person.class);
     }
 
     @Before
@@ -67,8 +71,8 @@ public class BasicQueryIT {
 
     @Test
     public void testExists() throws Exception {
-        assertThat(template.exists(qb.value("age", 23), Person.class)).as("does exist").isTrue();
-        assertThat(template.exists(qb.value("occupation", "knight"), Person.class)).as("doesn't exist").isFalse();
+        assertThat(template.exists(qb.value(qb.jsonProperty("age"), 23), Person.class)).as("does exist").isTrue();
+        assertThat(template.exists(qb.value(qb.jsonProperty("occupation"), "knight"), Person.class)).as("doesn't exist").isFalse();
     }
 
     @Test
@@ -95,14 +99,14 @@ public class BasicQueryIT {
 
     @Test
     public void testCountByQuery() throws Exception {
-        assertThat(template.count(qb.value("gender", "male"))).as("without type").isEqualTo(2);
-        assertThat(template.count(qb.value("gender", "male"), Person.class)).as("options type").isEqualTo(2);
+        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"))).as("without type").isEqualTo(2);
+        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"), Person.class)).as("options type").isEqualTo(2);
     }
 
     @Test
     public void testQueryByValue() {
         List<Person> people = template.search(
-            qb.value("gender", "male"),
+            qb.value(qb.jsonProperty("gender"), "male"),
             Person.class
         );
 
@@ -112,7 +116,7 @@ public class BasicQueryIT {
     @Test
     public void testQueryByValueWithLimit() {
         Page<Person> people = template.search(
-            qb.value("gender", "male"),
+            qb.value(qb.jsonProperty("gender"), "male"),
             0,
             1,
             Person.class
@@ -125,11 +129,21 @@ public class BasicQueryIT {
     @Test
     public void testSearchOne() {
         Person person = template.searchOne(
-                qb.value("name", "Bobby"),
+                qb.value(qb.jsonProperty("name"), "Bobby"),
                 Person.class
         );
 
         assertThat(person).isEqualTo(bobby);
+    }
+
+    @Test
+    public void testSearchOneReturningNoResults() {
+        Person person = template.searchOne(
+                qb.value(qb.jsonProperty("name"), "BubbaMan"),
+                Person.class
+        );
+
+        assertThat(person).isNull();
     }
 
     @Test
@@ -143,11 +157,22 @@ public class BasicQueryIT {
     }
 
     @Test
+    public void testQueryWithPageable() {
+        Page<Person> people = template.search(
+                null,
+                new ChunkRequest(0, 3, new Sort("name")),
+                Person.class
+        );
+
+        assertThat(people.getContent()).containsExactly(bobby, george, jane);
+    }
+
+    @Test
     public void testQueryByValueSorted() {
         List<Person> people = template.search(
             template.sortQuery(
                 new Sort("name"),
-                qb.value("gender", "male")
+                qb.value(qb.jsonProperty("gender"), "male")
             ),
             Person.class
         );
@@ -158,7 +183,18 @@ public class BasicQueryIT {
     @Test
     public void testQueryByValueStreamed() throws JsonProcessingException {
         InputStream people = template.stream(
-                qb.value("name", "Bobby"),
+                qb.value(qb.jsonProperty("name"), "Bobby"),
+                PersonToStream.class
+        );
+
+        assertThat(people).hasSameContentAs(stream(bobby));
+    }
+
+    @Test
+    public void testQueryByValueStreamedWithPagable() throws JsonProcessingException {
+        InputStream people = template.stream(
+                qb.value(qb.jsonProperty("gender"), "male"),
+                new ChunkRequest(0, 1, new Sort("name")),
                 PersonToStream.class
         );
 
@@ -176,14 +212,21 @@ public class BasicQueryIT {
         );
     }
 
-    @Ignore("not yet implemented")
     @Test
-    public void testQueryByValueReturningFacets() {
-//        FacetResult facets = template.values("/occupation", qb.value("gender", "male"));
-//
-//        assertThat(facets.map(FacetValue::getName))
-//                .containsExactlyInAnyOrder(george.getOccupation(), bobby.getOccupation())
+    public void testQueryReturningFacets() {
+        FacetedPage<Person> results = template.facetedSearch(
+                combine()
+                        .sort(new Sort("name"))
+                        .optionsName("facets"),
+                0,
+                1,
+                Person.class
+        );
+
+        assertThat(results.getContent()).contains(bobby);
+        assertThat(results.getFacets())
+                .extracting(FacetResultDto::getName).contains("occupation", "age", "gender");
+        assertThat(results.getFacets())
+                .extracting(FacetResultDto::getCount).contains(3L, 3L, 2L);
     }
-
-
 }

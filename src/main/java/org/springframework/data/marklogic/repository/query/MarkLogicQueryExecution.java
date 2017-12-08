@@ -39,6 +39,32 @@ interface MarkLogicQueryExecution {
         }
     }
 
+    final class FacetedPageExecution implements MarkLogicQueryExecution {
+
+        private final MarkLogicOperations operations;
+        private final Pageable pageable;
+
+        FacetedPageExecution(MarkLogicOperations operations, Pageable pageable) {
+            Assert.notNull(operations, "MarkLogicOperations must not be null!");
+            Assert.notNull(pageable, "Need a Pageable in order to page");
+            this.operations = operations;
+            this.pageable = pageable;
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see org.springframework.data.mongodb.repository.query.AbstractMongoQuery.Execution#execute(org.springframework.data.mongodb.core.query.Query, java.lang.Class, java.lang.String)
+         */
+        @Override
+        public Object execute(final StructuredQueryDefinition query, final Class<?> type) {
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
+                return operations.facetedSearch(query, 0, ((CombinedQueryDefinition)query).getLimit(), type);
+            } else {
+                return operations.facetedSearch(query, pageable.getOffset(), pageable.getPageSize(), type);
+            }
+        }
+    }
+
     final class EntityListExecution implements MarkLogicQueryExecution {
 
         private final MarkLogicOperations operations;

@@ -8,6 +8,7 @@ import com.marklogic.client.impl.DatabaseClientImpl;
 import com.marklogic.client.impl.PojoQueryBuilderImpl;
 import com.marklogic.client.impl.RESTServices;
 import com.marklogic.client.io.Format;
+import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.ValuesHandle;
 import com.marklogic.client.pojo.PojoQueryBuilder;
@@ -24,20 +25,22 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
-import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.marklogic.TransactionHolder;
 import org.springframework.data.marklogic.core.convert.JacksonMarkLogicConverter;
 import org.springframework.data.marklogic.core.convert.MarkLogicConverter;
+import org.springframework.data.marklogic.core.convert.QueryMapper;
 import org.springframework.data.marklogic.core.mapping.DocumentDescriptor;
 import org.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.TypePersistenceStrategy;
 import org.springframework.data.marklogic.domain.ChunkRequest;
+import org.springframework.data.marklogic.domain.facets.FacetedPage;
 import org.springframework.data.marklogic.repository.query.CombinedQueryDefinition;
 import org.springframework.data.marklogic.repository.query.convert.DefaultMarkLogicQueryConversionService;
 import org.springframework.data.marklogic.repository.query.convert.QueryConversionService;
@@ -76,6 +79,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     private DatabaseClient client;
     private RestTemplate restTemplate;
     private RESTServices services;
+    private QueryMapper queryMapper;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     /**
@@ -113,6 +117,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
         this.converter = converter == null ? getDefaultConverter() : converter;
         this.queryConversionService = queryConversionService == null ? getDefaultQueryConverter() : queryConversionService;
         this.exceptionTranslator = new MarkLogicExceptionTranslator();
+        this.queryMapper = new QueryMapper(this.converter);
 
         // Create a RestTemplate instance for use directly against the REST API because there are some things that
         // aren't fully supported in the client
@@ -290,7 +295,10 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> write(List<T> entities, ServerTransform transform, String... collections) {
-        // TODO: Versioning?
+        ServerTransform writeTransform = !entities.isEmpty() && transform == null
+                ? queryMapper.getWriteTransform(entities.get(0).getClass())
+                : transform;
+
         List<DocumentDescriptor> docs =
                 entities.stream()
                         .map(entity -> {
@@ -302,6 +310,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
         return execute((manager, transaction) -> {
             if (!docs.isEmpty()) {
+                // TODO: Do we have a case where we are saving entities of different types all in the same operation?
                 DocumentWriteSet writeSet = manager.newWriteSet();
                 for (DocumentDescriptor doc : docs) {
                     if (collections != null && collections.length > 0) {
@@ -317,7 +326,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                         writeSet.add((String) null, doc.getMetadata(), doc.getContent());
                     }
                 }
-                manager.write(writeSet, transform, transaction);
+                manager.write(writeSet, writeTransform, transaction);
             }
             return entities;
         });
@@ -340,11 +349,13 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> List<T> read(List<?> ids, Class<T> entityClass) {
+        // TODO: Do we have a case where we are saving entities of different types all in the same operation?
+        ServerTransform readTransform = queryMapper.getReadTransform(entityClass);
         final List<String> uris = converter.getDocumentUris(ids, entityClass);
 
         return execute((manager, transaction) -> {
             manager.setPageLength(uris.size());
-            DocumentPage page = manager.read(transaction, uris.toArray(new String[0]));
+            DocumentPage page = manager.read(readTransform, transaction, uris.toArray(new String[0]));
             return toEntityList(entityClass, page);
         });
     }
@@ -367,7 +378,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> T searchOne(StructuredQueryDefinition query, Class<T> entityClass) {
         List<T> results = search(query, 0, 1, entityClass)
                 .getContent();
-        return results.get(0);
+        return results == null || results.isEmpty() ? null : results.get(0);
     }
 
     /**
@@ -408,17 +419,65 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public DocumentPage search(StructuredQueryDefinition query, Pageable pageable) {
+        return search(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize());
+    }
+
+    @Override
     public <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (limit >= 0) manager.setPageLength(limit);
 
-            QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
+            QueryDefinition finalQuery = queryMapper.getMappedQuery(query, entityClass);
             DocumentPage docPage = manager.search(finalQuery, start + 1, transaction);
 
             List<T> results = toEntityList(entityClass, docPage);
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
             return new PageImpl<>(results, new ChunkRequest(start, length), docPage.getTotalSize());
         });
+    }
+
+    @Override
+    public <T> Page<T> search(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return search(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+        return facetedSearch(query, start, -1, entityClass);
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
+        return execute((manager, transaction) -> {
+            if (limit >= 0) manager.setPageLength(limit);
+
+            manager.setSearchView(QueryManager.QueryView.FACETS);
+            SearchHandle results = new SearchHandle();
+            QueryDefinition finalQuery = queryMapper.getMappedQuery(query, entityClass);
+
+            DocumentPage docPage = manager.search(finalQuery, start + 1, results, transaction);
+
+            List<T> entities = toEntityList(entityClass, docPage);
+            int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
+            return new FacetedPage<>(entities, new ChunkRequest(start, length), docPage.getTotalSize(), results.getFacetResults());
+        });
+    }
+
+    @Override
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return facetedSearch(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
     }
 
     @Override
@@ -447,11 +506,19 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
+    public InputStream stream(StructuredQueryDefinition query, Pageable pageable) {
+        return stream(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize());
+    }
+
+    @Override
     public <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
-            QueryDefinition finalQuery = converter.wrapQuery(query, entityClass);
+            QueryDefinition finalQuery = queryMapper.getMappedQuery(query, entityClass);
 
             DocumentPage page = manager.search(finalQuery, start + 1, transaction);
 
@@ -462,6 +529,15 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             return new SequenceInputStream(results);
         });
+    }
+
+    @Override
+    public <T> InputStream stream(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass) {
+        return stream(
+                combine(query).sort(pageable.getSort()),
+                pageable.getOffset(),
+                pageable.getPageSize(),
+                entityClass);
     }
 
     @Override
@@ -545,7 +621,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
             CombinedQueryDefinition combined =
                     combine(query).options("<values name='uris'><uri/></values>");
 
-            combined = (CombinedQueryDefinition) getConverter().wrapQuery(combined, entityClass);
+            combined = (CombinedQueryDefinition) queryMapper.getMappedQuery(combined, entityClass);
             ValuesDefinition valDef = qryMgr.newValuesDefinition("uris");
             valDef.setQueryDefinition(
                     qryMgr.newRawCombinedQueryDefinition(new StringHandle(combined.serialize()).withFormat(Format.XML))
@@ -625,6 +701,11 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     @Override
     public MarkLogicConverter getConverter() {
         return converter;
+    }
+
+    @Override
+    public QueryMapper getQueryMapper() {
+        return queryMapper;
     }
 
     public QueryConversionService getQueryConversionService() {
