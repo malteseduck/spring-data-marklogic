@@ -26,19 +26,14 @@ public class QueryMapper {
     }
 
     public QueryDefinition getMappedQuery(StructuredQueryDefinition query, Class entityClass) {
-        boolean isRaw = query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe();
-        CombinedQueryDefinition combined = combine(query).type(entityClass);
+        CombinedQueryDefinition combined = combine(query);
 
         // If no server transform is already set on the query then we can see if there is a entity-configured transform
         if (entityClass != null && combined.getResponseTransform() == null) {
             combined.setResponseTransform(getReadTransform(entityClass));
         }
 
-        if (isRaw) {
-            return combined.getRawQbe();
-        } else {
-            return combined;
-        }
+        return converter.wrapQuery(combined, entityClass);
     }
 
     public <T> QueryDefinition getExampleQuery(Example<T> example) {

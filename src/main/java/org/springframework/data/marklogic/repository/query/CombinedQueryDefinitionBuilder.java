@@ -257,13 +257,17 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
     @Override
     public CombinedQueryDefinition and(StructuredQueryDefinition... queries) {
-        this.structuredQuery = qb.and(collect(queries));
+        if (queries != null && queries.length > 0) {
+            this.structuredQuery = qb.and(collect(queries));
+        }
         return this;
     }
 
     @Override
     public CombinedQueryDefinition or(StructuredQueryDefinition... queries) {
-        this.structuredQuery = qb.or(collect(queries));
+        if (queries != null && queries.length > 0) {
+            this.structuredQuery = qb.or(collect(queries));
+        }
         return this;
     }
 
@@ -275,7 +279,9 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
      * @return An array of structured query definitions that can be sent to and() and or(), or whatever takes varargs.
      */
     private StructuredQueryDefinition[] collect(StructuredQueryDefinition... queries) {
-        Set<StructuredQueryDefinition> current = new HashSet<>(singletonList(structuredQuery));
+        Set<StructuredQueryDefinition> current = structuredQuery != null
+                ? new HashSet<>(singletonList(structuredQuery))
+                : new HashSet<>();
         Collections.addAll(current, queries);
         return current.toArray(new StructuredQueryDefinition[0]);
     }

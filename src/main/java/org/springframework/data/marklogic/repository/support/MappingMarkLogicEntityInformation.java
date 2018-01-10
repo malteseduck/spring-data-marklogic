@@ -22,7 +22,6 @@ public class MappingMarkLogicEntityInformation <T, ID extends Serializable> exte
         this.fallbackIdType =  idType;
     }
 
-
     @Override
     public String getCollectionName() {
         return entityMetadata.getCollection();
