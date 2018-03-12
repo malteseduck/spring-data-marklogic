@@ -224,13 +224,14 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindsPersonsByGenderLike() throws Exception {
-        List<Person> people = repository.findByGenderLike("ma*");
+        List<Person> people = repository.findByGenderLike("mal*");
         assertThat(people).containsExactlyInAnyOrder(bobby, george, henry);
     }
 
     @Test
     public void testFindsPersonsByNameNotLike() throws Exception {
-        List<Person> people = repository.findByNameNotLike("Bo*");
+        List<Person> people = repository.findByNameNotLike("Bob*");
+        assertThat(people).hasSize(all.size() - 1);
         assertThat(people).doesNotContain(bobby);
     }
 
@@ -322,9 +323,9 @@ public class PersonRepositoryIT {
 
     @Test
     public void testExecutesDerivedStartsWithQueryCorrectly() {
-        List<Person> people = repository.findByNameStartsWith("J");
+        List<Person> people = repository.findByNameStartsWith("Jen");
         
-        assertThat(people).containsExactlyInAnyOrder(jenny, jane);
+        assertThat(people).containsExactlyInAnyOrder(jenny);
     }
 
     @Test
@@ -349,7 +350,8 @@ public class PersonRepositoryIT {
 
     @Test
     public void testFindByNameStartingWithIgnoreCase() {
-        List<Person> people = repository.findByNameStartingWithIgnoreCase("ge");
+        // Needs to be 3+ characters in order to work without filtering
+        List<Person> people = repository.findByNameStartingWithIgnoreCase("geo");
         assertThat(people).containsExactly(george);
     }
 

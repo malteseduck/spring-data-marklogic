@@ -24,13 +24,13 @@ import java.nio.file.Paths;
 public class DatabaseConfiguration {
 
     // Uncomment this in order to proxy calls to the database for debugging, etc.
-    static {
-        DatabaseClientFactory.addConfigurator((OkHttpClientConfigurator) client -> {
-            if (client != null) {
-                client.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8888)));
-            }
-        });
-    }
+//    static {
+//        DatabaseClientFactory.addConfigurator((OkHttpClientConfigurator) client -> {
+//            if (client != null) {
+//                client.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8888)));
+//            }
+//        });
+//    }
 
     private MarkLogicOperations operations;
     private DatabaseClient client;
