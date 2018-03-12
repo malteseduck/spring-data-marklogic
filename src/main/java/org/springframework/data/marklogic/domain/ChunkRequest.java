@@ -10,15 +10,17 @@ import java.io.Serializable;
  */
 public class ChunkRequest implements Pageable, Serializable {
 
-    private final int offset;
+    private final long offset;
     private final int limit;
     private final Sort sort;
 
-    public ChunkRequest(int offset, int limit) {
+    @Deprecated
+    public ChunkRequest(long offset, int limit) {
         this(offset, limit, null);
     }
 
-    public ChunkRequest(int offset, int limit, Sort sort) {
+    @Deprecated
+    public ChunkRequest(long offset, int limit, Sort sort) {
         this.offset = offset > 0 ? offset: 0;
         this.limit = limit;
         this.sort = sort;
@@ -26,7 +28,7 @@ public class ChunkRequest implements Pageable, Serializable {
 
     @Override
     public int getPageNumber() {
-        return getPageSize() == 0 ? 0 : getOffset() / getPageSize();
+        return getPageSize() == 0 ? 0 : Math.toIntExact(getOffset() / getPageSize());
     }
 
     @Override
@@ -36,16 +38,16 @@ public class ChunkRequest implements Pageable, Serializable {
 
     @Override
     public Pageable next() {
-        return new ChunkRequest(getOffset() + getPageSize(), getPageSize(), getSort());
+        return ChunkRequest.of(getOffset() + getPageSize(), getPageSize(), getSort());
     }
 
     public ChunkRequest previous() {
-        return getOffset() == 0 ? this : new ChunkRequest(getOffset() - getPageSize(), getPageSize(), getSort());
+        return getOffset() == 0 ? this : ChunkRequest.of(getOffset() - getPageSize(), getPageSize(), getSort());
     }
 
     @Override
     public Pageable first() {
-        return new ChunkRequest(0, getPageSize(), getSort());
+        return ChunkRequest.of(0, getPageSize(), getSort());
     }
 
     @Override
@@ -59,12 +61,24 @@ public class ChunkRequest implements Pageable, Serializable {
     }
 
     @Override
-    public int getOffset() {
+    public long getOffset() {
         return offset;
     }
 
     public Sort getSort() {
         return sort;
+    }
+
+    public static ChunkRequest of(long offset, int limit) {
+        return of(offset, limit, Sort.unsorted());
+    }
+
+    public static ChunkRequest of(long offset, int limit, Sort sort) {
+        return new ChunkRequest(offset, limit, sort);
+    }
+
+    public static ChunkRequest of(long offset, int limit, Sort.Direction direction, String... properties) {
+        return of(offset, limit, Sort.by(direction, properties));
     }
 
     @Override

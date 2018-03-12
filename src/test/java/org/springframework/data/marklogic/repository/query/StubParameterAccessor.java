@@ -21,6 +21,7 @@ import org.springframework.data.repository.query.ParameterAccessor;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Optional;
 
 class StubParameterAccessor implements ParameterAccessor {
 
@@ -99,7 +100,7 @@ class StubParameterAccessor implements ParameterAccessor {
 	 * @see org.springframework.data.repository.query.ParameterAccessor#getDynamicProjection()
 	 */
 	@Override
-	public Class<?> getDynamicProjection() {
-		return null;
+	public Optional<Class<?>> getDynamicProjection() {
+		return Optional.empty();
 	}
 }

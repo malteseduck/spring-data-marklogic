@@ -444,7 +444,7 @@
 <span class="sourceLineNo">436</span><a name="line.436"></a>
 <span class="sourceLineNo">437</span>            List&lt;T&gt; results = toEntityList(entityClass, docPage);<a name="line.437"></a>
 <span class="sourceLineNo">438</span>            int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());<a name="line.438"></a>
-<span class="sourceLineNo">439</span>            return new PageImpl&lt;&gt;(results, new ChunkRequest(start, length), docPage.getTotalSize());<a name="line.439"></a>
+<span class="sourceLineNo">439</span>            return new PageImpl&lt;&gt;(results, ChunkRequest.of(start, length), docPage.getTotalSize());<a name="line.439"></a>
 <span class="sourceLineNo">440</span>        });<a name="line.440"></a>
 <span class="sourceLineNo">441</span>    }<a name="line.441"></a>
 <span class="sourceLineNo">442</span><a name="line.442"></a>
@@ -475,7 +475,7 @@
 <span class="sourceLineNo">467</span><a name="line.467"></a>
 <span class="sourceLineNo">468</span>            List&lt;T&gt; entities = toEntityList(entityClass, docPage);<a name="line.468"></a>
 <span class="sourceLineNo">469</span>            int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());<a name="line.469"></a>
-<span class="sourceLineNo">470</span>            return new FacetedPage&lt;&gt;(entities, new ChunkRequest(start, length), docPage.getTotalSize(), results.getFacetResults());<a name="line.470"></a>
+<span class="sourceLineNo">470</span>            return new FacetedPage&lt;&gt;(entities, ChunkRequest.of(start, length), docPage.getTotalSize(), results.getFacetResults());<a name="line.470"></a>
 <span class="sourceLineNo">471</span>        });<a name="line.471"></a>
 <span class="sourceLineNo">472</span>    }<a name="line.472"></a>
 <span class="sourceLineNo">473</span><a name="line.473"></a>

@@ -502,7 +502,7 @@ public class MarkLogicQueryCreatorTests {
                 .isEqualTo(
                         combine(qb.value(qb.jsonProperty("gender"), null, EXACT, 1.0, "female"))
                                 .type(Person.class)
-                                .sort(new Sort("age"))
+                                .sort(Sort.by("age"))
                                 .serialize()
                 );
     }
@@ -564,7 +564,7 @@ public class MarkLogicQueryCreatorTests {
                 .isEqualTo(
                         combine(qb.value(qb.element("gender"), null, EXACT, 1.0, "female"))
                         .type(PersonXml.class)
-                        .sort(new Sort("age"))
+                        .sort(Sort.by("age"))
                         .serialize()
                 );
     }
@@ -593,7 +593,7 @@ public class MarkLogicQueryCreatorTests {
                 .isEqualTo(
                         combine()
                                 .type(Person.class)
-                                .sort(new Sort("name"))
+                                .sort(Sort.by("name"))
                                 .limit(2)
                                 .serialize()
                 );

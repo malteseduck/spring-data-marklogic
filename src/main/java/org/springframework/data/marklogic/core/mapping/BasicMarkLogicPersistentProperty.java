@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
+import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.beans.PropertyDescriptor;
@@ -18,13 +20,13 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
     private final String path;
     private final IndexType indexType;
 
-    public BasicMarkLogicPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity<?, MarkLogicPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
-        super(field, propertyDescriptor, owner, simpleTypeHolder);
+    public BasicMarkLogicPersistentProperty(Property property, PersistentEntity<?, MarkLogicPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
+        super(property, owner, simpleTypeHolder);
 
         Indexed indexed = this.findAnnotation(Indexed.class);
         JsonProperty jsonProperty = this.findAnnotation(JsonProperty.class);
 
-        String name = field != null ? field.getName() : "";
+        String name = property.getName();
 
         if (jsonProperty != null && !StringUtils.isEmpty(jsonProperty.value())) {
             name = jsonProperty.value();

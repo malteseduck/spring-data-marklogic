@@ -45,14 +45,6 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
 
     /*
      * (non-Javadoc)
-     * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getRepositoryFactoryClassName()
-     */
-    public String getRepositoryFactoryClassName() {
-        return MarkLogicRepositoryFactoryBean.class.getName();
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getIdentifyingAnnotations()
      */
     @Override
@@ -78,6 +70,11 @@ public class MarkLogicRepositoryConfigurationExtension extends RepositoryConfigu
     public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {
         Element element = config.getElement();
         ParsingUtils.setPropertyReference(builder, element, MARKLOGIC_TEMPLATE_REF, "markLogicOperations");
+    }
+
+    @Override
+    public String getRepositoryFactoryBeanClassName() {
+        return MarkLogicRepositoryFactoryBean.class.getName();
     }
 
     /*

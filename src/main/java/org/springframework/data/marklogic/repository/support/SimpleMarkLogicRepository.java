@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,12 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
+    public Iterable<T> findAllById(Iterable<ID> ids) {
+        Assert.notNull(ids, "The given Iterable of ids must not be null");
+        return operations.read(convertIterableToList(ids), entityInformation.getJavaType());
+    }
+
+    @Override
     public List<T> findAll(Sort sort) {
         Assert.notNull(sort, "The given Sort must not be null");
         return operations.search(
@@ -70,7 +77,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
                 combine()
                         .type(entityInformation.getJavaType())
                         .sort(pageable.getSort()),
-                pageable.getOffset(),
+                Math.toIntExact(pageable.getOffset()),
                 pageable.getPageSize(),
                 entityInformation.getJavaType());
     }
@@ -80,31 +87,25 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     public <S extends T> S save(S entity) {
         Assert.notNull(entity, "Entity must not be null");
         Method calling = SimpleMarkLogicRepository.class.getEnclosingMethod(); // TODO What does this do?
-        return (S) operations.write(entity);
+        return operations.write(entity);
     }
 
     @Override
-    public <S extends T> List<S> save(Iterable<S> entities) {
+    public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
         Assert.notNull(entities, "The given Iterable of entities must not be null");
         return operations.write(convertIterableToList(entities));
     }
 
     @Override
-    public T findOne(ID id) {
+    public Optional<T> findById(ID id) {
         Assert.notNull(id, "The given id must not be null");
-        return operations.read(id, entityInformation.getJavaType());
+        return Optional.ofNullable(operations.read(id, entityInformation.getJavaType()));
     }
 
     @Override
-    public boolean exists(ID id) {
+    public boolean existsById(ID id) {
         Assert.notNull(id, "The given id must not be null");
         return operations.exists(id, entityInformation.getJavaType());
-    }
-
-    @Override
-    public List<T> findAll(Iterable<ID> ids) {
-        Assert.notNull(ids, "The given Iterable of ids must not be null");
-        return operations.read(convertIterableToList(ids), entityInformation.getJavaType());
     }
 
     @Override
@@ -113,7 +114,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    public void delete(ID id) {
+    public void deleteById(ID id) {
         Assert.notNull(id, "The given id must not be null");
         operations.deleteById(id, entityInformation.getJavaType());
     }
@@ -125,7 +126,7 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    public void delete(Iterable<? extends T> entities) {
+    public void deleteAll(Iterable<? extends T> entities) {
         Assert.notNull(entities, "The given Iterable of entities must not be null");
         operations.delete((List<T>) entities);
     }

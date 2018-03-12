@@ -11,7 +11,6 @@ import org.springframework.data.marklogic.repository.query.MarkLogicQueryExecuti
 import org.springframework.data.repository.query.*;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import sun.reflect.generics.tree.ReturnType;
 
 import java.util.Arrays;
 

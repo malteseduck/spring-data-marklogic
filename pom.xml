@@ -6,23 +6,23 @@
 
     <artifactId>spring-data-marklogic</artifactId>
     <groupId>org.springframework.data</groupId>
-    <version>1.1.9.RELEASE</version>
+    <version>2.0.0.RELEASE</version>
 
     <name>Spring Data MarkLogic - Core</name>
     <description>MarkLogic support for Spring Data</description>
 
     <properties>
         <bundlor.enabled>false</bundlor.enabled>
-        <marklogic>4.0.2</marklogic>
-        <springdata.commons>1.13.0.RELEASE</springdata.commons>
+        <marklogic>4.0.3.1</marklogic>
+        <springdata.commons>2.0.5.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
         <json>20170516</json>
-        <jackson>2.8.7</jackson>
+        <jackson>2.9.2</jackson>
         <maven-javadoc-plugin>2.10.4</maven-javadoc-plugin>
         <maven-source-plugin>3.0.1</maven-source-plugin>
 
         <!-- Testing versions -->
-        <mockito>2.2.0</mockito>
+        <mockito>2.15.0</mockito>
         <httpclient>4.5.2</httpclient>
         <assertj>3.6.1</assertj>
         <failsafe>2.19.1</failsafe>
@@ -36,7 +36,7 @@
             <dependency>
                 <groupId>org.springframework.data.build</groupId>
                 <artifactId>spring-data-parent</artifactId>
-                <version>1.9.9.RELEASE</version>
+                <version>2.0.5.RELEASE</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -150,9 +150,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.testifyproject.mock</groupId>
-            <artifactId>mockito</artifactId>
-            <version>0.9.2</version>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

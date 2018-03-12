@@ -11,13 +11,6 @@ public interface MarkLogicRepository<T, ID extends Serializable>
 
     /*
      * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
-     */
-    @Override
-    <S extends T> List<S> save(Iterable<S> entites);
-
-    /*
-     * (non-Javadoc)
      * @see org.springframework.data.repository.CrudRepository#findAll()
      */
     @Override

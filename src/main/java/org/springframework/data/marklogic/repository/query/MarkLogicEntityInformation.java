@@ -4,7 +4,7 @@ import org.springframework.data.repository.core.EntityInformation;
 
 import java.io.Serializable;
 
-public interface MarkLogicEntityInformation <T, ID extends Serializable> extends EntityInformation<T, ID> {
+public interface MarkLogicEntityInformation <T, ID> extends EntityInformation<T, ID> {
 
     /**
      * Returns the name of the collection the entity shall be persisted to.

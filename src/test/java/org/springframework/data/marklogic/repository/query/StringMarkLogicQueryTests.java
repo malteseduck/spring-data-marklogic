@@ -66,7 +66,7 @@ public class StringMarkLogicQueryTests {
 	public void bindsSimplePropertyWithPageable() throws Exception {
 		StructuredQueryDefinition query = stringQuery(
 				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
-				"female", new PageRequest(0, 2, ASC, "name")
+				"female", PageRequest.of(0, 2, ASC, "name")
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
@@ -77,7 +77,7 @@ public class StringMarkLogicQueryTests {
 	public void bindsSimplePropertyWithPageableElementSort() throws Exception {
 		StructuredQueryDefinition query = stringQuery(
 				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
-				"female", new PageRequest(0, 2, ASC, "description")
+				"female", PageRequest.of(0, 2, ASC, "description")
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())
@@ -88,7 +88,7 @@ public class StringMarkLogicQueryTests {
 	public void bindsSimplePropertyWithPageableMultipleSort() throws Exception {
 		StructuredQueryDefinition query = stringQuery(
 				queryMethod(PersonRepository.class, "qbeFindByGenderWithPageable", String.class, Pageable.class),
-				"female", new PageRequest(0, 2, new Sort(ASC, "name").and(new Sort(DESC, "age")))
+				"female", PageRequest.of(0, 2, Sort.by(ASC, "name").and(Sort.by(DESC, "age")))
 		);
 		// TODO: Should this be a multipart string?
 		assertThat(query.serialize())

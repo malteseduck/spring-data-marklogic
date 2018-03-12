@@ -31,10 +31,10 @@ interface MarkLogicQueryExecution {
          */
         @Override
         public Object execute(final StructuredQueryDefinition query, final Class<?> type) {
-            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
-                return operations.search(query, 0, ((CombinedQueryDefinition)query).getLimit(), type);
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
+                return operations.search(query, 0, ((CombinedQueryDefinition) query).getLimit(), type);
             } else {
-                return operations.search(query, pageable.getOffset(), pageable.getPageSize(), type);
+                return operations.search(query, Math.toIntExact(pageable.getOffset()), pageable.getPageSize(), type);
             }
         }
     }
@@ -57,10 +57,10 @@ interface MarkLogicQueryExecution {
          */
         @Override
         public Object execute(final StructuredQueryDefinition query, final Class<?> type) {
-            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
-                return operations.facetedSearch(query, 0, ((CombinedQueryDefinition)query).getLimit(), type);
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
+                return operations.facetedSearch(query, 0, ((CombinedQueryDefinition) query).getLimit(), type);
             } else {
-                return operations.facetedSearch(query, pageable.getOffset(), pageable.getPageSize(), type);
+                return operations.facetedSearch(query, Math.toIntExact(pageable.getOffset()), pageable.getPageSize(), type);
             }
         }
     }
@@ -80,8 +80,8 @@ interface MarkLogicQueryExecution {
          */
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
-            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition)query).isLimiting()) {
-                return operations.search(query, 0, ((CombinedQueryDefinition)query).getLimit(), type).getContent();
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
+                return operations.search(query, 0, ((CombinedQueryDefinition) query).getLimit(), type).getContent();
             } else {
                 return operations.search(query, type);
             }
@@ -117,12 +117,11 @@ interface MarkLogicQueryExecution {
 
         @Override
         public Object execute(StructuredQueryDefinition query, Class<?> type) {
-            if (pageable != null) {
-                if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
-                    return operations.stream(query, 0, ((CombinedQueryDefinition) query).getLimit(), type);
-                } else {
-                    return operations.stream(query, pageable.getOffset(), pageable.getPageSize(), type);
-                }
+            if (query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isLimiting()) {
+                return operations.stream(query, 0, ((CombinedQueryDefinition) query).getLimit(), type);
+            } else if (pageable.isPaged()) {
+                return operations.stream(query, pageable.getOffset(), pageable.getPageSize(), type);
+
             } else {
                 return operations.stream(query, type);
             }

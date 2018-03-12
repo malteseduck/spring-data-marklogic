@@ -16,15 +16,14 @@
 package org.springframework.data.marklogic.repository.support;
 
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.marklogic.core.MarkLogicOperations;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import org.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
-import org.springframework.data.marklogic.repository.query.MarkLogicEntityInformation;
 import org.springframework.data.marklogic.repository.query.MarkLogicQueryMethod;
 import org.springframework.data.marklogic.repository.query.PartTreeMarkLogicQuery;
 import org.springframework.data.marklogic.repository.query.StringMarkLogicQuery;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -38,6 +37,7 @@ import org.springframework.util.Assert;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
 
@@ -68,46 +68,35 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
         return SimpleMarkLogicRepository.class;
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+        MarkLogicPersistentEntity<?> entity = mappingContext.getPersistentEntity(domainClass);
+
+        Class idType = Object.class;
+
+        if (!entity.hasIdProperty()) {
+            throw new IllegalArgumentException("Your entity of type " + domainClass.getName() + " does not have a method or field annotated options org.springframework.data.annotation.Id");
+        } else if (entity.hasIdProperty()) {
+            idType = entity.getIdProperty().getType();
+        }
+
+        return new MappingMarkLogicEntityInformation<>((MarkLogicPersistentEntity<T>) entity, (Class<ID>) idType);
+    }
+
     /*
      * (non-Javadoc)
      * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getTargetRepository(org.springframework.data.repository.core.RepositoryInformation)
      */
     @Override
     protected Object getTargetRepository(RepositoryInformation information) {
-        MarkLogicEntityInformation<?, Serializable> entityInformation = getEntityInformation(information.getDomainType());
+        EntityInformation<?, Serializable> entityInformation = getEntityInformation(information.getDomainType());
         return getTargetRepositoryViaReflection(information, entityInformation, operations);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getQueryLookupStrategy(org.springframework.data.repository.query.QueryLookupStrategy.Key, org.springframework.data.repository.query.EvaluationContextProvider)
-     */
     @Override
-    protected QueryLookupStrategy getQueryLookupStrategy(Key key, EvaluationContextProvider evaluationContextProvider) {
-        return new MarkLogicQueryLookupStrategy(operations, evaluationContextProvider, mappingContext);
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getEntityInformation(java.lang.Class)
-     */
-
-    @SuppressWarnings("unchecked")
-    public <T, ID extends Serializable> MarkLogicEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
-        MarkLogicPersistentEntity<?> entity = mappingContext.getPersistentEntity(domainClass);
-
-        Class idType = Object.class;
-
-        if (entity == null) {
-            throw new MappingException(
-                    String.format("Could not lookup mapping metadata for domain class %s!", domainClass.getName()));
-        } else if (!entity.hasIdProperty()) {
-            throw new IllegalArgumentException("Your entity of type " + domainClass.getName() + " does not have a method or field annotated options org.springframework.data.annotation.Id");
-        } else if (entity.hasIdProperty()) {
-            idType = entity.getIdProperty().getType();
-        }
-
-        return new MappingMarkLogicEntityInformation(entity, idType);
+    protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key, EvaluationContextProvider evaluationContextProvider) {
+        return Optional.of(new MarkLogicQueryLookupStrategy(operations, evaluationContextProvider, mappingContext));
     }
 
     private static class MarkLogicQueryLookupStrategy implements QueryLookupStrategy {

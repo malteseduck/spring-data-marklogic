@@ -6,7 +6,7 @@ import org.springframework.data.repository.core.support.PersistentEntityInformat
 
 import java.io.Serializable;
 
-public class MappingMarkLogicEntityInformation <T, ID extends Serializable> extends PersistentEntityInformation<T, ID>
+public class MappingMarkLogicEntityInformation <T, ID> extends PersistentEntityInformation<T, ID>
 		implements MarkLogicEntityInformation<T, ID> {
 
     private final MarkLogicPersistentEntity<T> entityMetadata;

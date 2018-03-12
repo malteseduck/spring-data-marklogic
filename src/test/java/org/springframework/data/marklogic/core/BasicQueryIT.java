@@ -149,7 +149,7 @@ public class BasicQueryIT {
     @Test
     public void testQuerySorted() {
         List<Person> people = template.search(
-            template.sortQuery(new Sort("name"), null),
+            template.sortQuery(Sort.by("name"), null),
             Person.class
         );
 
@@ -160,7 +160,7 @@ public class BasicQueryIT {
     public void testQueryWithPageable() {
         Page<Person> people = template.search(
                 null,
-                new ChunkRequest(0, 3, new Sort("name")),
+                ChunkRequest.of(0, 3, Sort.by("name")),
                 Person.class
         );
 
@@ -171,7 +171,7 @@ public class BasicQueryIT {
     public void testQueryByValueSorted() {
         List<Person> people = template.search(
             template.sortQuery(
-                new Sort("name"),
+                Sort.by("name"),
                 qb.value(qb.jsonProperty("gender"), "male")
             ),
             Person.class
@@ -194,7 +194,7 @@ public class BasicQueryIT {
     public void testQueryByValueStreamedWithPagable() throws JsonProcessingException {
         InputStream people = template.stream(
                 qb.value(qb.jsonProperty("gender"), "male"),
-                new ChunkRequest(0, 1, new Sort("name")),
+                ChunkRequest.of(0, 1, Sort.by("name")),
                 PersonToStream.class
         );
 
@@ -207,7 +207,7 @@ public class BasicQueryIT {
         expectation.expectMessage("SEARCH-BADORDERBY");
 
         template.search(
-            template.sortQuery(new Sort("blabbitybloobloo"), null),
+            template.sortQuery(Sort.by("blabbitybloobloo"), null),
             Person.class
         );
     }
@@ -216,7 +216,7 @@ public class BasicQueryIT {
     public void testQueryReturningFacets() {
         FacetedPage<Person> results = template.facetedSearch(
                 combine()
-                        .sort(new Sort("name"))
+                        .sort(Sort.by("name"))
                         .optionsName("facets"),
                 0,
                 1,

@@ -23,7 +23,7 @@ public class PersonRepositoryImpl implements PersonRepositoryCustom {
 
         List<DocumentRecord> records = operations.search(
                 operations.sortQuery(
-                        new Sort("name"),
+                        Sort.by("name"),
                         qb.and(
                                 qb.collection("Employee", "Contact"),
                                 qb.directory(true, "/")

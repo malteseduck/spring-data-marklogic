@@ -390,7 +390,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
      * This method is mainly created to accommodate creating an implementation for the
      * {@link org.springframework.data.repository.CrudRepository#findAll()} method.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     public <T> List<T> search(Class<T> entityClass) {
         return search(qb.and(), 0, Integer.MAX_VALUE, entityClass)
@@ -398,17 +398,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public DocumentPage search(StructuredQueryDefinition query, int start) {
+    public DocumentPage search(StructuredQueryDefinition query, long start) {
         return search(query, start, Integer.MAX_VALUE);
     }
 
     @Override
-    public <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+    public <T> Page<T> search(StructuredQueryDefinition query, long start, Class<T> entityClass) {
         return search(query, start, Integer.MAX_VALUE, entityClass);
     }
 
     @Override
-    public DocumentPage search(StructuredQueryDefinition query, int start, int length) {
+    public DocumentPage search(StructuredQueryDefinition query, long start, int length) {
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 
@@ -427,7 +427,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
+    public <T> Page<T> search(StructuredQueryDefinition query, long start, int limit, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (limit >= 0) manager.setPageLength(limit);
 
@@ -436,7 +436,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             List<T> results = toEntityList(entityClass, docPage);
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
-            return new PageImpl<>(results, new ChunkRequest(start, length), docPage.getTotalSize());
+            return new PageImpl<>(results, ChunkRequest.of(start, length), docPage.getTotalSize());
         });
     }
 
@@ -450,12 +450,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, long start, Class<T> entityClass) {
         return facetedSearch(query, start, -1, entityClass);
     }
 
     @Override
-    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass) {
+    public <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, long start, int limit, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (limit >= 0) manager.setPageLength(limit);
 
@@ -467,7 +467,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
             List<T> entities = toEntityList(entityClass, docPage);
             int length = (int) Math.min(manager.getPageLength(), docPage.getTotalSize());
-            return new FacetedPage<>(entities, new ChunkRequest(start, length), docPage.getTotalSize(), results.getFacetResults());
+            return new FacetedPage<>(entities, ChunkRequest.of(start, length), docPage.getTotalSize(), results.getFacetResults());
         });
     }
 
@@ -491,17 +491,17 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public InputStream stream(StructuredQueryDefinition query, int start) {
+    public InputStream stream(StructuredQueryDefinition query, long start) {
         return stream(query,start, Integer.MAX_VALUE, null);
     }
 
     @Override
-    public <T> InputStream stream(StructuredQueryDefinition query, int start, Class<T> entityClass) {
+    public <T> InputStream stream(StructuredQueryDefinition query, long start, Class<T> entityClass) {
         return stream(query, start, Integer.MAX_VALUE, entityClass);
     }
 
     @Override
-    public InputStream stream(StructuredQueryDefinition query, int start, int length) {
+    public InputStream stream(StructuredQueryDefinition query, long start, int length) {
         return stream(query,start, length, null);
     }
 
@@ -514,7 +514,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass) {
+    public <T> InputStream stream(StructuredQueryDefinition query, long start, int length, Class<T> entityClass) {
         return execute((manager, transaction) -> {
             if (length >= 0) manager.setPageLength(length);
 

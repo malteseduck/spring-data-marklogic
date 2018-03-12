@@ -4,6 +4,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.mapping.context.AbstractMappingContext;
+import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
 
@@ -26,7 +27,7 @@ public class MarkLogicMappingContext extends AbstractMappingContext<BasicMarkLog
     }
 
     @Override
-    protected MarkLogicPersistentProperty createPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, BasicMarkLogicPersistentEntity<?> basicMarkLogicPersistentEntity, SimpleTypeHolder simpleTypeHolder) {
-        return new BasicMarkLogicPersistentProperty(field, propertyDescriptor, basicMarkLogicPersistentEntity, simpleTypeHolder);
+    protected MarkLogicPersistentProperty createPersistentProperty(Property property, BasicMarkLogicPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
+        return new BasicMarkLogicPersistentProperty(property, owner, simpleTypeHolder);
     }
 }

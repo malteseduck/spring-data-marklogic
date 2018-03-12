@@ -24,7 +24,7 @@ public class CombinedQueryTests {
 
     @Test
     public void testSorted() throws Exception {
-        String serialized = combine().sort(new Sort("name")).serialize();
+        String serialized = combine().sort(Sort.by("name")).serialize();
         assertThat(serialized)
                 .contains("<search xmlns=\"http://marklogic.com/appservices/search\">")
                 .contains("<sort-order direction='ascending'>")
@@ -35,7 +35,7 @@ public class CombinedQueryTests {
     public void testSortedOnNestedPathWithIndexedAnnotation() throws Exception {
         String serialized = combine()
                 .type(Person.class)
-                .sort(new Sort("pets/name"))
+                .sort(Sort.by("pets/name"))
                 .serialize();
         assertThat(serialized)
                 .contains("<search xmlns=\"http://marklogic.com/appservices/search\">")

@@ -8,6 +8,7 @@ import com.marklogic.client.io.StringHandle;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
@@ -102,9 +103,9 @@ public class EmptyPersonRepositoryIT {
     }
 
     @Test
-    public void testFindsPersonById() throws Exception {
-        Person found = repository.findOne("does-not-exist");
-        assertThat(found).isNull();
+    public void testFindsPersonByIdThatDoesNotExist() throws Exception {
+        Optional<Person> found = repository.findById("does-not-exist");
+        assertThat(found).isNotPresent();
     }
 
     @Test
@@ -115,13 +116,13 @@ public class EmptyPersonRepositoryIT {
 
     @Test
     public void testFindsAllPeopleOrderedByName() throws Exception {
-        List<Person> people = repository.findAll(new Sort("name"));
+        List<Person> people = repository.findAll(Sort.by("name"));
         assertThat(people).isEmpty();
     }
 
     @Test
     public void testFindsAllWithGivenIds() {
-        Iterable<Person> people = repository.findAll(asList("", bobby.getId()));
+        Iterable<Person> people = repository.findAllById(asList("", bobby.getId()));
         assertThat(people).isEmpty();
     }
 
@@ -142,7 +143,7 @@ public class EmptyPersonRepositoryIT {
     @Test
     public void testDeletesPersonByIdCorrectly() {
         assertThat(repository.findAll()).isEmpty();
-        repository.delete(bobby.getId());
+        repository.deleteById(bobby.getId());
         assertThat(repository.findAll()).isEmpty();
     }
 
@@ -214,7 +215,7 @@ public class EmptyPersonRepositoryIT {
 
     @Test
     public void testFindsPagedPersonsOrderedByName() throws Exception {
-        Page<Person> page = repository.findAll(new PageRequest(1, 2, Sort.Direction.ASC, "name"));
+        Page<Person> page = repository.findAll(PageRequest.of(1, 2, Sort.Direction.ASC, "name"));
         assertEmpty(page);
     }
 
@@ -229,13 +230,13 @@ public class EmptyPersonRepositoryIT {
     @Test
     public void testExecutesPagedFinderCorrectly() throws Exception {
         Page<Person> page = repository.findByGenderLike("fem*",
-                new PageRequest(0, 2, Sort.Direction.ASC, "name"));
+                PageRequest.of(0, 2, Sort.Direction.ASC, "name"));
         assertEmpty(page);
     }
 
     @Test
     public void testExistsWorksCorrectly() {
-        assertThat(repository.exists(bobby.getId())).isFalse();
+        assertThat(repository.existsById(bobby.getId())).isFalse();
     }
 
     @Test
@@ -373,7 +374,7 @@ public class EmptyPersonRepositoryIT {
 
     @Test
     public void testFindFirst2OrderByName() {
-        Page<Person> page = repository.findFirst2ByOrderByName(new PageRequest(0, 10, Sort.Direction.ASC, "name"));
+        Page<Person> page = repository.findFirst2ByOrderByName(PageRequest.of(0, 10, Sort.Direction.ASC, "name"));
         assertEmpty(page);
     }
 
@@ -388,7 +389,7 @@ public class EmptyPersonRepositoryIT {
     @Test
     public void testFindAllWithPageableQBE() throws Exception {
         Page<Person> page = repository.qbeFindAllWithPageable(
-                new PageRequest(0, 1, Sort.Direction.ASC, "name")
+                PageRequest.of(0, 1, Sort.Direction.ASC, "name")
         );
         assertEmpty(page);
     }
@@ -433,7 +434,7 @@ public class EmptyPersonRepositoryIT {
     public void testFindByGenderWithPageableQBE() throws Exception {
         Page<Person> page = repository.qbeFindByGenderWithPageable(
                 "female",
-                new PageRequest(0, 2, Sort.Direction.ASC, "name")
+                PageRequest.of(0, 2, Sort.Direction.ASC, "name")
         );
         assertEmpty(page);
     }
@@ -448,7 +449,7 @@ public class EmptyPersonRepositoryIT {
     public void testFindByGenderQBEHonorsCollections() throws Exception {
         Page<Person> page = repository.qbeFindByGenderWithPageable(
                 "male",
-                new PageRequest(0, 20, Sort.Direction.ASC, "name")
+                PageRequest.of(0, 20, Sort.Direction.ASC, "name")
         );
         assertEmpty(page);
     }
@@ -522,14 +523,14 @@ public class EmptyPersonRepositoryIT {
 
     @Test
     public void testFindAllOverriddenWithTransform() {
-        Page<Person> page = transRepository.findAllBy(new PageRequest(0, 1));
+        Page<Person> page = transRepository.findAllBy(PageRequest.of(0, 1));
         assertEmpty(page);
     }
 
     //    @Ignore("Maybe not possible?")
     @Test
     public void testDefaultImplementationFind() {
-        Page<Person> page = transRepository.findAllBy(new PageRequest(0, 1));
+        Page<Person> page = transRepository.findAllBy(PageRequest.of(0, 1));
         assertEmpty(page);
     }
 
@@ -549,6 +550,6 @@ public class EmptyPersonRepositoryIT {
         assertThat(page.getNumberOfElements()).isEqualTo(0);
         assertThat(page.getContent()).isEmpty();
         assertThat(page.getSize()).isEqualTo(0);
-        assertThat(page.getSort()).isNull();
+        assertThat(page.getSort()).isEqualTo(Sort.unsorted());
     }
 }

@@ -233,7 +233,7 @@ public interface MarkLogicOperations {
     /**
      * Query for a list of documents using the specified structured query.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int)
      */
     List<DocumentRecord> search(StructuredQueryDefinition query);
 
@@ -241,9 +241,9 @@ public interface MarkLogicOperations {
      * Query for a page of documents using the specified structured query, starting at the specified item in the
      * result set.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int)
      */
-    DocumentPage search(StructuredQueryDefinition query, int start);
+    DocumentPage search(StructuredQueryDefinition query, long start);
 
     /**
      * Query for a page of documents using the specified structured query.  Specify a start and length to get different
@@ -258,12 +258,12 @@ public interface MarkLogicOperations {
      * @return A {@link com.marklogic.client.document.DocumentPage} containing the records for this "chunk" of the result
      * set.
      */
-    DocumentPage search(StructuredQueryDefinition query, int start, int length);
+    DocumentPage search(StructuredQueryDefinition query, long start, int length);
 
     /**
      * Same as search with int bounds, but allows paging/sorting based off Spring Pageable.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     DocumentPage search(StructuredQueryDefinition query, Pageable pageable);
 
@@ -275,7 +275,7 @@ public interface MarkLogicOperations {
      *
      * This is a convenience method to get a single item when you "know" that is all there is.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     <T> T searchOne(StructuredQueryDefinition query, Class<T> entityClass);
 
@@ -283,7 +283,7 @@ public interface MarkLogicOperations {
      * Query for a list of of documents of the specified type using the specified structured query.  Only the first
      * {@link com.marklogic.client.impl.DocumentManagerImpl#DEFAULT_PAGE_LENGTH} documents are returned.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
@@ -292,9 +292,9 @@ public interface MarkLogicOperations {
      * documents is returned, starting from the specified start index and containing
      * {@link com.marklogic.client.impl.DocumentManagerImpl#DEFAULT_PAGE_LENGTH} entities.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
-    <T> Page<T> search(StructuredQueryDefinition query, int start, Class<T> entityClass);
+    <T> Page<T> search(StructuredQueryDefinition query, long start, Class<T> entityClass);
 
     /**
      * Queries for a page of documents of the specified type, using the specified structured query to constrain which
@@ -309,19 +309,19 @@ public interface MarkLogicOperations {
      *
      * @return A page of documents matching the specified parameters.
      */
-    <T> Page<T> search(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
+    <T> Page<T> search(StructuredQueryDefinition query, long start, int limit, Class<T> entityClass);
 
     /**
      * Same as search with int bounds, but allows paging/sorting based off Spring Pageable.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     <T> Page<T> search(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
 
     /**
-     * @see MarkLogicOperations#facetedSearch(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#facetedSearch(StructuredQueryDefinition, long, int, Class)
      */
-    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, Class<T> entityClass);
+    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, long start, Class<T> entityClass);
 
     /**
      * Similar to a normal paged query, except also includes facets for the matched results.  In order for the facets to
@@ -337,51 +337,51 @@ public interface MarkLogicOperations {
      *
      * @return A page of documents matching the specified parameters with the included facets.
      */
-    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, int start, int limit, Class<T> entityClass);
+    <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, long start, int limit, Class<T> entityClass);
 
     /**
      * Same as faceted search with int bounds, but allows paging/sorting based off Spring Pageable.
      *
-     * @see MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
     <T> FacetedPage<T> facetedSearch(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
 
     // ========== Database Queries Streaming Results =========== //
 
     /**
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
     InputStream stream(StructuredQueryDefinition query);
 
     /**
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
     <T> InputStream stream(StructuredQueryDefinition query, Class<T> entityClass);
 
     /**
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
-    InputStream stream(StructuredQueryDefinition query, int start);
+    InputStream stream(StructuredQueryDefinition query, long start);
 
     /**
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
-    <T> InputStream stream(StructuredQueryDefinition query, int start, Class<T> entityClass);
+    <T> InputStream stream(StructuredQueryDefinition query, long start, Class<T> entityClass);
 
     /**
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
-    InputStream stream(StructuredQueryDefinition query, int start, int length);
+    InputStream stream(StructuredQueryDefinition query, long start, int length);
 
     /**
      * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
      *
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
     InputStream stream(StructuredQueryDefinition query, Pageable pageable);
 
     /**
-     * Queries just like the {@link MarkLogicOperations#search(StructuredQueryDefinition, int, int, Class)} method does,
+     * Queries just like the {@link MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)} method does,
      * but instead of a page/list of documents it returns an input stream straight from the results of the REST call
      * against the database.  The purpose of these methods is to skip the serialization/deserialization process of
      * your application layer and just return raw data.
@@ -394,12 +394,12 @@ public interface MarkLogicOperations {
      *
      * @return An input stream of all the documents that matched the specified parameters.
      */
-    <T> InputStream stream(StructuredQueryDefinition query, int start, int length, Class<T> entityClass);
+    <T> InputStream stream(StructuredQueryDefinition query, long start, int length, Class<T> entityClass);
 
     /**
      * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
      *
-     * @see MarkLogicOperations#stream(StructuredQueryDefinition, int, int, Class)
+     * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
     <T> InputStream stream(StructuredQueryDefinition query, Pageable pageable, Class<T> entityClass);
 
