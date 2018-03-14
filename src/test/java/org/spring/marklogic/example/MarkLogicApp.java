@@ -2,8 +2,8 @@ package org.spring.marklogic.example;
 
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.query.StructuredQueryBuilder;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 

@@ -70,8 +70,8 @@ package org.spring.marklogic.example;
 
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.query.StructuredQueryBuilder;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 
@@ -116,8 +116,8 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 
@@ -234,7 +234,7 @@ There are four main ways to build your queries:
 - Structured queries created with a `StructuredQueryBuilder` interface
 - Using the MarkLogic 'DocumentManager` and `QueryManager` interfaces
 
-If all else fails there is an [`executeWithClient`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html#executeWithClient-org.springframework.data.marklogic.core.ClientCallback-) method you can use in `MarkLogicTemplate` that allows you to construct whatever you need to using the full capabilities of the MarkLogic Java Client API.
+If all else fails there is an [`executeWithClient`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html#executeWithClient-org.malteseduck.springframework.data.marklogic.core.ClientCallback-) method you can use in `MarkLogicTemplate` that allows you to construct whatever you need to using the full capabilities of the MarkLogic Java Client API.
 
 We will now go into more detail about each of these approaches.
 

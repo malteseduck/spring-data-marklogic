@@ -4,8 +4,8 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import org.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 
