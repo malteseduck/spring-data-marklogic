@@ -1,0 +1,108 @@
+package io.github.malteseduck.springframework.data.marklogic.repository;
+
+import com.marklogic.client.io.Format;
+import io.github.malteseduck.springframework.data.marklogic.core.convert.ServerTransformer;
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.DocumentFormat;
+import io.github.malteseduck.springframework.data.marklogic.repository.query.QueryType;
+import io.github.malteseduck.springframework.data.marklogic.repository.query.SelectedMode;
+import org.springframework.core.annotation.AliasFor;
+import org.springframework.data.annotation.QueryAnnotation;
+
+import java.lang.annotation.*;
+
+/**
+ * Declare QBE queries directly on repository methods. This allows cleaner queries for more complex cases. This also
+ * allows the "tweaking" of basic search parameters in a repository interface without having to use MarkLogicTemplate
+ * directly to set them.
+ *
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
+@Documented
+@QueryAnnotation
+public @interface Query {
+
+    /**
+     * Takes a MarkLogic QBE JSON string to define the actual query to be executed. This one will take precedence over the
+     * method name then.
+     *
+     * @return
+     */
+    @AliasFor("query")
+    String value() default "";
+
+    @AliasFor("value")
+    String query() default "";
+
+    /**
+     * Sometimes it is better to force the use of a range index for equality checks (to point to specific properties instead of
+     * any property in a hierarchy).  This allows the ability to do so.  Changing to the RANGE type would require a range index
+     * created, and possible the @Indexed attribute with the path set on the property in the POJO class.
+     *
+     * @return
+     */
+    QueryType type() default QueryType.VALUE;
+
+    /**
+     * The document format to match, either XML or JSON.  Currently can't match a mix using this approach, you would need
+     * a StructuredQueryDefinition using the query builder in order to match both formats.  Using the MarkLogic
+     * {@link com.marklogic.client.io.Format} instead of {@link DocumentFormat}
+     * since we allow "UNKNOWN" as the default.
+     *
+     * Setting this to "UNKNOWN", BINARY" OR "TEXT" would just end up setting the queries as JSON format, since that is
+     * default query "language"
+     *
+     * @return
+     */
+    Format format() default Format.UNKNOWN;
+
+    /**
+     * Defines the properties that should be returned for the given query. Note that only these properties will make it into the
+     * domain object returned.
+     *
+     * @return
+     */
+    String[] extract() default {};
+
+    /**
+     * Used in conjunction with the extract paths.  This determines how the extracted nodes are returned.  By default this
+     * returns specified nodes in their original hierarchy, but you can also specify to just return the extracted nodes, or to
+     * exclude the specified nodes.
+     *
+     * @return
+     */
+    SelectedMode selected() default SelectedMode.HIERARCHICAL;
+
+    /**
+     * To specify any query options to use in the query.  Since the query could end up as a range query or a text query of some
+     * kind, or MarkLogic could add additional options, this is not limited by an enumeration but the query will fail with
+     * incorrect options.  These options are applied to all the value/range/text queries that are created, so if fine-
+     * tuning is required at that level a custom Repository is required.
+     *
+     * @return
+     */
+    String[] options() default {};
+
+    /**
+     * Instead of specifying limited query options individually you can persist an options configuration to the database
+     * and just reference it to be used in the query.  This allows full configuration of the query for the annotated query.
+     *
+     * @return
+     */
+    String optionsName() default "";
+
+    /**
+     * The name of a transform to use when returning/saving documents (depends on the type of operations that is annotated).
+     * This transform must have been previously configured through the REST API otherwise the operation will fail.
+     *
+     * @return
+     */
+    String transform() default "";
+
+    /**
+     * If you need the ability to create a full ServerTransform then you can specify a ServerTransformer implementation
+     * that will generate the reader() and writer() transformers.
+     * @return
+     */
+    Class<? extends ServerTransformer> transformer() default ServerTransformer.class;
+}
