@@ -18,7 +18,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 <dependency>
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
-    <version>1.1.6.RELEASE</version>
+    <version>2.0.0.RELEASE</version>
 </dependency>
 ```
 
@@ -70,8 +70,8 @@ package org.spring.marklogic.example;
 
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import com.marklogic.client.query.StructuredQueryBuilder;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 
@@ -116,8 +116,8 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory.DigestAuthContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.marklogic.core.MarkLogicOperations;
-import org.springframework.data.marklogic.core.MarkLogicTemplate;
+import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
+import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicTemplate;
 
 import static com.marklogic.client.DatabaseClientFactory.newClient;
 
@@ -142,7 +142,7 @@ private MarkLogicOperations ops;
 ## Introduction to `MarkLogicTemplate`
 The `MarkLogicTemplate` class is the central class you can use to interact with a MarkLogic database.  It provides a simple interface to do the main CRUD operations against a database, as well as additional helper methods to help you build your queries.
 
-When using the template it is recommended that you interact with [`MarkLogicOperations`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html) instead of with `MarkLogicTemplate` directly.
+When using the template it is recommended that you interact with [`MarkLogicOperations`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/MarkLogicOperations.html) instead of with `MarkLogicTemplate` directly.
 
 The naming conventions for `MarkLogicOperations` is patterned after MarkLogic's [`PojoRepository`](http://docs.marklogic.com/javadoc/client/index.html), so you will find `read`, `write`, `search`, `count`, `exists`, and `delete` methods, as well as some variants from those.
 
@@ -219,12 +219,12 @@ And finally, here are ones you can use to remove documents from the database:
     <T> void delete(StructuredQueryDefinition query, Class<T> entityClass);
 ```
 
-For more details on what each function does, as well as additional functions for "count" and "exists" operations, see the javadocs for [`MarkLogicOperations`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html) .
+For more details on what each function does, as well as additional functions for "count" and "exists" operations, see the javadocs for [`MarkLogicOperations`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/MarkLogicOperations.html) .
 
 ### Notes on "@Id"
 All your entities need to have a single field specified as the "ID" of the entity that will be used to create the URI (primary key) of the document in the database.  By default the URI consists of the type of entity with id value and type extensions added on.  For example, a `Person` entity with an `id` field with the value of `1234` would by default get saved under the URI `/Person/1234.json` in the database.
 
-This behavior can be modified through use of the [`@Document`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/mapping/Document.html) annotation.  You can change the default path under which documents get saved, as well as change the type (so XML documents get saved with ".xml").  In order to have more control over how the URIs are generated you can override the `MarkLogicConverter` [`getDocumentUris()`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/convert/MarkLogicConverter.html#getDocumentUris-java.util.List-java.lang.Class-) methods.
+This behavior can be modified through use of the [`@Document`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/mapping/Document.html) annotation.  You can change the default path under which documents get saved, as well as change the type (so XML documents get saved with ".xml").  In order to have more control over how the URIs are generated you can override the `MarkLogicConverter` [`getDocumentUris()`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/convert/MarkLogicConverter.html#getDocumentUris-java.util.List-java.lang.Class-) methods.
 
 ## Building Queries
 There are four main ways to build your queries:
@@ -234,7 +234,7 @@ There are four main ways to build your queries:
 - Structured queries created with a `StructuredQueryBuilder` interface
 - Using the MarkLogic 'DocumentManager` and `QueryManager` interfaces
 
-If all else fails there is an [`executeWithClient`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html#executeWithClient-org.springframework.data.marklogic.core.ClientCallback-) method you can use in `MarkLogicTemplate` that allows you to construct whatever you need to using the full capabilities of the MarkLogic Java Client API.
+If all else fails there is an [`executeWithClient`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/MarkLogicOperations.html#executeWithClient-org.malteseduck.springframework.data.marklogic.core.ClientCallback-) method you can use in `MarkLogicTemplate` that allows you to construct whatever you need to using the full capabilities of the MarkLogic Java Client API.
 
 We will now go into more detail about each of these approaches.
 
@@ -247,14 +247,14 @@ This implementation does not currently implement the functionality to return Jav
 For more details on query method patterns see the [Spring Data Commons](http://docs.spring.io/spring-data/data-commons/docs/current/reference/html/#repositories) documentation.
 
 ### @Query Annotation
-As your queries get more complicated you will find that your query method names may start to get unreadable.  You may also want to be able to test your queries in a query console of sorts and you really can't paste a method name and get it to run.  This is where the [`@Query`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/repository/Query.html) annotation comes in.  This allows you to specify a [Query By Example](http://docs.marklogic.com/guide/search-dev/qbe) query in order to match documents in the database.
+As your queries get more complicated you will find that your query method names may start to get unreadable.  You may also want to be able to test your queries in a query console of sorts and you really can't paste a method name and get it to run.  This is where the [`@Query`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/repository/Query.html) annotation comes in.  This allows you to specify a [Query By Example](http://docs.marklogic.com/guide/search-dev/qbe) query in order to match documents in the database.
 
 One of the nice things about the QBE query is that you can run simple code in MarkLogic's QConsole to test it out.
 
 The `@Query` annotation isn't just for specifying queries, you can also specify query options - you don't even need to specify a query if all you want to do is tweak the query options for one of your query methods.
 
 #### `format`
-With this you can specify the format of the documents against which you are querying.  Typically they match the type of document as you have defined with [`@Document`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/mapping/Document.html), but depending on what transforms you use or other process you have, it may not.
+With this you can specify the format of the documents against which you are querying.  Typically they match the type of document as you have defined with [`@Document`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/mapping/Document.html), but depending on what transforms you use or other process you have, it may not.
 
 #### `transform`
 This allows you to specify the name of a transform to use when reading the documents from the database.  For more information on using transforms see http://docs.marklogic.com/guide/java/transforms.
@@ -292,7 +292,7 @@ Once you have build your query constraints you can pass it into one of the follo
 
 Each of these methods also have a companion `stream` method that returns an `InputStream` instead of entities.  This allows you to stream the data out through your application layer without incurring the cost of de-serialization and serialization.  You would only do this if you wanted to return the raw documents without interaction with them in the application.
 
-For more information on the details of each of these methods, see the [javadocs](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html).
+For more information on the details of each of these methods, see the [javadocs](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/MarkLogicOperations.html).
 
 ### Facets
 
@@ -338,7 +338,7 @@ Once you have that you can "enhance" your structured query by calling one of the
 
 This adds the necessary query option configuration to the query so that it will sort as you have specified.  As an alternative to this template method you can also use the `CombinedQueryDefinitionBuilder` to add sort configuration, and it is described below.
 
-For more details on how this works see the javadocs for [`sortQuery()`](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/core/MarkLogicOperations.html#sortQuery-org.springframework.data.domain.Sort-com.marklogic.client.query.StructuredQueryDefinition-java.lang.Class-).
+For more details on how this works see the javadocs for [`sortQuery()`](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/MarkLogicOperations.html#sortQuery-org.springframework.data.domain.Sort-com.marklogic.client.query.StructuredQueryDefinition-java.lang.Class-).
 
 ### `CombinedQueryDefinitionBuilder`
 The `CombinedQueryDefinitionBuilder` class is a query-building helper class that allows you to more easily create combined queries.  "Combined" queries combine structured queries with ad-hoc query options configuration.  This was build to make things easier in implementing various features of this library but can be useful to you as well.  It has some helper methods that allow easy addition of extracts and sorting configuration to your query.
@@ -352,4 +352,4 @@ CombinedQueryDefinitionBuilder.combine();
 
 The first you pass in your query, then you can leverage the various builder functions to construct the options.  The second is for if you don't have a specific query and are just sending some options to query against "everything".
 
-This builder implements the `CombinedQueryDefinition` interface, so you can look at the [javadocs](https://malteseduck.github.io/spring-data-marklogic/org/springframework/data/marklogic/repository/query/CombinedQueryDefinition.html) for more details on the available methods.
+This builder implements the `CombinedQueryDefinition` interface, so you can look at the [javadocs](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/repository/query/CombinedQueryDefinition.html) for more details on the available methods.

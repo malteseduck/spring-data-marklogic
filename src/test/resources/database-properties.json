@@ -1,6 +1,7 @@
 {
   "stemmed-searches": "basic",
-  "trailing-wildcard-searches": true,
+  "three-character-searches": true,
+  "fast-element-character-searches": true,
   "range-path-index": [
     {
       "scalar-type": "string",
