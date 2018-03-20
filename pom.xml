@@ -331,7 +331,7 @@
 
     <scm>
         <url>https://github.com/malteseduck/spring-data-marklogic</url>
-        <developerConnection>scm:git:git://github.com/malteseduck/spring-data-marklogic</developerConnection>
+        <developerConnection>scm:git:git@github.com:malteseduck/spring-data-marklogic.git</developerConnection>
     </scm>
 
     <repositories>
