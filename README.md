@@ -16,7 +16,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 
 ```xml
 <dependency>
-    <groupId>org.springframework.data</groupId>
+    <groupId>io.github.malteseduck.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
     <version>2.0.0.RELEASE</version>
 </dependency>
