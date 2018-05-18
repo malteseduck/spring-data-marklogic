@@ -23,6 +23,7 @@ import io.github.malteseduck.springframework.data.marklogic.repository.query.Que
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -158,6 +159,9 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     @Query("{ 'name': '?0' }")
     Person qbeFindByNameQuoted(String name);
+
+    @Query("{ name: ':name' }")
+    Person qbeFindByNameWithNamedPlaceholder(@Param("name") String name);
 
     @Query("{ 'name': 'Bobby' }")
     Person qbeFindBobby();
