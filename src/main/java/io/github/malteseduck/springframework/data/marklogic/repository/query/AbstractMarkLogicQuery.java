@@ -44,6 +44,7 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         // Add transforms and extracts to the query, if they are in the annotations
         query = transform(query, typeToRead, accessor);
         query = extracts(query);
+        query = searchOptions(query);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Executing query " + query.serialize());
@@ -86,6 +87,17 @@ public abstract class AbstractMarkLogicQuery implements RepositoryQuery {
         String[] extracts = method.getExtracts();
         if (extracts != null && extracts.length > 0) {
             query = combine(query).extracts(Arrays.asList(extracts));
+        }
+        return query;
+    }
+
+    private StructuredQueryDefinition searchOptions(StructuredQueryDefinition query) {
+        String[] options = method.getSearchQueryOptions();
+        if (options != null && options.length > 0) {
+            query = combine(query)
+                    .options(Arrays.stream(options).map(option ->
+                            "<search-option>" + option + "</search-option>").toArray(String[]::new)
+                    );
         }
         return query;
     }

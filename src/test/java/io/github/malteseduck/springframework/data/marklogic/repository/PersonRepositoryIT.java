@@ -490,6 +490,12 @@ public class PersonRepositoryIT {
     }
 
     @Test
+    public void testFindByAgeExists() throws Exception {
+        List<Person> person = repository.findByAgeExists();
+        assertThat(person).hasSize(all.size());
+    }
+
+    @Test
     public void testFindByNameQBEQuoted() throws Exception {
         Person person = repository.qbeFindByNameQuoted("Bobby");
         assertThat(person).isEqualTo(bobby);

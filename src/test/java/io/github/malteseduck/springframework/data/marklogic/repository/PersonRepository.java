@@ -102,6 +102,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
 
     Person findByBirthtime(Instant birthtime);
 
+    @Query(searchOptions = {"filtered", "unchecked"})
     List<Person> findByAgeExists();
 
     List<Person> findByPets(Pet pet);
@@ -163,7 +164,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     @Query("{ name: ':name' }")
     Person qbeFindByNameWithNamedPlaceholder(@Param("name") String name);
 
-    @Query("{ 'name': 'Bobby' }")
+    @Query(value = "{ 'name': 'Bobby' }", searchOptions = "filtered")
     Person qbeFindBobby();
 
     @Query(query = "{ 'pets': ?0 }")

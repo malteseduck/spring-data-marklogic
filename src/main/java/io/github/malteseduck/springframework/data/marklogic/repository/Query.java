@@ -84,6 +84,13 @@ public @interface Query {
     String[] options() default {};
 
     /**
+     * Shortcut for some of the search-option configurations available for MarkLogic query options, i.e. "filtered",
+     * "unfiltered", sore-logtfidf", "faceted", etc.
+     * @return
+     */
+    String[] searchOptions() default {};
+
+    /**
      * Instead of specifying limited query options individually you can persist an options configuration to the database
      * and just reference it to be used in the query.  This allows full configuration of the query for the annotated query.
      *

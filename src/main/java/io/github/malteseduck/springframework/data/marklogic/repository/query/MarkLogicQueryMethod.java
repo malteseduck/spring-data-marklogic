@@ -90,6 +90,12 @@ public class MarkLogicQueryMethod extends QueryMethod {
                 : new String[0];
     }
 
+    String[] getSearchQueryOptions() {
+        return getQueryAnnotation() != null
+                ? getQueryAnnotation().searchOptions()
+                : new String[0];
+    }
+
     String getQueryOptionsName() {
         return getQueryAnnotation() != null
                 ? getQueryAnnotation().optionsName()
