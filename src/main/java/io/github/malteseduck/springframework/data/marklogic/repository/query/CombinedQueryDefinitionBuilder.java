@@ -135,6 +135,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 }
             }
 
+            String serialized = null;
             if (!optionsToSerialize.isEmpty()) {
                 ObjectNode optionsJson = factory.objectNode();
                 optionsToSerialize.stream()
@@ -164,14 +165,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                         });
 
                 search.set("options", optionsJson);
+                serialized = factory.objectNode().set("search", search).toString();
             } else {
-                // We need an empty options node or the REST API is unhappy, which makes us unhappy
-                search.set("options", factory.objectNode());
+                // If there are no options, then just pass the query to the endpoint
+                serialized = search.toString();
             }
 
-            // Make sure it is "proper" JSON so that MarkLogic is happy
-            return factory.objectNode().set("search", search).toString()
-                    .replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
+            return serialized.replaceAll("%[0-9]*\":", "\":"); // get rid of the "unique" identifiers for properties
 
         } else if (isQbe() || structuredQuery != null ||
                 !optionsToSerialize.isEmpty() ||

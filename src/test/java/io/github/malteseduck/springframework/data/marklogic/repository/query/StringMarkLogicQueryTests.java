@@ -59,7 +59,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
+				.isEqualTo(jsonQuery("{ $query: { name: 'Bubba' } }"));
 	}
 
 	@Test
@@ -102,7 +102,7 @@ public class StringMarkLogicQueryTests {
 				new Pet("Fluffy", "cat")
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ search: { $query: { pets: { name: 'Fluffy', type: 'cat', immunizations: null } }, options: {} } }"));
+				.isEqualTo(jsonQuery("{ $query: { pets: { name: 'Fluffy', type: 'cat', immunizations: null } } }"));
 	}
 
 	@Test
@@ -112,7 +112,16 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
+				.isEqualTo(jsonQuery("{ $query: { name: 'Bubba' } }"));
+	}
+
+	@Test
+	public void testOmitsOptionsToSupportPersistedOptions() throws Exception {
+		StructuredQueryDefinition query = stringQuery(
+				queryMethod(PersonRepository.class, "qbeFindBobby")
+		);
+		assertThat(query.serialize())
+				.isEqualTo(jsonQuery("{ $query: { name: 'Bobby' } }"));
 	}
 
 
@@ -133,7 +142,7 @@ public class StringMarkLogicQueryTests {
 				"Bubba"
 		);
 		assertThat(query.serialize())
-				.isEqualTo(jsonQuery("{ search: { $query: { name: 'Bubba' }, options: {} } }"));
+				.isEqualTo(jsonQuery("{ $query: { name: 'Bubba' } }"));
 
 	}
 

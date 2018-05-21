@@ -502,12 +502,6 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void testFindByNameWithNamedParameter() throws Exception {
-        Person person = repository.qbeFindByNameWithNamedPlaceholder("Bobby");
-        assertThat(person).isEqualTo(bobby);
-    }
-
-    @Test
     public void testFindByPetQBE() throws Exception {
         List<Person> people = repository.qbeFindByPet(new Pet("Snoopy", "dog"));
         assertThat(people).containsExactly(george);
