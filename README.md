@@ -18,7 +18,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 <dependency>
     <groupId>io.github.malteseduck.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
-    <version>2.0.0.RELEASE</version>
+    <version>2.0.1.RELEASE</version>
 </dependency>
 ```
 
@@ -262,10 +262,13 @@ This allows you to specify the name of a transform to use when reading the docum
 #### `extract`/`selected`
 These are used to specify which properties are included/excluded from the result documents before they return from the database. The `extract` field is for specifying the XPath of each property this effects, and the `selected` allows you whether to include or exclude those fields.
 
+For more information on extracts see [Extracting a Portion of Matching Documents](http://docs.marklogic.com/guide/java/searches#id_90087).
+
 #### `optionsName`
 You can persist query configuration into your MarkLogic database and reference that configuration in your queries.  This is a more optimize approach to using options (as opposed to creating ad-hoc ones at query time).  This option allows you to specify the name of one of your persisted options.  These options will be used as part of the annotated query that is run.
 
-For more information on extracts see [Extracting a Portion of Matching Documents](http://docs.marklogic.com/guide/java/searches#id_90087).
+#### `searchOptions`
+To configure search query options like "faceted", "unchecked", etc.  To see all the available options see the documentation on [cts:search](http://docs.marklogic.com/cts:search)  
 
 ### Structured Query Building
 If you need more fine-grained control over query options, or need to use features not available with MarkLogic's Query By Example, then you will need to customize your repositories and use `MarkLogicOperations` directly.  When you do this the main way to build your queries is to use a `StructuredQueryBuilder` or `PojoQueryBuilder` interface and pass it into one of the various `search` methods in the template.
