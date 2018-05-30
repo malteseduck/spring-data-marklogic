@@ -2,6 +2,7 @@ package io.github.malteseduck.springframework.data.marklogic.core.convert;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mapping.context.MappingContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
@@ -67,6 +69,14 @@ public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implem
 
     @Override
     public void afterPropertiesSet() {
+        Module kotlinModule = null;
+        try {
+            kotlinModule = (Module) Class.forName("com.fasterxml.jackson.module.kotlin.KotlinModule", false, getClass().getClassLoader())
+                    .getConstructor().newInstance();
+        } catch (Exception e) {
+            LOG.debug("KotlinModule not included in mappers because it was not detected on the classpath or there was an issue instantiating an instance");
+        }
+
         objectMapper = new ObjectMapper()
                 .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                 .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
@@ -76,10 +86,12 @@ public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implem
                 // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
                 .disableDefaultTyping();
 
+        if (kotlinModule != null) objectMapper = objectMapper.registerModule(kotlinModule);
+
         try {
             // TODO: Is it just easier/better to include the dumb library?  It will cause the default behavior to change for Spring Web stuff
             Class mapperClass = Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
-            xmlMapper = ((ObjectMapper) mapperClass.newInstance())
+            xmlMapper = ((ObjectMapper) mapperClass.getConstructor().newInstance())
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                     .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
@@ -87,13 +99,14 @@ public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implem
                     .setDateFormat(JacksonMarkLogicConverter.simpleDateFormat8601)
                     .registerModule(new JavaTimeModule())
                     .disableDefaultTyping();
-        } catch (ClassNotFoundException e) {
-            LOG.warn("com.fasterxml.jackson.dataformat:jackson-dataformat-xml needs to be included in order to use Java->XML conversion");
-        } catch (IllegalAccessException e) {
-            LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
-        } catch (InstantiationException e) {
-            LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
-        }
 
+            if (kotlinModule != null) xmlMapper = xmlMapper.registerModule(kotlinModule);
+        } catch (ClassNotFoundException e) {
+            LOG.info("com.fasterxml.jackson.dataformat:jackson-dataformat-xml needs to be included in order to use Java->XML conversion");
+        } catch (IllegalAccessException | NoSuchMethodException | InstantiationException e) {
+            LOG.warn("Unable to instantiate XmlMapper instance in order to use Java->XML conversion");
+        }   catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 }

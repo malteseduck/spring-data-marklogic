@@ -153,6 +153,14 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Kotlin Configuration -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <version>${jackson}</version>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.assertj</groupId>

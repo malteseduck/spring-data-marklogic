@@ -18,7 +18,7 @@ Include the following dependency in your project's `pom.xml` dependencies sectio
 <dependency>
     <groupId>io.github.malteseduck.springframework.data</groupId>
     <artifactId>spring-data-marklogic</artifactId>
-    <version>2.0.1.RELEASE</version>
+    <version>2.0.2.RELEASE</version>
 </dependency>
 ```
 
