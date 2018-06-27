@@ -111,7 +111,7 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
                         is Word -> words(annotation, property, value)
                         is Range -> range(annotation, property, value)
                         is Value -> value(annotation, property, value)
-                        else -> value(property, value)
+                        else -> value(property.name, value)
                     }
                 }
             }
@@ -174,12 +174,11 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
     }
 
     private fun <Q : QueryCriteria<T>> value(annotation: Value, property: KProperty1<Q, *>, value: Any): StructuredQueryDefinition {
-        val fieldName = if (annotation.field.isNotBlank()) annotation.field else property.name
-        return value(property, value, annotation.options, annotation.weight)
+        val fieldName = if  (annotation.field.isNotBlank()) annotation.field else property.name
+        return value(fieldName, value, annotation.options, annotation.weight)
     }
 
-    private fun <Q : QueryCriteria<T>> value(property: KProperty1<Q, *>, value: Any, options: Array<String>? = arrayOf("exact"), weight: Double = 1.0): StructuredQueryDefinition {
-        val fieldName = property.name
+    private fun value(fieldName: String, value: Any, options: Array<String>? = arrayOf("exact"), weight: Double = 1.0): StructuredQueryDefinition {
 
         return wrapScope(fieldName) {
             when (value) {

@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -79,18 +80,28 @@ public class PersonCriteriaRepositoryIT {
     @Test
     public void testFindsPersonsByName() {
         PersonCriteria criteria = new PersonCriteria();
-        criteria.setName("Jane");
+        criteria.setName("Jan");
 
         List<Person> people = repository.findAll(criteria);
         assertThat(people).containsExactly(jane);
     }
 
+    @Test
+    public void testFindsPersonsByExactName() {
+        PersonCriteria criteria = new PersonCriteria();
+        criteria.setHasExactNameOf("Jane");
+
+        List<Person> people = repository.findAll(criteria);
+        assertThat(people).containsExactly(jane);
+    }
+
+    @Test
     public void testFindsPersonsByGender() {
         PersonCriteria criteria = new PersonCriteria();
         criteria.setGender("female");
 
-        List<Person> people = repository.findAll(criteria);
-        assertThat(people).containsExactly(andrea, jenny, jane);
+        List<Person> people = repository.findAll(criteria, Sort.by("name"));
+        assertThat(people).containsExactly(andrea, jane, jenny);
     }
 
     @Test

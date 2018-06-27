@@ -10,6 +10,9 @@ data class PersonCriteria(
     @Word
     var name: String? = null,
 
+    @Value(field = "name")
+    var hasExactNameOf: String? = null,
+
     var age: Int? = null,
 
     @Range(field = "age", operator = GT)
