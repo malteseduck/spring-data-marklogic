@@ -23,7 +23,8 @@
         <springdata.commons>2.0.5.RELEASE</springdata.commons>
         <woodstox>4.4.1</woodstox>
         <json>20170516</json>
-        <jackson>2.9.2</jackson>
+        <jackson>2.9.4</jackson>
+        <kotlin>1.2.50</kotlin>
         <maven-source-plugin>3.0.1</maven-source-plugin>
         <maven-javadoc-plugin>2.9.1</maven-javadoc-plugin>
 
@@ -154,10 +155,14 @@
 
         <!-- Kotlin Configuration -->
         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-kotlin</artifactId>
-            <version>${jackson}</version>
-            <optional>true</optional>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin}</version>
         </dependency>
 
         <!-- Test Dependencies -->

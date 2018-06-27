@@ -27,7 +27,9 @@ import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.support.RepositoryComposition;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.core.support.RepositoryFragment;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
@@ -66,6 +68,21 @@ public class MarkLogicRepositoryFactory extends RepositoryFactorySupport {
     @Override
     protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
         return SimpleMarkLogicRepository.class;
+    }
+
+    @Override
+    protected RepositoryComposition.RepositoryFragments getRepositoryFragments(RepositoryMetadata metadata) {
+        RepositoryComposition.RepositoryFragments fragments = RepositoryComposition.RepositoryFragments.empty();
+
+        boolean isQueryCriteriaRepository = QueryCriteriaExecutor.class.isAssignableFrom(metadata.getRepositoryInterface());
+
+        if (isQueryCriteriaRepository) {
+            EntityInformation<?, Serializable> entityInformation = getEntityInformation(metadata.getDomainType());
+            fragments = fragments.append(RepositoryFragment.implemented(
+                    getTargetRepositoryViaReflection(QueryCriteriaMarkLogicExecutor.class, entityInformation, operations)));
+        }
+
+        return fragments;
     }
 
     @Override

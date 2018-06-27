@@ -275,7 +275,8 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> T write(final T entity, ServerTransform transform, String... collections) {
-        return write(singletonList(entity), transform, collections).get(0);
+        List<T> results = write(singletonList(entity), transform, collections);
+        return results.isEmpty() ? null : results.get(0);
     }
 
     @Override
