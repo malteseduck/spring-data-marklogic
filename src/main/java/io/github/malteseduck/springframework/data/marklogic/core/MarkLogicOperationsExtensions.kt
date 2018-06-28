@@ -1,6 +1,7 @@
 package io.github.malteseduck.springframework.data.marklogic.core
 
 import com.marklogic.client.query.StructuredQueryDefinition
+import io.github.malteseduck.springframework.data.marklogic.domain.facets.FacetedPage
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import java.io.InputStream
@@ -25,10 +26,10 @@ inline fun <reified T : Any> MarkLogicOperations.search(query: StructuredQueryDe
 inline fun <reified T : Any> MarkLogicOperations.search(query: StructuredQueryDefinition, start: Long = 0, length: Int = 10): Page<T> =
     search(query, start, length, T::class.java)
 
-inline fun <reified T : Any> MarkLogicOperations.facetedSearch(query: StructuredQueryDefinition, pageable: Pageable): Page<T> =
+inline fun <reified T : Any> MarkLogicOperations.facetedSearch(query: StructuredQueryDefinition, pageable: Pageable): FacetedPage<T> =
     facetedSearch(query, pageable, T::class.java)
 
-inline fun <reified T : Any> MarkLogicOperations.facetedSearch(query: StructuredQueryDefinition, start: Long = 0, length: Int = 10): Page<T> =
+inline fun <reified T : Any> MarkLogicOperations.facetedSearch(query: StructuredQueryDefinition, start: Long = 0, length: Int = 10): FacetedPage<T> =
     facetedSearch(query, start, length, T::class.java)
 
 inline fun <reified T : Any> MarkLogicOperations.searchOne(query: StructuredQueryDefinition): T? =
