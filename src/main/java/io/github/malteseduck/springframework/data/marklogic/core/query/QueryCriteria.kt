@@ -19,5 +19,5 @@ abstract class QueryCriteria<T> {
     var options: String? = null
 
     // Override to do customization of the created CombinedQueryDefinition
-    fun configure(query: CombinedQueryDefinition): CombinedQueryDefinition = query
+    open fun configure(query: CombinedQueryDefinition): CombinedQueryDefinition = query
 }
