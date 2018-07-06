@@ -49,6 +49,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
@@ -259,29 +260,28 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
 
     @Override
     public <T> T write(T entity) {
-        return write(entity, (String[]) null);
+        return write(entity, new String[0]);
     }
 
     @Override
     public <T> T write(final T entity, String... collections) {
-        // TODO: Safer...
         return write(entity, null, collections);
     }
 
     @Override
-    public <T> T write(T entity, ServerTransform transform) {
-        return write(entity, transform, (String[]) null);
+    public <T> T write(T entity, @Nullable ServerTransform transform) {
+        return write(entity, transform, new String[0]);
     }
 
     @Override
-    public <T> T write(final T entity, ServerTransform transform, String... collections) {
+    public <T> T write(final T entity, @Nullable ServerTransform transform, String... collections) {
         List<T> results = write(singletonList(entity), transform, collections);
         return results.isEmpty() ? null : results.get(0);
     }
 
     @Override
     public <T> List<T> write(List<T> entities) {
-        return write(entities, null, (String[]) null);
+        return write(entities, null, new String[0]);
     }
 
     @Override
@@ -290,12 +290,12 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     }
 
     @Override
-    public <T> List<T> write(List<T> entities, ServerTransform transform) {
-        return write(entities, transform, (String[]) null);
+    public <T> List<T> write(List<T> entities, @Nullable ServerTransform transform) {
+        return write(entities, transform, new String[0]);
     }
 
     @Override
-    public <T> List<T> write(List<T> entities, ServerTransform transform, String... collections) {
+    public <T> List<T> write(List<T> entities, @Nullable ServerTransform transform, String... collections) {
         ServerTransform writeTransform = !entities.isEmpty() && transform == null
                 ? queryMapper.getWriteTransform(entities.get(0).getClass())
                 : transform;
@@ -314,7 +314,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
                 // TODO: Do we have a case where we are saving entities of different types all in the same operation?
                 DocumentWriteSet writeSet = manager.newWriteSet();
                 for (DocumentDescriptor doc : docs) {
-                    if (collections != null && collections.length > 0) {
+                    if (collections.length > 0) {
                         // If collections are specified then those are the ones that will be used - we expect things to be how we specify
                         doc.getMetadata().getCollections().clear();
                         doc.setMetadata(doc.getMetadata().withCollections(collections));
