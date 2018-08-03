@@ -285,6 +285,14 @@ public interface MarkLogicOperations {
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
+    <T> List<T> search(Class<T> entityClass);
+
+    /**
+     * Query for a list of of documents of the specified type using the specified structured query.  Only the first
+     * {@link com.marklogic.client.impl.DocumentManagerImpl#DEFAULT_PAGE_LENGTH} documents are returned.
+     *
+     * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
+     */
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
     /**

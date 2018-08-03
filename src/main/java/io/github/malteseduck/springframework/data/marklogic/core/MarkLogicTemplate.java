@@ -393,6 +393,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
+    @Override
     public <T> List<T> search(Class<T> entityClass) {
         return search(qb.and(), 0, Integer.MAX_VALUE, entityClass)
                 .getContent();
