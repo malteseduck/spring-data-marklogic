@@ -22,6 +22,7 @@ public class Person {
     private String description;
     @Indexed(type = IndexType.ELEMENT)
     private Instant birthtime;
+    private Instant modified;
     private List<Integer> rankings;
     private List<String> hobbies;
     private List<Pet> pets;
@@ -50,6 +51,7 @@ public class Person {
         this.occupation = occupation;
         this.description = description;
         this.birthtime = birthtime;
+        this.modified = Instant.now();
         this.rankings = new ArrayList<>();
         this.hobbies = hobbies;
         this.pets = pets;
@@ -117,6 +119,15 @@ public class Person {
 
     public void setBirthtime(Instant birthtime) {
         this.birthtime = birthtime;
+    }
+
+    public Instant getModified() {
+        return modified;
+    }
+
+    public Person setModified(Instant modified) {
+        this.modified = modified;
+        return this;
     }
 
     public List<Integer> getRankings() {

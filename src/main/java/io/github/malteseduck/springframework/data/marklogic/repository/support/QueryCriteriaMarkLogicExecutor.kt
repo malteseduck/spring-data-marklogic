@@ -7,6 +7,8 @@ import com.marklogic.client.query.StructuredQueryBuilder
 import com.marklogic.client.query.StructuredQueryDefinition
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.DocumentFormat
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType.*
 import io.github.malteseduck.springframework.data.marklogic.core.query.QueryCriteria
 import io.github.malteseduck.springframework.data.marklogic.core.query.Range
 import io.github.malteseduck.springframework.data.marklogic.core.query.Value
@@ -127,6 +129,12 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
             else -> qb.jsonProperty(field)
         }
 
+    private fun index(field: String, indexType: IndexType): StructuredQueryBuilder.RangeIndex =
+        when (indexType) {
+            ELEMENT -> qb.element(field)
+            else -> qb.pathIndex(field)
+        }
+
     /**
      * Break out the string(s) into "terms".  To allow for partial matches surround each term with wildcards.  This
      * potentially will not with other languages, as the words separator may not be a space.  The search will be
@@ -162,15 +170,19 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
     }
 
     private fun <Q : QueryCriteria<T>> range(annotation: Range, property: KProperty1<Q, *>, value: Any): StructuredQueryDefinition {
-        val fieldName = if (annotation.field.isNotBlank()) annotation.field else property.name
+        val fieldName = when {
+            annotation.pathIndex.isNotBlank() -> annotation.pathIndex
+            annotation.field.isNotBlank() -> indexName(annotation.field, annotation.indexType)
+            else -> indexName(property.name, annotation.indexType)
+        }
         var type: String = annotation.type
 
         if (type.isEmpty()) {
             if (value is Temporal) type = "xs:dateTime"
-            else ValueConverter.convertFromJava(value, { _, stringType, _ -> type = stringType })
+            else ValueConverter.convertFromJava(value) { _, stringType, _ -> type = stringType }
         }
 
-        return wrapScope(fieldName, { qb.range(element(it), type, annotation.options, annotation.operator, value) })
+        return qb.range(index(fieldName, annotation.indexType), type, annotation.options, annotation.operator, value)
     }
 
     private fun <Q : QueryCriteria<T>> value(annotation: Value, property: KProperty1<Q, *>, value: Any): StructuredQueryDefinition {
@@ -198,4 +210,8 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
                     qb.containerQuery(qb.jsonProperty(s), acc)
                 }
         } else query(name)
+
+    private fun indexName(field: String?, indexType: IndexType): String =
+        if (indexType == ELEMENT) field!!.split(".").last()
+        else "/${field!!.replace('.', '/')}"
 }

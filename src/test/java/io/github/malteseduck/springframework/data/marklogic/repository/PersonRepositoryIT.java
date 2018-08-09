@@ -255,7 +255,7 @@ public class PersonRepositoryIT {
     public void testExecutesPagedFinderCorrectly() throws Exception {
         Page<Person> page = repository.findByGenderLike("fem*",
                 PageRequest.of(0, 2, Sort.Direction.ASC, "name"));
-        
+
         assertThat(page.isFirst()).isTrue();
         assertThat(page.isLast()).isFalse();
         assertThat(page.getNumberOfElements()).isEqualTo(2);
@@ -290,7 +290,7 @@ public class PersonRepositoryIT {
     @Test
     public void testFindsPeopleUsingNotPredicate() {
         List<Person> people = repository.findByNameNot("Andrea");
-        
+
         assertThat(people)
                 .doesNotContain(andrea)
                 .hasSize(all.size() - 1);
@@ -324,7 +324,7 @@ public class PersonRepositoryIT {
     @Test
     public void testExecutesDerivedStartsWithQueryCorrectly() {
         List<Person> people = repository.findByNameStartsWith("Jen");
-        
+
         assertThat(people).containsExactlyInAnyOrder(jenny);
     }
 
@@ -333,7 +333,7 @@ public class PersonRepositoryIT {
         List<Person> people = repository.findByNameEndsWith("nny");
         assertThat(people).containsExactly(jenny);
     }
-    
+
     @Test
     public void testFindByNameIgnoreCase() {
         List<Person> people = repository.findByNameIgnoreCase("george");
