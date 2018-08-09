@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 public class BasicQueryIT {
 
-    private MarkLogicTemplate template;
+    private MarkLogicOperations ops;
     private StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
     private Person bobby, george, jane;
@@ -48,7 +48,7 @@ public class BasicQueryIT {
 
     @Autowired
     public void setClient(DatabaseClient client) {
-        template = new MarkLogicTemplate(client);
+        ops = new MarkLogicTemplate(client);
     }
 
     @Before
@@ -59,7 +59,7 @@ public class BasicQueryIT {
         george = new Person("George", 12, "male", "engineer", "The guy wo works at the gas station, he is your friend", Instant.parse("2016-01-01T00:00:00Z"));
         jane = new Person("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-01-01T00:00:00Z"));
 
-        all = template.write(asList(bobby, george, jane));
+        all = ops.write(asList(bobby, george, jane));
     }
 
     @After
@@ -68,46 +68,47 @@ public class BasicQueryIT {
     }
 
     private void cleanDb() {
-        template.dropCollection(Person.class);
+        ops.dropCollection(Person.class);
+        ops.delete(qb.directory(true, "/test/categories/"), Category.class);
     }
 
     @Test
     public void testExists() throws Exception {
-        assertThat(template.exists(qb.value(qb.jsonProperty("age"), 23), Person.class)).as("does exist").isTrue();
-        assertThat(template.exists(qb.value(qb.jsonProperty("occupation"), "knight"), Person.class)).as("doesn't exist").isFalse();
+        assertThat(ops.exists(qb.value(qb.jsonProperty("age"), 23), Person.class)).as("does exist").isTrue();
+        assertThat(ops.exists(qb.value(qb.jsonProperty("occupation"), "knight"), Person.class)).as("doesn't exist").isFalse();
     }
 
     @Test
     public void testExistsById() throws Exception {
-        assertThat(template.exists(bobby.getId(), Person.class)).as("does exist").isTrue();
-        assertThat(template.exists("invalidid")).as("doesn't exist").isFalse();
+        assertThat(ops.exists(bobby.getId(), Person.class)).as("does exist").isTrue();
+        assertThat(ops.exists("invalidid")).as("doesn't exist").isFalse();
     }
 
     @Test
     public void testExistsByUri() throws Exception {
-        assertThat(template.exists("/Person/" + bobby.getId() + ".json")).as("does exist").isTrue();
-        assertThat(template.exists("invalidid")).as("doesn't exist").isFalse();
+        assertThat(ops.exists("/Person/" + bobby.getId() + ".json")).as("does exist").isTrue();
+        assertThat(ops.exists("invalidid")).as("doesn't exist").isFalse();
     }
 
     @Test
     public void testCount() throws Exception {
-        assertThat(template.count(Person.class)).isEqualTo(all.size());
+        assertThat(ops.count(Person.class)).isEqualTo(all.size());
     }
 
     @Test
     public void testCountByCollections() throws Exception {
-        assertThat(template.count("Person")).isEqualTo(all.size());
+        assertThat(ops.count("Person")).isEqualTo(all.size());
     }
 
     @Test
     public void testCountByQuery() throws Exception {
-        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"))).as("without type").isEqualTo(2);
-        assertThat(template.count(qb.value(qb.jsonProperty("gender"), "male"), Person.class)).as("options type").isEqualTo(2);
+        assertThat(ops.count(qb.value(qb.jsonProperty("gender"), "male"))).as("without type").isEqualTo(2);
+        assertThat(ops.count(qb.value(qb.jsonProperty("gender"), "male"), Person.class)).as("options type").isEqualTo(2);
     }
 
     @Test
     public void testQueryByValue() {
-        List<Person> people = template.search(
+        List<Person> people = ops.search(
             qb.value(qb.jsonProperty("gender"), "male"),
             Person.class
         );
@@ -117,7 +118,7 @@ public class BasicQueryIT {
 
     @Test
     public void testQueryByValueWithLimit() {
-        Page<Person> people = template.search(
+        Page<Person> people = ops.search(
             qb.value(qb.jsonProperty("gender"), "male"),
             0,
             1,
@@ -130,7 +131,7 @@ public class BasicQueryIT {
 
     @Test
     public void testSearchOne() {
-        Person person = template.searchOne(
+        Person person = ops.searchOne(
                 qb.value(qb.jsonProperty("name"), "Bobby"),
                 Person.class
         );
@@ -140,7 +141,7 @@ public class BasicQueryIT {
 
     @Test
     public void testSearchOneReturningNoResults() {
-        Person person = template.searchOne(
+        Person person = ops.searchOne(
                 qb.value(qb.jsonProperty("name"), "BubbaMan"),
                 Person.class
         );
@@ -150,8 +151,8 @@ public class BasicQueryIT {
 
     @Test
     public void testQuerySorted() {
-        List<Person> people = template.search(
-            template.sortQuery(Sort.by("name"), null),
+        List<Person> people = ops.search(
+            ops.sortQuery(Sort.by("name"), null),
             Person.class
         );
 
@@ -160,7 +161,7 @@ public class BasicQueryIT {
 
     @Test
     public void testQueryWithPageable() {
-        Page<Person> people = template.search(
+        Page<Person> people = ops.search(
                 null,
                 ChunkRequest.of(0, 3, Sort.by("name")),
                 Person.class
@@ -171,8 +172,8 @@ public class BasicQueryIT {
 
     @Test
     public void testQueryByValueSorted() {
-        List<Person> people = template.search(
-            template.sortQuery(
+        List<Person> people = ops.search(
+            ops.sortQuery(
                 Sort.by("name"),
                 qb.value(qb.jsonProperty("gender"), "male")
             ),
@@ -184,7 +185,7 @@ public class BasicQueryIT {
 
     @Test
     public void testQueryByValueStreamed() throws JsonProcessingException {
-        InputStream people = template.stream(
+        InputStream people = ops.stream(
                 qb.value(qb.jsonProperty("name"), "Bobby"),
                 PersonToStream.class
         );
@@ -194,7 +195,7 @@ public class BasicQueryIT {
 
     @Test
     public void testQueryByValueStreamedWithPagable() throws JsonProcessingException {
-        InputStream people = template.stream(
+        InputStream people = ops.stream(
                 qb.value(qb.jsonProperty("gender"), "male"),
                 ChunkRequest.of(0, 1, Sort.by("name")),
                 PersonToStream.class
@@ -208,15 +209,15 @@ public class BasicQueryIT {
         expectation.expect(InvalidMarkLogicApiUsageException.class);
         expectation.expectMessage("SEARCH-BADORDERBY");
 
-        template.search(
-            template.sortQuery(Sort.by("blabbitybloobloo"), null),
+        ops.search(
+            ops.sortQuery(Sort.by("blabbitybloobloo"), null),
             Person.class
         );
     }
 
     @Test
     public void testQueryReturningFacets() {
-        FacetedPage<Person> results = template.facetedSearch(
+        FacetedPage<Person> results = ops.facetedSearch(
                 CombinedQueryDefinitionBuilder.combine()
                         .sort(Sort.by("name"))
                         .optionsName("facets"),
@@ -230,5 +231,16 @@ public class BasicQueryIT {
                 .extracting(FacetResultDto::getName).contains("occupation", "age", "gender");
         assertThat(results.getFacets())
                 .extracting(FacetResultDto::getCount).contains(3L, 3L, 2L);
+    }
+
+    @Test
+    public void testQueryIsScopedToDirectory() {
+        ops.write(new Category().setTitle("Test Category"));
+
+        List<Category> categories = ops.search(Category.class);
+        assertThat(categories).as("number of categories")
+            .hasSize(1);
+        assertThat(categories).extracting(Category::getTitle).as("title of returned category")
+            .containsExactly("Test Category");
     }
 }

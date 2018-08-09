@@ -1,75 +1,82 @@
 {
-  "stemmed-searches": "basic",
-  "three-character-searches": true,
-  "fast-element-character-searches": true,
-  "range-path-index": [
-    {
-      "scalar-type": "string",
-      "path-expression": "/name",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "string",
-      "path-expression": "/pets/name",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "int",
-      "path-expression": "/age",
-      "collation": null,
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "string",
-      "path-expression": "/gender",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "string",
-      "path-expression": "/occupation",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "dateTime",
-      "path-expression": "/birthtime",
-      "collation": null,
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    }
-  ],
-  "range-element-index": [
-    {
-      "scalar-type": "string",
-      "namespace-uri": null,
-      "localname": "name",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "int",
-      "namespace-uri": null,
-      "localname": "age",
-      "collation": "http://marklogic.com/collation/",
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    },
-    {
-      "scalar-type": "dateTime",
-      "namespace-uri": null,
-      "localname": "birthtime",
-      "collation": null,
-      "range-value-positions": false,
-      "invalid-values": "reject"
-    }
-  ]
+    "stemmed-searches": "basic",
+    "three-character-searches": true,
+    "fast-element-character-searches": true,
+    "range-path-index": [
+        {
+            "scalar-type": "string",
+            "path-expression": "/name",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "string",
+            "path-expression": "/pets/name",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "int",
+            "path-expression": "/age",
+            "collation": null,
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "string",
+            "path-expression": "/gender",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "string",
+            "path-expression": "/occupation",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "dateTime",
+            "path-expression": "/birthtime",
+            "collation": null,
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "dateTime",
+            "path-expression": "/modified",
+            "collation": null,
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        }
+    ],
+    "range-element-index": [
+        {
+            "scalar-type": "string",
+            "namespace-uri": null,
+            "localname": "name",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "int",
+            "namespace-uri": null,
+            "localname": "age",
+            "collation": "http://marklogic.com/collation/",
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        },
+        {
+            "scalar-type": "dateTime",
+            "namespace-uri": null,
+            "localname": "birthtime",
+            "collation": null,
+            "range-value-positions": false,
+            "invalid-values": "reject"
+        }
+    ]
 }

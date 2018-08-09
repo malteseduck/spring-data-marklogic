@@ -35,6 +35,7 @@ public class BasicMarkLogicPersistentEntity<T> extends BasicPersistentEntity<T, 
         Class<? extends ServerTransformer> defaultTransformer = null;
 
         if (document != null) {
+            defaultUri = normalize(Util.coalesce(document.type(), defaultUri));
             this.baseUri = normalize(Util.coalesce(document.uri(), document.value(), defaultUri));
             this.documentFormat = document.format().toFormat();
             this.typePersistenceStrategy = document.typeStrategy();

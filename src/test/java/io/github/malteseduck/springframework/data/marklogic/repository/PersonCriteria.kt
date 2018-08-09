@@ -2,6 +2,8 @@ package io.github.malteseduck.springframework.data.marklogic.repository
 
 import com.marklogic.client.query.StructuredQueryBuilder.Operator.*
 import io.github.malteseduck.springframework.data.marklogic.core.Person
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType.ELEMENT
 import io.github.malteseduck.springframework.data.marklogic.core.query.*
 import io.github.malteseduck.springframework.data.marklogic.core.query.QueryCriteria
 import java.time.Instant
@@ -31,8 +33,11 @@ data class PersonCriteria(
 
     var birthtime: Instant? = null,
 
-    @Range(field = "birthtime", operator = GT)
+    @Range(field = "birthtime", operator = GT, indexType = ELEMENT)
     var bornAfter: Instant? = null,
+
+    @Range(field = "modified", operator = LT)
+    var modifiedBefore: Instant? = null,
 
     var hobbies: String? = null,
 

@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.github.malteseduck.springframework.data.marklogic.core.mapping.TypePersistenceStrategy.COLLECTION;
+import static io.github.malteseduck.springframework.data.marklogic.core.mapping.TypePersistenceStrategy.URI;
 import static java.util.Arrays.asList;
 import static io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
@@ -71,7 +73,7 @@ public abstract class AbstractMarkLogicConverter implements MarkLogicConverter {
             throw new IllegalArgumentException("Your entity of type " + source.getClass().getName() + " does not have a method or field annotated with org.springframework.data.annotation.Id");
         }
 
-        if (entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
+        if (entity.getTypePersistenceStrategy() == COLLECTION) {
             if (doc.getMetadata() == null) doc.setMetadata(new DocumentMetadataHandle());
             doc.setMetadata(doc.getMetadata().withCollections(entity.getTypeName()));
         } else {
@@ -144,7 +146,21 @@ public abstract class AbstractMarkLogicConverter implements MarkLogicConverter {
     @Override
     public <T> QueryDefinition wrapQuery(StructuredQueryDefinition query, Class<T> entityClass) {
         boolean isRaw = query instanceof CombinedQueryDefinition && ((CombinedQueryDefinition) query).isQbe();
-        CombinedQueryDefinition combined = combine(query).type(entityClass);
+        CombinedQueryDefinition combined = combine(query);
+        if (entityClass != null) {
+            final MarkLogicPersistentEntity<?> entity = getMappingContext().getPersistentEntity(entityClass);
+
+            if (entity.getTypePersistenceStrategy() == COLLECTION) {
+                // Only scope queries to the collection if that is the type strategy
+                combined = combined.type(entityClass);
+            } else if (entity.getTypePersistenceStrategy() == URI) {
+                // Check to see if the base uri is different than the default "/", and if it is then scope the query to just
+                // that "directory".
+                String baseUri = entity.getBaseUri();
+                if (!baseUri.equals("/")) combined = combined.directory(baseUri);
+            }
+        }
+
         if (isRaw) {
             return combined.getRawQbe();
         } else {

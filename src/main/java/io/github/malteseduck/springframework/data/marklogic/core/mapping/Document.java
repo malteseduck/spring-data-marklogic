@@ -21,7 +21,8 @@ public @interface Document
 	String value() default "";
 
 	/**
-	 * The base URI for documents of the annotated type.
+	 * The base URI for documents of the annotated type.  If the type persistence strategy is set to "URI" then will
+     * scope all queries to limit to only documents under this URI.  Defaults to "/TYPE_NAME/".
 	 */
 	String uri() default "";
 
@@ -33,22 +34,17 @@ public @interface Document
 	/**
 	 * The name to use for the type of document which will be persisted into the database.  This overrides the default
 	 * of using the class simple name (or full class name, depending on configuration).
-	 *
-	 * @return
 	 */
 	String type() default "";
 
 	/**
-	 *
-	 * @return
+	 * Set to scope queries to a "type" as defined by the configured strategy.
 	 */
 	TypePersistenceStrategy typeStrategy() default TypePersistenceStrategy.COLLECTION;
 
 	/**
 	 * The configured transformer class to use for the entity for server read/write transforms.  An implementation of the
 	 * ServerTransform interface.
-	 *
-	 * @return
 	 */
 	Class<? extends ServerTransformer> transformer() default ServerTransformer.class;
 }

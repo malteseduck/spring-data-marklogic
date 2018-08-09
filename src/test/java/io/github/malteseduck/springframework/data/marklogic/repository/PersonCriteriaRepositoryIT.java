@@ -18,6 +18,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.time.Instant;
 import java.util.List;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +58,7 @@ public class PersonCriteriaRepositoryIT {
         henry = new Person("Henry", 32, "male", "construction", "He built my house", Instant.parse("2016-05-01T00:00:00Z"), asList("carpentry", "gardening"));
         jane = new Person("Jane", 52, "female", "doctor", "A nice lady that is a friend of george", Instant.parse("2016-03-01T00:00:00Z"), asList("fencing", "archery", "running"));
         jenny = new Person("Jenny", 41, "female", "dentist", "", Instant.parse("2016-06-01T00:00:00Z"), singletonList("gymnastics"), singletonList(new Pet("Powderkeg", "wolverine")));
+        jenny.setModified(Instant.now().minus(1, DAYS));
 
         henry.setRankings(asList(1, 2, 3));
 
@@ -138,6 +142,14 @@ public class PersonCriteriaRepositoryIT {
     }
 
     @Test
+    public void testFindsPersonBornAfter() {
+        PersonCriteria criteria = new PersonCriteria();
+        criteria.setBirthtime(Instant.parse("2016-01-01T00:00:00Z"));
+
+        List<Person> people = repository.findAll(criteria);
+        assertThat(people).contains(bobby);
+    }
+    @Test
     public void testFindsPersonsByNameLike() {
         PersonCriteria criteria = new PersonCriteria();
         criteria.setName("Bob*");
@@ -187,6 +199,15 @@ public class PersonCriteriaRepositoryIT {
     public void testFindByBirthtimeGreaterThan() {
         PersonCriteria criteria = new PersonCriteria();
         criteria.setBornAfter(Instant.parse("2016-05-02T00:00:00Z"));
+
+        List<Person> people = repository.findAll(criteria);
+        assertThat(people).containsExactly(jenny);
+    }
+
+    @Test
+    public void testFindByModifiedBefore() {
+        PersonCriteria criteria = new PersonCriteria();
+        criteria.setModifiedBefore(Instant.now().minus(1, HOURS));
 
         List<Person> people = repository.findAll(criteria);
         assertThat(people).containsExactly(jenny);
