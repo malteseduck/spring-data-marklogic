@@ -530,7 +530,13 @@ public class PersonRepositoryIT {
     }
 
     @Test
-    public void testFindByComplicatedQBE() throws Exception {
+    public void testFindByAgeQuotedAndUnquotedQBE() throws Exception {
+        List<Person> people = repository.qbeFindByAgeQuotedAndUnquoted(23);
+        assertThat(people).containsExactly(bobby);
+    }
+
+    @Test
+    public void testFindBy() throws Exception {
         List<Person> people = repository.qbeFindByComplicated("fish");
         assertThat(people).containsExactly(george);
     }

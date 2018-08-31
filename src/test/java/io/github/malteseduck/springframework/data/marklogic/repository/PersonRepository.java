@@ -195,7 +195,7 @@ public interface PersonRepository extends MarkLogicRepository<Person, String> {
     List<Person> qbeFindByComplicated(String term);
 
     @Query(query = "{ $or: [{ age: ?0 }, {'age': '?0'}] }")
-    boolean qbeFindByAgeQuotedAndUnquoted(int age);
+    List<Person> qbeFindByAgeQuotedAndUnquoted(int age);
 
     @Query("{ arg0: ?0, arg1: ?1 }")
     List<Person> qbeFindByStringWithWildcardChar(String arg0, String arg1);

@@ -53,7 +53,7 @@ class ExpressionEvaluatingParameterBinder {
 	public String bind(String raw, ParameterAccessor accessor, BindingContext bindingContext) {
 
 		if (!StringUtils.hasText(raw)) {
-			return null;
+			return raw;
 		}
 
 		return replacePlaceholders(raw, accessor, bindingContext);
@@ -74,7 +74,8 @@ class ExpressionEvaluatingParameterBinder {
 		}
 
 		if (input.matches("^\\?\\d+$")) {
-			return getParameterValueForBinding(accessor, bindingContext.getParameters(), bindingContext.getBindings().iterator().next());
+			return getParameterValueForBinding(accessor, bindingContext.getParameters(),
+					bindingContext.getBindings().iterator().next());
 		}
 
 		Matcher matcher = createReplacementPattern(bindingContext.getBindings()).matcher(input);
@@ -199,7 +200,8 @@ class ExpressionEvaluatingParameterBinder {
 
 			regex.append("|");
 			regex.append("(" + Pattern.quote(binding.getParameter()) + ")");
-			regex.append("(\\W?['\"])?"); // potential quotation char (as in { foo : '?0' }).
+			regex.append("([\\w.]*");
+			regex.append("(\\W?['\"]|\\w*')?)");
 		}
 
 		return Pattern.compile(regex.substring(1));
@@ -230,13 +232,16 @@ class ExpressionEvaluatingParameterBinder {
 				}
 			}
 			if (QuotedString.endsWithQuote(rawPlaceholder)) {
-				rawPlaceholder = rawPlaceholder.substring(0, rawPlaceholder.length() - (StringUtils.hasText(suffix) ? suffix.length() : 1));
+				rawPlaceholder = rawPlaceholder.substring(0,
+						rawPlaceholder.length() - (StringUtils.hasText(suffix) ? suffix.length() : 1));
 			}
 		}
 
 		if (StringUtils.hasText(suffix)) {
 			boolean quoted = QuotedString.endsWithQuote(suffix);
-			return new Placeholder(parameterIndex, rawPlaceholder, quoted, quoted ? QuotedString.unquoteSuffix(suffix) : suffix);
+
+			return new Placeholder(parameterIndex, rawPlaceholder, quoted,
+					quoted ? QuotedString.unquoteSuffix(suffix) : suffix);
 		}
 		return new Placeholder(parameterIndex, rawPlaceholder, false, null);
 	}

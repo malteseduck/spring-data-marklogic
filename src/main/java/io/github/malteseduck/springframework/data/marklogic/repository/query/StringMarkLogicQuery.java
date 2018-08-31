@@ -7,6 +7,7 @@ import com.marklogic.client.query.StructuredQueryDefinition;
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import io.github.malteseduck.springframework.data.marklogic.repository.Query;
 import org.springframework.data.repository.query.EvaluationContextProvider;
@@ -202,6 +203,11 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
                     collectParameterReferencesIntoBindings(bindings, field);
                     collectParameterReferencesIntoBindings(bindings, ob.get(field));
                 }
+            } else if (value instanceof JSONArray) {
+                ((JSONArray) value).iterator()
+                    .forEachRemaining(child ->
+                        collectParameterReferencesIntoBindings(bindings, child)
+                    );
             }
         }
 
