@@ -1,0 +1,11 @@
+io.github.malteseduck.springframework.data.marklogic
+io.github.malteseduck.springframework.data.marklogic.core
+io.github.malteseduck.springframework.data.marklogic.core.convert
+io.github.malteseduck.springframework.data.marklogic.core.mapping
+io.github.malteseduck.springframework.data.marklogic.domain
+io.github.malteseduck.springframework.data.marklogic.domain.facets
+io.github.malteseduck.springframework.data.marklogic.repository
+io.github.malteseduck.springframework.data.marklogic.repository.config
+io.github.malteseduck.springframework.data.marklogic.repository.query
+io.github.malteseduck.springframework.data.marklogic.repository.query.convert
+io.github.malteseduck.springframework.data.marklogic.repository.support
