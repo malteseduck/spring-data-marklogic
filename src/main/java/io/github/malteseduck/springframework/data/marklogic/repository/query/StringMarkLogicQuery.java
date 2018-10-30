@@ -8,6 +8,7 @@ import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperat
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
 import io.github.malteseduck.springframework.data.marklogic.repository.Query;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
