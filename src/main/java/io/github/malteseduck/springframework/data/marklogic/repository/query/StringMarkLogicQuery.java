@@ -7,11 +7,10 @@ import com.marklogic.client.query.StructuredQueryDefinition;
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicMappingContext;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import io.github.malteseduck.springframework.data.marklogic.repository.Query;
-import org.springframework.data.repository.query.EvaluationContextProvider;
+import org.json.JSONObject;
 import org.springframework.data.repository.query.ParameterAccessor;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -26,7 +25,7 @@ import static io.github.malteseduck.springframework.data.marklogic.repository.qu
 public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
 
     private final MarkLogicOperations operations;
-    private final EvaluationContextProvider contextProvider;
+    private final QueryMethodEvaluationContextProvider contextProvider;
     private final SpelExpressionParser parser;
     private final MarkLogicMappingContext context;
     private final String query;
@@ -38,11 +37,11 @@ public class StringMarkLogicQuery extends AbstractMarkLogicQuery {
     private final ExpressionEvaluatingParameterBinder parameterBinder;
 
 
-    public StringMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations, SpelExpressionParser parser, EvaluationContextProvider contextProvider) {
+    public StringMarkLogicQuery(MarkLogicQueryMethod method, MarkLogicOperations operations, SpelExpressionParser parser, QueryMethodEvaluationContextProvider contextProvider) {
         this(method.getAnnotatedQuery(), method, operations, parser, contextProvider);
     }
 
-    public StringMarkLogicQuery(String query, MarkLogicQueryMethod method, MarkLogicOperations operations, SpelExpressionParser parser, EvaluationContextProvider contextProvider) {
+    public StringMarkLogicQuery(String query, MarkLogicQueryMethod method, MarkLogicOperations operations, SpelExpressionParser parser, QueryMethodEvaluationContextProvider contextProvider) {
         super(method, operations);
         this.context = (MarkLogicMappingContext) method.getMappingContext();
         this.annotation = method.getQueryAnnotation();

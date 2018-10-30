@@ -20,7 +20,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
-import org.springframework.data.repository.query.DefaultEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -138,7 +138,7 @@ public class QueryTestUtils {
 
     public static StructuredQueryDefinition stringQuery(MarkLogicQueryMethod method, Object... parameters) throws Exception {
         MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> context = new MarkLogicMappingContext();
-        return new StringMarkLogicQuery(method, new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(context)), PARSER, DefaultEvaluationContextProvider.INSTANCE).createQuery(getAccessor(parameters));
+        return new StringMarkLogicQuery(method, new MarkLogicTemplate(client(), new JacksonMarkLogicConverter(context)), PARSER, QueryMethodEvaluationContextProvider.DEFAULT).createQuery(getAccessor(parameters));
     }
 
     public static PartTreeMarkLogicQuery tree(MarkLogicQueryMethod method) {

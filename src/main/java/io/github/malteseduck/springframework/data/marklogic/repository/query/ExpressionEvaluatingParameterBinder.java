@@ -17,11 +17,11 @@ package io.github.malteseduck.springframework.data.marklogic.repository.query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONObject;
 import io.github.malteseduck.springframework.data.marklogic.repository.query.StringMarkLogicQuery.ParameterBinding;
-import org.springframework.data.repository.query.EvaluationContextProvider;
+import org.json.JSONObject;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -37,11 +37,11 @@ import java.util.regex.Pattern;
 class ExpressionEvaluatingParameterBinder {
 
 	private final SpelExpressionParser expressionParser;
-	private final EvaluationContextProvider evaluationContextProvider;
+	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 	private final ObjectMapper mapper = new ObjectMapper();
 
 	public ExpressionEvaluatingParameterBinder(SpelExpressionParser expressionParser,
-			EvaluationContextProvider evaluationContextProvider) {
+                                               QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		Assert.notNull(expressionParser, "ExpressionParser must not be null!");
 		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
@@ -61,7 +61,7 @@ class ExpressionEvaluatingParameterBinder {
 
 	/**
 	 * Replaced the parameter placeholders with the actual parameter values from the given {@link ParameterBinding}s.
-	 * 
+	 *
 	 * @param input must not be {@literal null} or empty.
 	 * @param accessor must not be {@literal null}.
 	 * @param bindingContext must not be {@literal null}.
