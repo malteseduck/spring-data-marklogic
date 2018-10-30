@@ -61,7 +61,7 @@ public class QueryMapper {
 
         if (transformer == null) {
             try {
-                transformer = transformerClass.newInstance();
+                transformer = transformerClass.getDeclaredConstructor().newInstance();
                 transformers.put(transformerClass, transformer);
             } catch (Exception e) {
                 e.printStackTrace();
