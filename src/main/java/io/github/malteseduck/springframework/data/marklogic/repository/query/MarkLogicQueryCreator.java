@@ -24,13 +24,13 @@ import com.marklogic.client.query.StructuredQueryBuilder.TextIndex;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
-import io.github.malteseduck.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import io.github.malteseduck.springframework.data.marklogic.repository.query.convert.PropertyIndex;
+import io.github.malteseduck.springframework.data.marklogic.repository.query.convert.QueryConversionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.context.PersistentPropertyPath;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
 import org.springframework.data.repository.query.parser.Part;
@@ -44,8 +44,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.marklogic.client.query.StructuredQueryBuilder.Operator.*;
-import static java.util.Arrays.asList;
 import static io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
+import static java.util.Arrays.asList;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
 
