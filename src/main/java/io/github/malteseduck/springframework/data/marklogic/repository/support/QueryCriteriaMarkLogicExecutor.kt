@@ -9,10 +9,7 @@ import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperat
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.DocumentFormat
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType.*
-import io.github.malteseduck.springframework.data.marklogic.core.query.QueryCriteria
-import io.github.malteseduck.springframework.data.marklogic.core.query.Range
-import io.github.malteseduck.springframework.data.marklogic.core.query.Value
-import io.github.malteseduck.springframework.data.marklogic.core.query.Word
+import io.github.malteseduck.springframework.data.marklogic.core.query.*
 import io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinition
 import io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine
 import io.github.malteseduck.springframework.data.marklogic.repository.query.MarkLogicEntityInformation
@@ -105,6 +102,7 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
     private fun <Q : QueryCriteria<T>> queries(criteria: Q): List<StructuredQueryDefinition> =
         (criteria::class as KClass<Q>).declaredMemberProperties
             .filter { !coreCriteria.contains(it.name) }
+            .filter { it.annotations.firstOrNull()?.let { annotation -> annotation !is Custom } ?: true }
             .mapNotNull { property ->
                 val annotation: Annotation? = property.annotations.firstOrNull()
 
