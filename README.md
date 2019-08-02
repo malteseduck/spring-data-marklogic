@@ -150,6 +150,32 @@ The naming conventions for `MarkLogicOperations` is patterned after MarkLogic's 
 
 The mapping between Java entity classes and documents in MarkLogic is handled by the `MarkLogicConverter` interface.  By default the template uses the `JacksonMarkLogicConverter` which uses MarkLogic's `JacksonDatabindHandle` (and Jackson internally) to do the mapping.  You can implement your own converter using the `MarkLogicConverter` interface and specify at template creation time to use it.
 
+#### @Document Annotation
+
+The [@Document](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/mapping/Document.html) annotation is main way to configure how your entities get mapped/transformed/etc. into documents is through the use of this annotation.  By default the converter will convert your entity into a JSON document, under a "directory" with the name of the entity type (i.e. a "Person" entity will be saved under a "/Person/" uri). 
+
+There are various options available to configure this, though, which we will explain in this section.
+
+#### `uri`
+
+The base URI for documents of the annotated type.  If the type persistence strategy is set to "URI" then will scope all queries to limit to only documents under this URI.  Defaults to "/TYPE_NAME/".
+
+#### `format`
+
+The serialization format to use for documents of the annotated type, either "JSON" or "XML".
+
+#### `type`
+
+The name to use for the type of document which will be persisted into the database.  This overrides the default of using the class simple name (or full class name, depending on configuration).
+
+#### `typeStrategy`
+
+ Set to scope queries to a "type" as defined by the configured strategy.  Can be either "COLLECTION" - which means that the documents will be stored in a collection with the type name (in addition to under a uri of that name), and queries scoped to that collection, "URI" - which means queries will be scoped to the entity uri, or "NONE" - where queries will not be scoped by type by default.
+
+#### `transformer`
+
+The configured transformer class to use for the entity for server read/write transforms.  An implementation of the [ServerTransformer](https://malteseduck.github.io/spring-data-marklogic/io/github/malteseduck/springframework/data/marklogic/core/convert/ServerTransformer.html) interface.
+
 ### Constructors
 There are three different constructors you can use to create an instance of `MarkLogicTemplate`:
 

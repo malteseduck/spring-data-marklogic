@@ -42,6 +42,9 @@ data class PersonCriteria(
     var hobbies: String? = null,
 
     @Word(field = "pets.name")
-    var pets: String? = null
+    var pets: String? = null,
+
+    @Custom
+    var something: String? = null
 
 ) : QueryCriteria<Person>()

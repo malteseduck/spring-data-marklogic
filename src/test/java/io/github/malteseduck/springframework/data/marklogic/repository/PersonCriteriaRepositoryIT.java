@@ -91,6 +91,16 @@ public class PersonCriteriaRepositoryIT {
     }
 
     @Test
+    public void testFindsPersonsByNameButIgnoresSomething() {
+        PersonCriteria criteria = new PersonCriteria();
+        criteria.setName("Jan");
+        criteria.setSomething("Hello World");
+
+        List<Person> people = repository.findAll(criteria);
+        assertThat(people).containsExactly(jane);
+    }
+
+    @Test
     public void testFindsPersonsByExactName() {
         PersonCriteria criteria = new PersonCriteria();
         criteria.setHasExactNameOf("Jane");

@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static io.github.malteseduck.springframework.data.marklogic.repository.query.QueryTestUtils.*;
 import static io.github.malteseduck.springframework.data.marklogic.repository.query.StubParameterAccessor.getAccessor;
 
-public class MarkLogicQueryCreatorTests {
+public class MarkLogicQueryCreatorTest {
 
     private MarkLogicOperations operations;
     private static final StructuredQueryBuilder qb = new StructuredQueryBuilder();

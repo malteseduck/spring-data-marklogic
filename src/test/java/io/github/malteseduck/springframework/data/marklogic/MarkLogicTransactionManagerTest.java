@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.BDDMockito.*;
 
 
-public class MarkLogicTransactionManagerTests  {
+public class MarkLogicTransactionManagerTest {
 
 	private DatabaseClient client;
 	private Transaction transaction;

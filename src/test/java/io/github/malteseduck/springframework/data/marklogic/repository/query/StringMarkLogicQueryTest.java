@@ -41,7 +41,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
  * Duplicate keys are allowed in MarkLogic, but not in many JSON creators/parsers.  Single quotes are converted to double quotes as well.  This was
  * all done so the tests are more readable.
  */
-public class StringMarkLogicQueryTests {
+public class StringMarkLogicQueryTest {
 
 	SpelExpressionParser PARSER = new SpelExpressionParser();
 
