@@ -350,6 +350,11 @@
                         </activation>
                     </profile>
                 </profiles>
+
+
+                Then to release:
+
+                ./mvnw release:prepare release:perform
             -->
             <build>
                 <plugins>
