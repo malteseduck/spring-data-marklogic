@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ChunkRequestTests {
+public class ChunkRequestTest {
 
     @Test
     public void testPageNumber() {

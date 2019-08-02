@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinitionBuilder.combine;
 
-public class CombinedQueryTests {
+public class CombinedQueryTest {
 
     private static final StructuredQueryBuilder qb = new StructuredQueryBuilder();
 
