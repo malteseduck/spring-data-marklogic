@@ -23,7 +23,7 @@
         <springdata.commons>[2.1.2.RELEASE,)</springdata.commons>
         <woodstox>4.4.1</woodstox>
         <json>20170516</json>
-        <jackson>2.9.7</jackson>
+        <jackson>2.10.1</jackson>
         <kotlin>1.3.0</kotlin>
         <maven-source-plugin>3.0.1</maven-source-plugin>
         <maven-javadoc-plugin>3.1.1</maven-javadoc-plugin>
