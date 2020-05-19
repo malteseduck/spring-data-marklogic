@@ -3,6 +3,6 @@ version: "3"
 services:
   spring_data_marklogic:
     container_name: "spring-data-marklogic"
-    image: "store/marklogicdb/marklogic-server-centos:9.0-9.1-dev"
+    image: "store/marklogicdb/marklogic-server:10.0-4-dev-centos"
     ports:
       - "8000-8002:8000-8002"
