@@ -11,6 +11,7 @@
     <logger name="org" level="warn" />
     <logger name="io.github.malteseduck.springframework.data.marklogic" level="warn" />
     <logger name="com.marklogic.client" level="warn" />
+    <logger name="org.apache.http.wire" level="warn" />
 
     <root level="error">
         <appender-ref ref="console" />
