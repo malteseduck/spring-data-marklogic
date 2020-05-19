@@ -19,7 +19,7 @@
     </licenses>
 
     <properties>
-        <spring.data>2.2.7.RELEASE</spring.data>
+        <spring.data>2.3.0.RELEASE</spring.data>
         <marklogic>5.2.0</marklogic>
         <woodstox>4.4.1</woodstox>
         <json>20170516</json>
@@ -56,7 +56,7 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <version>2.2.7.RELEASE</version>
+        <version>2.3.0.RELEASE</version>
     </parent>
 
     <dependencies>
