@@ -68,7 +68,7 @@ class StubParameterAccessor implements ParameterAccessor {
 		return values[index];
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.query.ParameterAccessor#hasBindableNullValue()
 	 */
@@ -95,7 +95,7 @@ class StubParameterAccessor implements ParameterAccessor {
 			return Arrays.asList(values).iterator();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.query.ParameterAccessor#getDynamicProjection()
 	 */
@@ -103,4 +103,9 @@ class StubParameterAccessor implements ParameterAccessor {
 	public Optional<Class<?>> getDynamicProjection() {
 		return Optional.empty();
 	}
+
+    @Override
+    public Class<?> findDynamicProjection() {
+        return null;
+    }
 }
