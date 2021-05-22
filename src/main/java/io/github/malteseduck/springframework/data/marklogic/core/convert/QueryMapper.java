@@ -18,14 +18,14 @@ import static io.github.malteseduck.springframework.data.marklogic.repository.qu
 public class QueryMapper {
 
     private final MarkLogicConverter converter;
-    private final ConcurrentHashMap<Class, ServerTransformer> transformers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Class<?>, ServerTransformer> transformers = new ConcurrentHashMap<>();
 
     public QueryMapper(MarkLogicConverter converter) {
         Assert.notNull(converter, "MarkLogicConverter must not be null!");
         this.converter = converter;
     }
 
-    public QueryDefinition getMappedQuery(StructuredQueryDefinition query, Class entityClass) {
+    public QueryDefinition getMappedQuery(StructuredQueryDefinition query, Class<?> entityClass) {
         CombinedQueryDefinition combined = combine(query);
 
         // If no server transform is already set on the query then we can see if there is a entity-configured transform
@@ -40,7 +40,7 @@ public class QueryMapper {
         return null;
     }
 
-    public ServerTransform getReadTransform(Class entityClass) {
+    public ServerTransform getReadTransform(Class<?> entityClass) {
         MarkLogicPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(entityClass);
         ServerTransformer transformer = findTransformer(entity);
         return transformer != null
@@ -48,7 +48,7 @@ public class QueryMapper {
                 : null;
     }
 
-    public ServerTransform getWriteTransform(Class entityClass) {
+    public ServerTransform getWriteTransform(Class<?> entityClass) {
         MarkLogicPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(entityClass);
         ServerTransformer transformer = findTransformer(entity);
         return transformer != null

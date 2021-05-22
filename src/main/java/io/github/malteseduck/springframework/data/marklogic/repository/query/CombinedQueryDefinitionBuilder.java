@@ -21,7 +21,6 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -39,7 +38,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     private StructuredQueryDefinition structuredQuery;
     private MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext;
     private RawQueryByExampleDefinition qbe;
-    private Class entityClass;
+    private Class<?> entityClass;
     private Format qbeFormat;
     private List<String> options;
     private List<String> extracts;
@@ -135,7 +134,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 }
             }
 
-            String serialized = null;
+            String serialized;
             if (!optionsToSerialize.isEmpty()) {
                 ObjectNode optionsJson = factory.objectNode();
                 optionsToSerialize.stream()
@@ -151,7 +150,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                         .forEachOrdered(option -> {
                             // Fix path indexes - they don't convert "nicely" like many of the other indexes
                             String index = (String) option.at("/sort-order/path-index").asText();
-                            if (!StringUtils.isEmpty(index)) {
+                            if (StringUtils.hasText(index)) {
                                 optionsJson
                                         .set(unique("sort-order"), factory.objectNode()
                                                 .put("direction", option.at("/sort-order/direction").asText())
@@ -179,11 +178,13 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 hasText(sparql)) {
             StringBuilder search = new StringBuilder();
 
+            //noinspection HttpUrlsUsage
             search.append("<search xmlns=\"http://marklogic.com/appservices/search\">");
 
             if (isQbe() && qbeFormat == Format.XML) {
                 // TODO: Can we put the structured query in "additional-query" if the "main" query is a QBE?
                 // TODO: Support "true" XML QBE instead of converting the JSON to XML?
+                //noinspection HttpUrlsUsage
                 search.append("<q:qbe xmlns:q=\"http://marklogic.com/appservices/querybyexample\">");
                 JSONObject json = new JSONObject(qbe.toString());
                 // TODO: Somehow support namespaces?
@@ -195,18 +196,18 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
 
             if (!optionsToSerialize.isEmpty())
                 search.append("<options>")
-                        .append(optionsToSerialize.stream().collect(Collectors.joining()))
+                        .append(String.join("", optionsToSerialize))
                         .append("</options>");
 
-            if (!StringUtils.isEmpty(qtext))
+            if (StringUtils.hasText(qtext))
                 search.append("<qtext>")
-                        .append(qtext)
-                        .append("</qtext>");
+                    .append(qtext)
+                    .append("</qtext>");
 
-            if (!StringUtils.isEmpty(sparql))
+            if (StringUtils.hasText(sparql))
                 search.append("<sparql>")
-                        .append(qtext)
-                        .append("</sparql>");
+                    .append(qtext)
+                    .append("</sparql>");
 
             search.append("</search>");
             return search.toString();
@@ -317,7 +318,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     @Override
     public CombinedQueryDefinition sort(Sort sort) {
         if (sort != null && sort.iterator().hasNext()) {
-            final MarkLogicPersistentEntity entity = entityClass != null ? mappingContext.getPersistentEntity(entityClass) : null;
+            final MarkLogicPersistentEntity<?> entity = entityClass != null ? mappingContext.getPersistentEntity(entityClass) : null;
 
             sort.forEach(order -> {
                 String propertyName = order.getProperty();
@@ -327,20 +328,20 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
                 // If there is an entity then we can determine the configuration of the index from it, otherwise we just
                 // default to a path index. An error will be thrown by the database if the index is not created, though.
                 if (entity != null) {
-                    MarkLogicPersistentProperty property = (MarkLogicPersistentProperty) entity.getPersistentProperty(propertyName);
+                    MarkLogicPersistentProperty property = entity.getPersistentProperty(propertyName);
                     if (property != null) {
                         // If the user specified type of "PATH" (default), or a path was specified, do we set it.  If
                         // they specify type of "ELEMENT" then we don't set a path and let it fall through into the
                         // logic of creating an element sort
-                        if (property.getIndexType() == IndexType.PATH && !StringUtils.isEmpty(property.getPath())) {
+                        if (property.getIndexType() == IndexType.PATH && StringUtils.hasText(property.getPath())) {
                             path = property.getPath();
                         }
                     } else {
                         // If the property was not found (user probably specified a path) then we default to path index
-                        path = "/"+ order.getProperty();
+                        path = "/" + order.getProperty();
                     }
                 } else {
-                    path = "/"+ order.getProperty();
+                    path = "/" + order.getProperty();
                 }
 
                 // If any of the conditions above made it seem like this needs to be an element sort, then do so,
@@ -438,11 +439,11 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public CombinedQueryDefinition type(Class entityClass) {
+    public CombinedQueryDefinition type(Class<?> entityClass) {
         this.entityClass = entityClass;
 
         if (entityClass != null) {
-            MarkLogicPersistentEntity entity = mappingContext.getPersistentEntity(entityClass);
+            MarkLogicPersistentEntity<?> entity = mappingContext.getPersistentEntity(entityClass);
 
             if (entity != null && entity.getTypePersistenceStrategy() == TypePersistenceStrategy.COLLECTION) {
                 collections(entity.getTypeName());
@@ -453,7 +454,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     }
 
     @Override
-    public CombinedQueryDefinition context(MappingContext mappingContext) {
+    public CombinedQueryDefinition context(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext) {
         this.mappingContext = mappingContext;
         return this;
     }
@@ -475,6 +476,11 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
     {
         this.criteria = criteria;
         return this;
+    }
+
+    @Override
+    public boolean canSerializeQueryAsJSON() {
+        return true;
     }
 
     private CombinedQueryDefinition and(StructuredQueryDefinition query) {
@@ -513,7 +519,7 @@ public class CombinedQueryDefinitionBuilder extends AbstractQueryDefinition impl
         return selected;
     }
 
-    public Class getEntityClass() {
+    public Class<?> getEntityClass() {
         return entityClass;
     }
 

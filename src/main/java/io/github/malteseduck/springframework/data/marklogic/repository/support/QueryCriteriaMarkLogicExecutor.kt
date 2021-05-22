@@ -6,7 +6,6 @@ import com.marklogic.client.io.Format.JSON
 import com.marklogic.client.query.StructuredQueryBuilder
 import com.marklogic.client.query.StructuredQueryDefinition
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations
-import io.github.malteseduck.springframework.data.marklogic.core.mapping.DocumentFormat
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType.*
 import io.github.malteseduck.springframework.data.marklogic.core.query.*
@@ -18,6 +17,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import java.io.Serializable
 import java.time.temporal.Temporal
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -123,7 +123,7 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
      */
     private fun element(field: String): StructuredQueryBuilder.Element =
         when (format) {
-            DocumentFormat.XML -> qb.element(field)
+            Format.XML -> qb.element(field)
             else -> qb.jsonProperty(field)
         }
 
@@ -145,7 +145,7 @@ open class QueryCriteriaMarkLogicExecutor<T, ID : Serializable>(
         val stringValue: String =
             (value as? List<*>)?.joinToString(" ") ?: value.toString()
         return stringValue
-            .toLowerCase() // Making all the terms lower-case will make the search case-insensitive
+            .lowercase(Locale.getDefault()) // Making all the terms lower-case will make the search case-insensitive
             .split(" ")
             .filter(String::isNotBlank)
             .map {

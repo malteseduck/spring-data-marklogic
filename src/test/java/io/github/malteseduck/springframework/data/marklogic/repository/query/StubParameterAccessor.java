@@ -100,6 +100,7 @@ class StubParameterAccessor implements ParameterAccessor {
 	 * @see org.springframework.data.repository.query.ParameterAccessor#getDynamicProjection()
 	 */
 	@Override
+    @Deprecated
 	public Optional<Class<?>> getDynamicProjection() {
 		return Optional.empty();
 	}

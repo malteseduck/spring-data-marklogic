@@ -82,10 +82,8 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <S extends T> S save(S entity) {
         Assert.notNull(entity, "Entity must not be null");
-        Method calling = SimpleMarkLogicRepository.class.getEnclosingMethod(); // TODO What does this do?
         return operations.write(entity);
     }
 
@@ -127,12 +125,16 @@ public class SimpleMarkLogicRepository<T, ID extends Serializable> implements Ma
     @Override
     public void deleteAll(Iterable<? extends T> entities) {
         Assert.notNull(entities, "The given Iterable of entities must not be null");
-        operations.delete((List<T>) entities);
+        operations.delete(convertIterableToList(entities));
     }
 
     @Override
     public void deleteAll() {
         operations.dropCollection(entityInformation.getJavaType());
+    }
+
+    public void deleteAllById(java.lang.Iterable<? extends ID> ids) {
+        operations.deleteByIds(convertIterableToList(ids), entityInformation.getJavaType());
     }
 
     private static <T> List<T> convertIterableToList(Iterable<T> entities) {

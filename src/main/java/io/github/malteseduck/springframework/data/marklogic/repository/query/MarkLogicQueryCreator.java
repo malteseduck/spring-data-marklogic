@@ -202,7 +202,7 @@ class MarkLogicQueryCreator extends AbstractQueryCreator<StructuredQueryDefiniti
     private RangeIndex getRangeIndex(MarkLogicPersistentProperty property) {
         // TODO: Add support for field range queries
         String name = property.getName();
-        String annotatedPath = !StringUtils.isEmpty(property.getPath()) ? property.getPath() : "";
+        String annotatedPath = StringUtils.hasText(property.getPath()) ? property.getPath() : "";
 
         if (annotatedPath.length() > 0) {
             return qb.pathIndex(annotatedPath);

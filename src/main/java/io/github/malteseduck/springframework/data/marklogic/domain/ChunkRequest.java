@@ -65,6 +65,12 @@ public class ChunkRequest implements Pageable, Serializable {
         return offset;
     }
 
+    @Override
+    public Pageable withPage(int pageNumber) {
+        long offset = (long) getPageSize() * (long) pageNumber;
+        return ChunkRequest.of(offset, getPageSize(), getSort());
+    }
+
     public Sort getSort() {
         return sort;
     }
