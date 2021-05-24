@@ -42,16 +42,16 @@ public class QueryTestUtils {
 
     static SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    private static ObjectMapper xmlMapper = new XmlMapper()
+    private final static ObjectMapper xmlMapper = new XmlMapper()
             .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
             .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setDateFormat(simpleDateFormat8601)
             .registerModule(new JavaTimeModule())
-            .disableDefaultTyping();
+            .deactivateDefaultTyping();
 
 
-    private static ObjectMapper objectMapper = new ObjectMapper()
+    private final static ObjectMapper objectMapper = new ObjectMapper()
             .configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
             .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
@@ -61,7 +61,7 @@ public class QueryTestUtils {
             .setDateFormat(simpleDateFormat8601)
             .registerModule(new JavaTimeModule())
             // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
-            .disableDefaultTyping();
+            .deactivateDefaultTyping();
 
     private static final DatabaseClient client = DatabaseClientFactory.newClient("nowhere", 23,
             new DatabaseClientFactory.DigestAuthContext("nobody", "nothing"));

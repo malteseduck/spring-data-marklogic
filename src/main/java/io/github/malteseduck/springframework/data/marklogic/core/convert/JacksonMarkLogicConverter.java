@@ -84,13 +84,13 @@ public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implem
                 .setDateFormat(simpleDateFormat8601)
                 .registerModule(new JavaTimeModule())
                 // Since we don't configure to "wrap" in the class name we can't do "type scoped" path range indexes - could be a problem options larger data sets
-                .disableDefaultTyping();
+                .deactivateDefaultTyping();
 
         if (kotlinModule != null) objectMapper = objectMapper.registerModule(kotlinModule);
 
         try {
             // TODO: Is it just easier/better to include the dumb library?  It will cause the default behavior to change for Spring Web stuff
-            Class mapperClass = Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
+            Class<?> mapperClass = Class.forName("com.fasterxml.jackson.dataformat.xml.XmlMapper", false, this.getClass().getClassLoader());
             xmlMapper = ((ObjectMapper) mapperClass.getConstructor().newInstance())
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
                     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
@@ -98,7 +98,7 @@ public class JacksonMarkLogicConverter extends AbstractMarkLogicConverter implem
                     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                     .setDateFormat(JacksonMarkLogicConverter.simpleDateFormat8601)
                     .registerModule(new JavaTimeModule())
-                    .disableDefaultTyping();
+                    .deactivateDefaultTyping();
 
             if (kotlinModule != null) xmlMapper = xmlMapper.registerModule(kotlinModule);
         } catch (ClassNotFoundException e) {

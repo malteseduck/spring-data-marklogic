@@ -24,7 +24,7 @@ import java.util.List;
  * operations as well as for building some common query constructs.  Additional methods allow you direct access to the
  * different query and document managers, as well as direct access to the database client, so that you can write logic
  * against the database using the full power of the MarkLogic Java Client Library.
- *
+ * <p>
  * The main implementation of this is {@link MarkLogicTemplate}, so you will create an instance of that
  * in order to use this interface.
  */
@@ -38,8 +38,9 @@ public interface MarkLogicOperations {
      * the {@link com.marklogic.client.query.StructuredQueryBuilder} instead.
      *
      * @param entityClass Type of Java entity being stored in the database.
-     * @param <T> The type of the entity.
-     * @return
+     * @param <T>         The type of the entity.
+     *
+     * @return A PojoQueryBuilder instance
      */
     <T> PojoQueryBuilder<T> qb(Class<T> entityClass);
 
@@ -53,13 +54,13 @@ public interface MarkLogicOperations {
     /**
      * Add sorting configuration to the specified query.  The default sort algorithm will expect to use a path range
      * index with specified sort properties, i.e. if sorting on "name" then a path index of "/name" should exist.
-     *
+     * <p>
      * Through use of the {@link io.github.malteseduck.springframework.data.marklogic.core.mapping.Indexed} annotation you can indicate
      * use of a different type of range index for the property sorting, or specify the full path that should be used in
      * creation of the sort options.  This requires that the entity type is specified.
      *
-     * @param sort Sort information for the query, i.e. which properties and which orders.
-     * @param query The structured query to "enhance".
+     * @param sort        Sort information for the query, i.e. which properties and which orders.
+     * @param query       The structured query to "enhance".
      * @param entityClass The entity type.
      *
      * @return The "enhanced" query definition for use in continued building.
@@ -71,7 +72,7 @@ public interface MarkLogicOperations {
      * fine-grained control use {@link com.marklogic.client.query.StructuredQueryBuilder#word(StructuredQueryBuilder.TextIndex, String...)}
      * to specify specific properties or fields into which to scope the word search.
      *
-     * @param term A search phrase.
+     * @param term  A search phrase.
      * @param query The structured query to "enhance".
      *
      * @return The "enhanced" query definition for use in continued building.
@@ -86,7 +87,8 @@ public interface MarkLogicOperations {
      * was created with a user that has "admin" privileges.
      *
      * @param configuration Resource pointing to a JSON document containing database configuration information.
-     * @throws IOException
+     *
+     * @throws IOException if an I/O error occurs while attempting to configure the database
      */
     void configure(Resource configuration) throws IOException;
 
@@ -98,7 +100,7 @@ public interface MarkLogicOperations {
      *
      * @param action A function to execute using the document manager.  The active transaction is also provided so that
      *               the function can add additional operations to it.
-     * @param <T> The result type of the function.
+     * @param <T>    The result type of the function.
      *
      * @return The results of the document manager interactions (results of a query, etc.).
      */
@@ -112,7 +114,7 @@ public interface MarkLogicOperations {
      * or a {@link com.marklogic.client.query.QueryManager}.
      *
      * @param action A function to execute using the database client and active transaction.
-     * @param <T> The result type of the function.
+     * @param <T>    The result type of the function.
      *
      * @return The results of the function.
      */
@@ -122,7 +124,7 @@ public interface MarkLogicOperations {
      * Executes the specified action using a {@link com.marklogic.client.query.QueryManager}.
      *
      * @param action A function to execute using the query manager and active transaction.
-     * @param <T> The result type of the function.
+     * @param <T>    The result type of the function.
      *
      * @return The results from the query manager.
      */
@@ -183,14 +185,14 @@ public interface MarkLogicOperations {
      * Write the specified list of entities to the database.  Using the {@link io.github.malteseduck.springframework.data.marklogic.core.mapping.Document}
      * annotation you can specify some information as to how it is persisted (i.e. whether or not to store it in a "type"
      * collection, what path, etc.).
-     *
+     * <p>
      * If a transform is specified then before the entity is saved into the database they transform will be run against
      * each entity.  For more information see http://docs.marklogic.com/guide/java/transforms.
      *
-     * @param entities A list of POJO entities you wish to save into the database.
-     * @param transform The transform to use before finally persisting to the database.
+     * @param entities    A list of POJO entities you wish to save into the database.
+     * @param transform   The transform to use before finally persisting to the database.
      * @param collections Additional collections to which you want the document to be a part of inside the database.
-     * @param <T> The type of entity
+     * @param <T>         The type of entity
      *
      * @return The list of entities that were saved to the database.  This is mainly for convenience as they are not
      * modified through this process.
@@ -220,9 +222,9 @@ public interface MarkLogicOperations {
      * Reads a set of documents that have the specified IDs.  The documents must match the specified type or they will
      * not be included in the result set.
      *
-     * @param ids A list of IDs of entities.
+     * @param ids         A list of IDs of entities.
      * @param entityClass The Java type of the entity.
-     * @param <T> The type of the entity.
+     * @param <T>         The type of the entity.
      *
      * @return A list of all the entities that matched the specified IDs.
      */
@@ -251,8 +253,8 @@ public interface MarkLogicOperations {
      * very large number and will degrade the performance of your application.  You instead should query out "pages" of
      * data as needed.
      *
-     * @param query A structured query defining the constraints to use to match the desired documents.
-     * @param start The start index within the result set that acts as the start of the "page".
+     * @param query  A structured query defining the constraints to use to match the desired documents.
+     * @param start  The start index within the result set that acts as the start of the "page".
      * @param length The number of items to include in the "page"
      *
      * @return A {@link com.marklogic.client.document.DocumentPage} containing the records for this "chunk" of the result
@@ -272,7 +274,7 @@ public interface MarkLogicOperations {
     /**
      * Query for a single entity using the specified structured query.  If for some reason multiple results are matched
      * then only the first is returned.
-     *
+     * <p>
      * This is a convenience method to get a single item when you "know" that is all there is.
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
@@ -285,6 +287,7 @@ public interface MarkLogicOperations {
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
+    @SuppressWarnings("JavadocReference")
     <T> List<T> search(Class<T> entityClass);
 
     /**
@@ -293,6 +296,7 @@ public interface MarkLogicOperations {
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
+    @SuppressWarnings("JavadocReference")
     <T> List<T> search(StructuredQueryDefinition query, Class<T> entityClass);
 
     /**
@@ -302,6 +306,7 @@ public interface MarkLogicOperations {
      *
      * @see MarkLogicOperations#search(StructuredQueryDefinition, long, int, Class)
      */
+    @SuppressWarnings("JavadocReference")
     <T> Page<T> search(StructuredQueryDefinition query, long start, Class<T> entityClass);
 
     /**
@@ -309,11 +314,11 @@ public interface MarkLogicOperations {
      * documents are returned.  Only a page is returned, starting from the specified index and containing the specified
      * number of entries.
      *
-     * @param query The structured query to use to match documents in the database.
-     * @param start The starting index within the result set of matches.
-     * @param limit The number of documents to return.
+     * @param query       The structured query to use to match documents in the database.
+     * @param start       The starting index within the result set of matches.
+     * @param limit       The number of documents to return.
      * @param entityClass The entity type class.
-     * @param <T> The type of entity.
+     * @param <T>         The type of entity.
      *
      * @return A page of documents matching the specified parameters.
      */
@@ -337,11 +342,11 @@ public interface MarkLogicOperations {
      * or the query is a {@link io.github.malteseduck.springframework.data.marklogic.repository.query.CombinedQueryDefinition} that includes
      * the ad-hoc options definitions for them.
      *
-     * @param query The structured query to use to match documents in the database.
-     * @param start The starting index within the result set of matches.
-     * @param limit The number of documents to return.
+     * @param query       The structured query to use to match documents in the database.
+     * @param start       The starting index within the result set of matches.
+     * @param limit       The number of documents to return.
      * @param entityClass The entity type class.
-     * @param <T> The type of entity.
+     * @param <T>         The type of entity.
      *
      * @return A page of documents matching the specified parameters with the included facets.
      */
@@ -382,7 +387,7 @@ public interface MarkLogicOperations {
     InputStream stream(StructuredQueryDefinition query, long start, int length);
 
     /**
-     * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
+     * Same as method taking int bounds, but allows use of Pageable for paging/sorting.
      *
      * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
@@ -393,10 +398,10 @@ public interface MarkLogicOperations {
      * but instead of a page/list of documents it returns an input stream straight from the results of the REST call
      * against the database.  The purpose of these methods is to skip the serialization/deserialization process of
      * your application layer and just return raw data.
-     *
+     * <p>
      * If you don't need to access any parts of the document and just need to return the raw
      * JSON/XML then it is easier/faster to just copy the stream from the database into the HTTP response directly.
-     *
+     * <p>
      * Extractions or server-side transforms can still be used to change how the data is returned in cases where there
      * are properties you don't want returned through a public API, etc.
      *
@@ -405,7 +410,7 @@ public interface MarkLogicOperations {
     <T> InputStream stream(StructuredQueryDefinition query, long start, int length, Class<T> entityClass);
 
     /**
-     * Same as method taking int bounds, but allows use of Pagable for paging/sorting.
+     * Same as method taking int bounds, but allows use of Pageable for paging/sorting.
      *
      * @see MarkLogicOperations#stream(StructuredQueryDefinition, long, int, Class)
      */
@@ -425,9 +430,9 @@ public interface MarkLogicOperations {
     /**
      * Check for existence of an entity in the database by using it's ID.
      *
-     * @param id The ID value of an entity.
+     * @param id          The ID value of an entity.
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      *
      * @return True if an entity with the specified ID exists.
      */
@@ -437,9 +442,9 @@ public interface MarkLogicOperations {
      * Check for existence of entities matching the specified structured query.  This will not show which ones match,
      * but is a way to do a quick estimate on whether or not any exist in the first place.
      *
-     * @param query The structured query to use to match documents in the database.
+     * @param query       The structured query to use to match documents in the database.
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      *
      * @return True if there are any entities that match the query.
      */
@@ -460,7 +465,7 @@ public interface MarkLogicOperations {
      * Count the number of the specified entity that exist in the database.
      *
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      *
      * @return The number of the specified entity contained in the database.
      */
@@ -476,9 +481,9 @@ public interface MarkLogicOperations {
     /**
      * Count the number of entities that would match the specified query.
      *
-     * @param query The structured query to use to match documents in the database.
+     * @param query       The structured query to use to match documents in the database.
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      *
      * @return The count of entities that are in the database.
      */
@@ -510,10 +515,9 @@ public interface MarkLogicOperations {
     /**
      * Deletes the entities which have one of the specified IDs.
      *
-     * @param ids A list of entity IDs.
-     *
+     * @param ids         A list of entity IDs.
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      */
     <T> void deleteByIds(List<?> ids, Class<T> entityClass);
 
@@ -521,7 +525,7 @@ public interface MarkLogicOperations {
      * Deletes all the entities of the specified type.
      *
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      */
     <T> void dropCollection(Class<T> entityClass);
 
@@ -529,8 +533,9 @@ public interface MarkLogicOperations {
      * Deletes all the entities of the specified types.
      *
      * @param entityClasses The type classes of entities.
-     * @param <T> The type of an entity.
+     * @param <T>           The type of an entity.
      */
+    @SuppressWarnings("unchecked")
     <T> void dropCollections(Class<T>... entityClasses);
 
     /**
@@ -544,16 +549,16 @@ public interface MarkLogicOperations {
      * Delete the specified entities from the database.
      *
      * @param entities A list of entities.
-     * @param <T> The type of an entity.
+     * @param <T>      The type of an entity.
      */
     <T> void delete(List<T> entities);
 
     /**
      * Delete entities of the specified type that match the specified query.
      *
-     * @param query The structured query to use to match documents in the database.
+     * @param query       The structured query to use to match documents in the database.
      * @param entityClass The type class of an entity.
-     * @param <T> The type of an entity.
+     * @param <T>         The type of an entity.
      */
     <T> void delete(StructuredQueryDefinition query, Class<T> entityClass);
 

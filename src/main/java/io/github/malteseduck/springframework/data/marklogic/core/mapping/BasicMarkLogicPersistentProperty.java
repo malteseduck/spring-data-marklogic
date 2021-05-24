@@ -24,13 +24,13 @@ public class BasicMarkLogicPersistentProperty extends AnnotationBasedPersistentP
 
         String name = property.getName();
 
-        if (jsonProperty != null && !StringUtils.isEmpty(jsonProperty.value())) {
+        if (jsonProperty != null && StringUtils.hasText(jsonProperty.value())) {
             name = jsonProperty.value();
         }
 
         if (indexed != null) {
             indexType = indexed.type();
-            if (!StringUtils.isEmpty(indexed.path())) {
+            if (StringUtils.hasText(indexed.path())) {
                 path = indexed.path();
             } else if (indexed.type() == IndexType.PATH) {
                 path = "/" + name;

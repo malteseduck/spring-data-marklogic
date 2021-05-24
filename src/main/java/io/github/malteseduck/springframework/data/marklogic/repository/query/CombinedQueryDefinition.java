@@ -8,6 +8,9 @@ import com.marklogic.client.query.StructuredQueryDefinition;
 import io.github.malteseduck.springframework.data.marklogic.core.MarkLogicOperations;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.IndexType;
 import io.github.malteseduck.springframework.data.marklogic.core.mapping.Indexed;
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentEntity;
+import io.github.malteseduck.springframework.data.marklogic.core.mapping.MarkLogicPersistentProperty;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.context.MappingContext;
 
@@ -17,10 +20,10 @@ import java.util.List;
  * Convenience interface provided to allow easy creation of "combined" queries.  These type of queries combined structured
  * queries and ad-hoc options (not persisted to the database) (see http://docs.marklogic.com/guide/rest-dev/search#id_69918)
  * for more information.
- *
+ * <p>
  * This interface follows the Java "builder" pattern to make it easier to construct queries.  As much as possible any
  * defaults for these methods follow conventions used in the MarkLogic Java Client Library.
- *
+ * <p>
  * This interface also has helper methods to add some of the more common query options like sorting, extractions, and
  * term searches.
  */
@@ -41,10 +44,10 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     CombinedQueryDefinition byExample(RawQueryByExampleDefinition qbe);
 
     /**
-     * Adds a raw Query By Example definition to the current combined query.  This will supercede any structured query
+     * Adds a raw Query By Example definition to the current combined query.  This will supersede any structured query
      * that currently exists in the combined query, so use one or the other.
      *
-     * @param qbe the raw QBE object.
+     * @param qbe    the raw QBE object.
      * @param format Either JSON or XML, using the {@link com.marklogic.client.io.Format} enum.
      *
      * @return The current query definition for use in continued building.
@@ -72,7 +75,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     /**
      * Adds constraints to limit results to only documents contained in one of the specified collections.  This can be
      * called multiple times and the result is additive.
-     *
+     * <p>
      * By default all documents are in a collection named after the entity class, i.e. a Person entity is stored in a
      * collection with the URI "Person".
      *
@@ -83,9 +86,9 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     CombinedQueryDefinition collections(String... collections);
 
     /**
-     * Adds contraints to limit results to only documents contained in the specified directory.  Multiple calls to this
+     * Adds constraints to limit results to only documents contained in the specified directory.  Multiple calls to this
      * function will replace the value of previous calls.
-     *
+     * <p>
      * By default all documents are stored under a path named after the entity class (to avoid ID clashes, since the
      * database URI is the "true" primary key).  So a Person entity is stored under the path "/Person/".
      *
@@ -99,7 +102,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      * Sets the query to use persisted options that have the specified name.  If you find you are adding lots of ad-hoc
      * options to your queries or that you are having performance issues because of building them each time you can save
      * those options and reference them in your query.
-     *
+     * <p>
      * For more information see http://docs.marklogic.com/guide/java/query-options#id_20346.
      *
      * @param name The name of the options as they are saved in the database.
@@ -111,8 +114,8 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     /**
      * Add a snippet of XML query options to the combined query.  If you wanted to configure the query to return the
      * metrics of the query you would call the method like so:
-     *
-     *      combinedQuery.options("&lt;return-metrics&gt;true&lt;/return-metrics&gt;");
+     * <p>
+     * combinedQuery.options("&lt;return-metrics&gt;true&lt;/return-metrics&gt;");
      *
      * @param options Variable number of options XML strings to add to the query.
      *
@@ -123,7 +126,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     /**
      * Add sorting configuration to the query.  The default sort algorithm will expect
      * to use a path range index, i.e. if sorting on "name" then a path index of "/name" should exist.
-     *
+     * <p>
      * Through use of the {@link Indexed} annotation you can indicate
      * use of a different type of range index for the property sorting, or specify the full path that should be used in
      * creation of the sort options.  This requires that {@link CombinedQueryDefinition#type(Class)} be called first to
@@ -141,7 +144,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      * in that object is exactly how the index is defined in the configuration.  For example, if you have a sort property
      * of "name" and you specify the type of IndexType.PATH then you would need a path range index defined for "name".  If the
      * property is "/pets/name" with the same index type then a path range index would need to be defined for "/pets/name".
-     *
+     * <p>
      * Usually it is better to be consistent in how you define your indexes (i.e. use either path range or element (property)
      * range indexes) so that the same type of index can be configured for many properties in a sort.
      *
@@ -159,9 +162,9 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      * {@link org.springframework.data.domain.Sort} yourself and perform logic to determine index type yourself.
      *
      * @param propertyName The name of the property, or path, or whatever (depending on index type used)
-     * @param order The order, either "descending" or "ascending"
-     * @param type The type of index that is configured for the properties.  Used to create the correct options in the
-     *             combined query.
+     * @param order        The order, either "descending" or "ascending"
+     * @param type         The type of index that is configured for the properties.  Used to create the correct options in the
+     *                     combined query.
      *
      * @return The current query definition for use in continued building.
      */
@@ -177,16 +180,16 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
     /**
      * Specify which properties of a document will be included/excluded from the results.  The default is for the entire
      * document to be returned.
-     *
+     * <p>
      * Ideally you keep the mode as {@link SelectedMode#HIERARCHICAL} so that your entities will be de-serialized correctly.
      * If you create a custom entity to handle the results of just the properties flattened out then you can just use
      * the {@link SelectedMode#INCLUDE}.
-     *
+     * <p>
      * For more information see http://docs.marklogic.com/guide/java/searches#id_90087.
      *
      * @param extracts A list of XPaths that describe which properties in a document to include/exclude
-     * @param mode Specify whether to include or exclude the specified properties.
-
+     * @param mode     Specify whether to include or exclude the specified properties.
+     *
      * @return The current query definition for use in continued building.
      */
     CombinedQueryDefinition extracts(List<String> extracts, SelectedMode mode);
@@ -205,12 +208,10 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      * Specify a server transform to use on the results that are matched in the database.  This server transform will be
      * applied to each document before the set is returned from the database, so for complicated transformation logic
      * this could be more efficient than trying to do it in the Java layer.
-     *
+     * <p>
      * For more information see http://docs.marklogic.com/guide/java/transforms.
      *
      * @return The current query definition for use in continued building.
-     *
-     * @return
      */
     CombinedQueryDefinition transform(ServerTransform transform);
 
@@ -243,7 +244,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      *
      * @return The current query definition for use in continued building.
      */
-    CombinedQueryDefinition type(Class entityClass);
+    CombinedQueryDefinition type(Class<?> entityClass);
 
     /**
      * Override the default mapping context to use when building queries.
@@ -252,7 +253,7 @@ public interface CombinedQueryDefinition extends StructuredQueryDefinition {
      *
      * @return The current query definition for use in continued building.
      */
-    CombinedQueryDefinition context(MappingContext mappingContext);
+    CombinedQueryDefinition context(MappingContext<? extends MarkLogicPersistentEntity<?>, MarkLogicPersistentProperty> mappingContext);
 
     /**
      * Indicates whether or not this combined query is a raw Query By Example query.

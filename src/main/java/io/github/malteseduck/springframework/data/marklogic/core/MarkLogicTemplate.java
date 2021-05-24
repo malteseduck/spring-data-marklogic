@@ -689,7 +689,7 @@ public class MarkLogicTemplate implements MarkLogicOperations, ApplicationContex
     public <T> void dropCollections(Class<T>... entityClasses) {
         String[] collections = Arrays.stream(entityClasses)
                 .map(entityClass -> {
-                    MarkLogicPersistentEntity entity = converter.getMappingContext().getPersistentEntity(entityClass);
+                    MarkLogicPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(entityClass);
                     if (entity == null || entity.getTypePersistenceStrategy() != TypePersistenceStrategy.COLLECTION) {
                         throw new InvalidDataAccessApiUsageException(String.format("Cannot determine deleteById scope for entity of type %s", entityClass.getName()));
                     }
