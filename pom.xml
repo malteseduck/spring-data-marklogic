@@ -36,7 +36,7 @@
         <javax.xml.bind-api.version>2.3.0</javax.xml.bind-api.version>
 
         <!-- Testing versions -->
-        <httpclient>4.5.12</httpclient>
+        <httpclient>4.5.13</httpclient>
         <commons-codec>1.14</commons-codec>
         <assertj>3.11.1</assertj>
         <failsafe>2.22.2</failsafe>
